@@ -9,8 +9,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="8dp"
+    android:layout_marginVertical="12dp"
     android:clickable="true"
     android:focusable="true"
-    android:padding="16dp"
-    app:shapeAppearance="@style/ShapeAppearance.Material3.Corner.ExtraLarge" />
+    app:contentPadding="16dp"
+    app:cardElevation="4dp"
+    app:shapeAppearance="@style/ShapeAppearance.Material3.Corner.ExtraLarge"
+    app:strokeColor="?colorOutlineVariant"
+    app:strokeWidth="1dp" />

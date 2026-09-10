@@ -10,7 +10,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import androidx.core.view.plusAssign
-import androidx.core.view.setMargins
+
 import coil.load
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,9 +53,7 @@ class HomeAvailabilityCard(
     override fun bind(position: Int, holder: HomeCardAdapter.ViewHolder) {
         holder.root.removeAllViews()
         val b = CardHomeAvailabilityBinding.inflate(LayoutInflater.from(holder.root.context))
-        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            setMargins(8.dp)
-        }
+        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         holder.root += b.root
 
         val error = app.availabilityManager.check(profile, cacheOnly = true)

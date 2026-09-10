@@ -39,54 +39,54 @@ class ProfileConfig(
     val sync by lazy { Sync() }
     val attendance by lazy { Attendance() }
 
-    var shareByDefault by config<Boolean>(false)
+    var shareByDefault: Boolean by config<Boolean>(false)
 
     inner class Grades {
-        var averageWithoutWeight by config<Boolean>(true)
-        var colorMode by config<Int>(COLOR_MODE_WEIGHTED)
-        var dontCountEnabled by config<Boolean>(false)
-        var dontCountGrades by config<List<String>> { listOf() }
-        var hideImproved by config<Boolean>(false)
-        var hideNoGrade by base.config<Boolean>(false)
-        var hideSticksFromOld by config<Boolean>(false)
-        var minusValue by config<Float?>(null)
-        var plusValue by config<Float?>(null)
-        var yearAverageMode by config<Int>(YEAR_ALL_GRADES)
-        var universityAverageMode by config<Int>(UNIVERSITY_AVERAGE_MODE_ECTS)
-        var countEctsInProgress by config<Boolean>(false)
+        var averageWithoutWeight: Boolean by config<Boolean>(true)
+        var colorMode: Int by config<Int>(COLOR_MODE_WEIGHTED)
+        var dontCountEnabled: Boolean by config<Boolean>(false)
+        var dontCountGrades: List<String> by config<List<String>> { listOf() }
+        var hideImproved: Boolean by config<Boolean>(false)
+        var hideNoGrade: Boolean by config<Boolean>(false)
+        var hideSticksFromOld: Boolean by config<Boolean>(false)
+        var minusValue: Float? by config<Float?>(null)
+        var plusValue: Float? by config<Float?>(null)
+        var yearAverageMode: Int by config<Int>(YEAR_ALL_GRADES)
+        var universityAverageMode: Int by config<Int>(UNIVERSITY_AVERAGE_MODE_ECTS)
+        var countEctsInProgress: Boolean by config<Boolean>(false)
     }
 
     inner class UI {
-        var agendaViewType by config<Int>(AGENDA_DEFAULT)
-        var agendaCompactMode by config<Boolean>(false)
-        var agendaGroupByType by config<Boolean>(false)
-        var agendaLessonChanges by config<Boolean>(true)
-        var agendaTeacherAbsence by config<Boolean>(true)
-        var agendaSubjectImportant by config<Boolean>(false)
-        var agendaElearningMark by config<Boolean>(false)
-        var agendaElearningGroup by config<Boolean>(true)
+        var agendaViewType: Int by config<Int>(AGENDA_DEFAULT)
+        var agendaCompactMode: Boolean by config<Boolean>(false)
+        var agendaGroupByType: Boolean by config<Boolean>(false)
+        var agendaLessonChanges: Boolean by config<Boolean>(true)
+        var agendaTeacherAbsence: Boolean by config<Boolean>(true)
+        var agendaSubjectImportant: Boolean by config<Boolean>(false)
+        var agendaElearningMark: Boolean by config<Boolean>(false)
+        var agendaElearningGroup: Boolean by config<Boolean>(true)
 
-        var homeCards by config<List<HomeCardModel>> { listOf() }
+        var homeCards: List<HomeCardModel> by config<List<HomeCardModel>> { listOf() }
 
-        var messagesGreetingOnCompose by config<Boolean>(true)
-        var messagesGreetingOnReply by config<Boolean>(true)
-        var messagesGreetingOnForward by config<Boolean>(false)
-        var messagesGreetingText by config<String?>(null)
+        var messagesGreetingOnCompose: Boolean by config<Boolean>(true)
+        var messagesGreetingOnReply: Boolean by config<Boolean>(true)
+        var messagesGreetingOnForward: Boolean by config<Boolean>(false)
+        var messagesGreetingText: String? by config<String?>(null)
 
-        var timetableShowAttendance by config<Boolean>(true)
-        var timetableShowEvents by config<Boolean>(true)
-        var timetableTrimHourRange by config<Boolean>(false)
-        var timetableColorSubjectName by config<Boolean>(false)
+        var timetableShowAttendance: Boolean by config<Boolean>(true)
+        var timetableShowEvents: Boolean by config<Boolean>(true)
+        var timetableTrimHourRange: Boolean by config<Boolean>(false)
+        var timetableColorSubjectName: Boolean by config<Boolean>(false)
     }
 
     inner class Sync {
-        var notificationFilter by config(NotificationType.Companion::getDefaultConfig)
+        var notificationFilter: Set<NotificationType> by config(NotificationType.Companion::getDefaultConfig)
     }
 
     inner class Attendance {
-        var attendancePageSelection by config<Int>(1)
-        var groupConsecutiveDays by config<Boolean>(true)
-        var showPresenceInMonth by config<Boolean>(false)
-        var useSymbols by config<Boolean>(false)
+        var attendancePageSelection: Int by config<Int>(1)
+        var groupConsecutiveDays: Boolean by config<Boolean>(true)
+        var showPresenceInMonth: Boolean by config<Boolean>(false)
+        var useSymbols: Boolean by config<Boolean>(false)
     }
 }

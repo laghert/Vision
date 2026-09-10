@@ -8,8 +8,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -21,7 +20,7 @@
             style="?materialIconButtonContainerStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="12dp"
             android:clickable="false"
             app:iiv_color="?colorOnPrimaryContainer"
             app:iiv_icon="cmd-pencil-box-outline"
@@ -37,6 +36,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.4"
                 android:text="@string/card_notes_header_title"
                 android:textAppearance="?textAppearanceTitleMedium" />
 
@@ -44,7 +44,11 @@
                 android:id="@+id/noData"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/notes_no_data" />
+                android:layout_marginTop="4dp"
+                android:lineSpacingMultiplier="1.5"
+                android:text="@string/notes_no_data"
+                android:textAppearance="?textAppearanceBodyMedium"
+                android:textColor="?android:textColorSecondary" />
         </LinearLayout>
     </LinearLayout>
 
@@ -53,14 +57,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clipToPadding="false"
+        android:layout_marginTop="12dp"
         tools:itemCount="3"
         tools:listitem="@layout/note_list_item"
         tools:visibility="visible" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/addNote"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:text="@string/notes_action_add" />
 </LinearLayout>

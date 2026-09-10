@@ -17,7 +17,6 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="8dp"
         android:visibility="gone"
         tools:visibility="visible">
 
@@ -26,7 +25,7 @@
             style="?materialIconButtonContainerStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="12dp"
             android:clickable="false"
             app:iiv_color="?colorOnPrimaryContainer"
             app:iiv_icon="szf-sync"
@@ -42,6 +41,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.4"
                 android:text="@string/home_timetable_no_timetable"
                 android:textAppearance="?textAppearanceTitleMedium" />
 
@@ -49,7 +49,10 @@
                 android:id="@+id/noTimetableText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/home_timetable_no_timetable_text" />
+                android:layout_marginTop="4dp"
+                android:lineSpacingMultiplier="1.5"
+                android:textAppearance="?textAppearanceBodyMedium"
+                android:textColor="?android:textColorSecondary" />
         </LinearLayout>
     </LinearLayout>
 
@@ -59,8 +62,6 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingLeft="8dp"
-        android:paddingTop="8dp"
         android:visibility="gone"
         tools:layout_marginTop="100dp"
         tools:visibility="visible">
@@ -69,7 +70,7 @@
             style="?materialIconButtonContainerStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="12dp"
             android:clickable="false"
             app:iiv_color="?colorOnPrimaryContainer"
             app:iiv_icon="cmd-calendar-month-outline"
@@ -85,15 +86,18 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.4"
                 android:text="@string/home_timetable_no_lessons"
                 android:textAppearance="?textAppearanceTitleMedium" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="left"
-                android:gravity="left"
-                android:text="@string/home_timetable_no_lessons_text" />
+                android:layout_marginTop="4dp"
+                android:lineSpacingMultiplier="1.5"
+                android:text="@string/home_timetable_no_lessons_text"
+                android:textAppearance="?textAppearanceBodyMedium"
+                android:textColor="?android:textColorSecondary" />
         </LinearLayout>
     </LinearLayout>
 
@@ -103,7 +107,6 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="8dp"
         android:visibility="gone"
         tools:layout_marginTop="185dp"
         tools:visibility="visible">
@@ -112,7 +115,7 @@
             style="?materialIconButtonContainerStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="12dp"
             android:clickable="false"
             app:iiv_color="?colorOnPrimaryContainer"
             app:iiv_icon="szf-sync-error"
@@ -128,13 +131,18 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.4"
                 android:text="@string/home_timetable_not_public"
                 android:textAppearance="?textAppearanceTitleMedium" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/home_timetable_not_public_text" />
+                android:layout_marginTop="4dp"
+                android:lineSpacingMultiplier="1.5"
+                android:text="@string/home_timetable_not_public_text"
+                android:textAppearance="?textAppearanceBodyMedium"
+                android:textColor="?android:textColorSecondary" />
         </LinearLayout>
     </LinearLayout>
 
@@ -143,7 +151,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp"
         tools:layout_marginTop="290dp">
 
         <LinearLayout
@@ -156,7 +163,7 @@
                 style="?materialIconButtonContainerStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="12dp"
                 android:clickable="false"
                 app:iiv_color="?colorOnPrimaryContainer"
                 app:iiv_icon="cmd-calendar-month-outline"
@@ -165,7 +172,7 @@
                 tools:iconTint="?colorOnPrimaryContainer" />
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical">
@@ -174,6 +181,7 @@
                     android:id="@+id/dayInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:lineSpacingMultiplier="1.4"
                     android:textAppearance="?textAppearanceTitleMedium"
                     tools:text="Jutro" />
 
@@ -181,7 +189,10 @@
                     android:id="@+id/lessonInfo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?textAppearanceBodySmall"
+                    android:layout_marginTop="2dp"
+                    android:lineSpacingMultiplier="1.5"
+                    android:textAppearance="?textAppearanceBodyMedium"
+                    android:textColor="?android:textColorSecondary"
                     tools:text="7 lekcji - 8:10 do 14:45" />
             </LinearLayout>
 
@@ -211,20 +222,22 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginEnd="16dp"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/lessonBig"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:lineSpacingMultiplier="1.4"
                         android:textAppearance="?textAppearanceTitleMedium"
                         tools:text="Pierwsza: informatyka" />
 
@@ -232,20 +245,25 @@
                         android:id="@+id/counter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:lineSpacingMultiplier="1.5"
                         android:textAppearance="?textAppearanceBodyMedium"
+                        android:textColor="?colorOnSurface"
                         tools:text="zostały 2 minuty 35 sekund" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginEnd="16dp"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/classroomHeading"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:lineSpacingMultiplier="1.4"
                         android:text="Sala"
                         android:textAppearance="?textAppearanceTitleMedium"
                         android:visibility="gone"
@@ -253,8 +271,12 @@
 
                     <TextView
                         android:id="@+id/classroom"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:lineSpacingMultiplier="1.5"
+                        android:textAppearance="?textAppearanceBodyMedium"
+                        android:textColor="?android:textColorSecondary"
                         tools:text="09a komputerowa" />
                 </LinearLayout>
             </LinearLayout>
@@ -266,25 +288,42 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:textAppearance="?textAppearanceLabelLarge"
+            android:textColor="?colorPrimary"
+            android:textStyle="bold"
             tools:text="Później:" />
 
         <TextView
             android:id="@+id/nextLessons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:lineSpacingMultiplier="1.5"
+            android:textAppearance="?textAppearanceBodyMedium"
+            android:textColor="?android:textColorSecondary"
             tools:text="9:05 informatyka\n10:00 urządzenia techniki komputerowej\n11:00 projektowanie lokalnych sieci komputerowych\n11:55 zajęcia z wychowawcą\n13:00 język polski\n14:05 język niemiecki" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/bellSync"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/bell_sync_title" />
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/showCounter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/counter_activity" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bellSync"
+                style="@style/AppStyle.M3.Button.CardAction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:singleLine="true"
+                android:text="@string/bell_sync_title" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/showCounter"
+                style="@style/AppStyle.M3.Button.CardAction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:text="@string/counter_activity" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

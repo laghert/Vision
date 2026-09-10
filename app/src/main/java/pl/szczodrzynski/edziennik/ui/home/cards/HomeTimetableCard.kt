@@ -102,9 +102,7 @@ class HomeTimetableCard(
     override fun bind(position: Int, holder: HomeCardAdapter.ViewHolder) {
         holder.root.removeAllViews()
         b = CardHomeTimetableBinding.inflate(LayoutInflater.from(holder.root.context))
-        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            setMargins(8.dp)
-        }
+        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         holder.root += b.root
 
         b.settings.setImageDrawable(CommunityMaterial.Icon.cmd_cog_outline.toDrawable(activity, R.attr.colorOnPrimaryContainer))

@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.plusAssign
-import androidx.core.view.setMargins
+
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.CoroutineScope
@@ -53,9 +53,7 @@ class HomeEventsCard(
     override fun bind(position: Int, holder: HomeCardAdapter.ViewHolder) { launch {
         holder.root.removeAllViews()
         val b = CardHomeEventsBinding.inflate(LayoutInflater.from(holder.root.context))
-        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            setMargins(8.dp)
-        }
+        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         holder.root += b.root
 
         adapter = EventListAdapter(

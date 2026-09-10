@@ -52,9 +52,7 @@ class HomeLuckyNumberCard(
     override fun bind(position: Int, holder: HomeCardAdapter.ViewHolder) { launch {
         holder.root.removeAllViews()
         val b = CardHomeLuckyNumberBinding.inflate(LayoutInflater.from(holder.root.context))
-        b.root.layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
-            setMargins(8.dp)
-        }
+        b.root.layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
         holder.root += b.root
 
         val today = Date.getToday()

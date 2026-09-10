@@ -8,67 +8,88 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    tools:ignore="HardcodedText"
-    tools:layout_margin="8dp">
+    tools:ignore="HardcodedText">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Warning! Do not move this debug card, or you will probably confuse the internal card ID list, thus resulting in a weird and (maybe)non-undoable card order." />
+        android:lineSpacingMultiplier="1.5"
+        android:text="Warning! Do not move this debug card, or you will probably confuse the internal card ID list, thus resulting in a weird and (maybe)non-undoable card order."
+        android:textAppearance="?textAppearanceBodySmall"
+        android:textColor="?android:textColorSecondary" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/librusCaptchaButton"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="LIBRUS® Captcha" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/refreshWidget"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="Refresh all widgets" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:lineSpacingMultiplier="1.4"
         android:text="Network"
-        android:textSize="16sp" />
+        android:textAppearance="?textAppearanceLabelLarge"
+        android:textStyle="bold" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/runChucker"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="Launch Chucker" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:lineSpacingMultiplier="1.4"
         android:text="Messages"
-        android:textSize="16sp" />
+        android:textAppearance="?textAppearanceLabelLarge"
+        android:textStyle="bold" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/migrate71"
-        style="?materialButtonOutlinedStyle"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="Migration 71" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/syncReceivers"
-        style="?materialButtonOutlinedStyle"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="Sync receivers" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:lineSpacingMultiplier="1.4"
         android:text="Sync"
-        android:textSize="16sp" />
+        android:textAppearance="?textAppearanceLabelLarge"
+        android:textStyle="bold" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/pruneWorkButton"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="Prune finished work" />
 </LinearLayout>

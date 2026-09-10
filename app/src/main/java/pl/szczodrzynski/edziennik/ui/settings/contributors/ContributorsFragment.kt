@@ -70,10 +70,10 @@ class ContributorsFragment : PagerFragment<ContributorsFragmentBinding, MainActi
         b.viewPager.isVisible = false
 
         // eggs
-        b.szkolny.onLongClick {
+        b.vision.onLongClick {
             if (b.konami.isVisible) {
                 b.glove.isVisible = true
-                b.szkolny.isInvisible = true
+                b.vision.isInvisible = true
             }
             true
         }

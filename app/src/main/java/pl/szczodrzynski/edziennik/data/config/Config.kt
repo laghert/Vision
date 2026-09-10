@@ -43,82 +43,82 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
     val timetable by lazy { Timetable() }
     val grades by lazy { Grades() }
 
-    var lastProfileId by config<Int>(0)
-    var loginFinished by config<Boolean>(false)
-    var privacyPolicyAccepted by config<Boolean>(false)
-    var update by config<Update?>(null)
-    var updatesChannel by config<String>("release")
+    var lastProfileId: Int by config<Int>(0)
+    var loginFinished: Boolean by config<Boolean>(false)
+    var privacyPolicyAccepted: Boolean by config<Boolean>(false)
+    var update: Update? by config<Update?>(null)
+    var updatesChannel: String by config<String>("release")
 
-    var devMode by config<Boolean?>("debugMode", null)
-    var devModePassword by config<String?>(null)
-    var enableChucker by config<Boolean?>(null)
+    var devMode: Boolean? by config<Boolean?>("debugMode", null)
+    var devModePassword: String? by config<String?>(null)
+    var enableChucker: Boolean? by config<Boolean?>(null)
 
-    var apiAvailabilityCheck by config<Boolean>(true)
-    var apiInvalidCert by config<String?>(null)
-    var apiKeyCustom by config<String?>(null)
-    var appInstalledTime by config<Long>(0L)
-    var appRateSnackbarTime by config<Long>(0L)
-    var lastLogCleanupTime by config<Long>(0L)
-    var appVersion by config<Int>(BuildConfig.VERSION_CODE)
-    var appVersionCore by config<Int>(0)
-    var validation by config<String?>(null, "buildValidation")
+    var apiAvailabilityCheck: Boolean by config<Boolean>(true)
+    var apiInvalidCert: String? by config<String?>(null)
+    var apiKeyCustom: String? by config<String?>(null)
+    var appInstalledTime: Long by config<Long>(0L)
+    var appRateSnackbarTime: Long by config<Long>(0L)
+    var lastLogCleanupTime: Long by config<Long>(0L)
+    var appVersion: Int by config<Int>(BuildConfig.VERSION_CODE)
+    var appVersionCore: Int by config<Int>(0)
+    var validation: String? by config<String?>(null, "buildValidation")
 
-    var archiverEnabled by config<Boolean>(true)
-    var runSync by config<Boolean>(false)
-    var widgetConfigs by config<JsonObject> { JsonObject() }
+    var archiverEnabled: Boolean by config<Boolean>(true)
+    var runSync: Boolean by config<Boolean>(false)
+    var widgetConfigs: JsonObject by config<JsonObject> { JsonObject() }
 
     inner class UI {
-        var themeColor by config<Theme>(Theme.DEFAULT)
-        var themeType by config<Theme.Type>(Theme.Type.M3)
-        var themeMode by config<Theme.Mode>(Theme.Mode.DAYNIGHT)
-        var themeNightMode by config<Boolean?>(null)
-        var themeBlackMode by config<Boolean>(false)
+        var themeColor: Theme by config<Theme>(Theme.DEFAULT)
+        var themeType: Theme.Type by config<Theme.Type>(Theme.Type.M3)
+        var themeMode: Theme.Mode by config<Theme.Mode>(Theme.Mode.DAYNIGHT)
+        var themeNightMode: Boolean? by config<Boolean?>(null)
+        var themeBlackMode: Boolean by config<Boolean>(false)
 
-        var language by config<String?>(null)
+        var language: String? by config<String?>(null)
 
-        var appBackground by config<String?>("appBg", null)
-        var headerBackground by config<String?>("headerBg", null)
+        var appBackground: String? by config<String?>("appBg", null)
+        var headerBackground: String? by config<String?>("headerBg", null)
 
-        var miniMenuVisible by config<Boolean>(false)
-        var miniMenuButtons by config(NavTarget.Companion::getDefaultConfig)
-        var openDrawerOnBackPressed by config<Boolean>(false)
+        var miniMenuVisible: Boolean by config<Boolean>(false)
+        var miniMenuButtons: Set<NavTarget> by config(NavTarget.Companion::getDefaultConfig)
+        var openDrawerOnBackPressed: Boolean by config<Boolean>(false)
 
-        var bottomSheetOpened by config<Boolean>(false)
-        var snowfall by config<Boolean>(false)
-        var eggfall by config<Boolean>(false)
+        var bottomSheetOpened: Boolean by config<Boolean>(false)
+        var snowfall: Boolean by config<Boolean>(false)
+        var eggfall: Boolean by config<Boolean>(false)
     }
 
     inner class Sync {
-        var enabled by config<Boolean>("syncEnabled", true)
-        var interval by config<Int>("syncInterval", 1 * HOUR.toInt())
-        var onlyWifi by config<Boolean>("syncOnlyWifi", false)
+        var enabled: Boolean by config<Boolean>("syncEnabled", true)
+        var interval: Int by config<Int>("syncInterval", 1 * HOUR.toInt())
+        var onlyWifi: Boolean by config<Boolean>("syncOnlyWifi", false)
 
-        var dontShowAppManagerDialog by config<Boolean>(false)
-        var lastAppSync by config<Long>(0L)
-        var notifyAboutUpdates by config<Boolean>(true)
-        var webPushEnabled by config<Boolean>(true)
+        var dontShowAppManagerDialog: Boolean by config<Boolean>(false)
+        var lastAppSync: Long by config<Long>(0L)
+        var notifyAboutUpdates: Boolean by config<Boolean>(true)
+        var webPushEnabled: Boolean by config<Boolean>(true)
 
         // Quiet Hours
-        var quietHoursEnabled by config<Boolean>(false)
-        var quietHoursStart by config<Time?>(null)
-        var quietHoursEnd by config<Time?>(null)
-        var quietDuringLessons by config<Boolean>(false)
+        var quietHoursEnabled: Boolean by config<Boolean>(false)
+        var quietHoursStart: Time? by config<Time?>(null)
+        var quietHoursEnd: Time? by config<Time?>(null)
+        var quietDuringLessons: Boolean by config<Boolean>(false)
 
         // FCM Tokens
-        var tokenApp by config<String?>(null)
-        var tokenMobidziennik by config<String?>(null)
-        var tokenLibrus by config<String?>(null)
-        var tokenVulcan by config<String?>(null)
-        var tokenVulcanHebe by config<String?>(null)
+        var tokenApp: String? by config<String?>(null)
+        var tokenMobidziennik: String? by config<String?>(null)
+        var tokenLibrus: String? by config<String?>(null)
+        var tokenVulcan: String? by config<String?>(null)
+        var tokenVulcanHebe: String? by config<String?>(null)
 
-        var tokenMobidziennikList by config<List<Int>> { listOf() }
-        var tokenLibrusList by config<List<Int>> { listOf() }
-        var tokenVulcanList by config<List<Int>> { listOf() }
-        var tokenVulcanHebeList by config<List<Int>> { listOf() }
+        var tokenMobidziennikList: List<Int> by config<List<Int>> { listOf() }
+        var tokenLibrusList: List<Int> by config<List<Int>> { listOf() }
+        var tokenVulcanList: List<Int> by config<List<Int>> { listOf() }
+        var tokenVulcanHebeList: List<Int> by config<List<Int>> { listOf() }
 
         // Register Availability
-        private var registerAvailabilityMap by config<Map<String, RegisterAvailabilityStatus>>("registerAvailability") { mapOf() }
-        private var registerAvailabilityFlavor by config<String?>(null)
+        private var registerAvailabilityMap: Map<String, RegisterAvailabilityStatus> by config<Map<String, RegisterAvailabilityStatus>>("registerAvailability") { mapOf() }
+        private var registerAvailabilityFlavor: String? by config<String?>(null)
 
         var registerAvailability: Map<String, RegisterAvailabilityStatus>
             get() {
@@ -133,12 +133,12 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
     }
 
     inner class Timetable {
-        var bellSyncMultiplier by config<Int>(0)
-        var bellSyncDiff by config<Time?>(null)
-        var countInSeconds by config<Boolean>(false)
+        var bellSyncMultiplier: Int by config<Int>(0)
+        var bellSyncDiff: Time? by config<Time?>(null)
+        var countInSeconds: Boolean by config<Boolean>(false)
     }
 
     inner class Grades {
-        var orderBy by config<Int>("gradesOrderBy", ORDER_BY_DATE_DESC)
+        var orderBy: Int by config<Int>("gradesOrderBy", ORDER_BY_DATE_DESC)
     }
 }

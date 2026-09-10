@@ -79,7 +79,7 @@
             android:background="?selectableItemBackgroundBorderless"
             android:gravity="center"
             android:textAppearance="?textAppearanceLabelMedium"
-            tools:text="Szkolny.eu v4.7-rc.2\n2021-04-06" />
+            tools:text="Vision v4.7-rc.2\n2021-04-06" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/helpButton"

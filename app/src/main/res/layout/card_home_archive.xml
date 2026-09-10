@@ -8,24 +8,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_weight="1"
-    android:orientation="vertical"
-    android:paddingLeft="8dp"
-    android:paddingTop="8dp">
+    android:orientation="vertical">
 
     <com.mikepenz.iconics.view.IconicsImageView
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginBottom="8dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginBottom="12dp"
         app:iiv_color="?colorOnSecondaryContainer"
         app:iiv_icon="szf-archive"
-        app:iiv_size="24dp"
+        app:iiv_size="28dp"
         tools:background="@sample/settings"
         tools:backgroundTint="?colorOnSecondaryContainer" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:lineSpacingMultiplier="1.4"
         android:text="@string/home_archive_title"
         android:textAppearance="?textAppearanceTitleMedium" />
 
@@ -33,14 +31,16 @@
         android:id="@+id/homeArchiveText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="left"
-        android:gravity="left"
+        android:layout_marginTop="4dp"
+        android:lineSpacingMultiplier="1.5"
         android:text="@string/home_archive_text"
+        android:textAppearance="?textAppearanceBodyMedium"
+        android:textColor="?android:textColorSecondary"
         tools:text="Przeglądasz dane ucznia z roku szkolnego 2019/2020." />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/homeArchiveClose"
-        style="?materialButtonSecondaryStyle"
+        style="@style/AppStyle.M3.Button.CardAction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"

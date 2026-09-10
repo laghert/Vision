@@ -33,6 +33,7 @@ import pl.szczodrzynski.edziennik.ui.main.ErrorSnackbar
 import pl.szczodrzynski.edziennik.ui.login.LoginInfo
 import pl.szczodrzynski.edziennik.utils.models.Date
 import pl.szczodrzynski.edziennik.utils.models.Time
+import timber.log.Timber
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -445,19 +446,13 @@ class SzkolnyApi(val app: App) : CoroutineScope {
     @Throws(Exception::class)
     fun getRealms(registerName: String): List<LoginInfo.Platform> {
         val response = api.platforms(registerName).execute()
-        if (response.isSuccessful && response.body() != null) {
-            return parseResponse(response)
-        }
-        throw SzkolnyApiException(null)
+        return parseResponse(response)
     }
 
     @Throws(Exception::class)
     fun getContributors(): ContributorsResponse {
         val response = api.contributors().execute()
-        if (response.isSuccessful && response.body() != null) {
-            return parseResponse(response)
-        }
-        throw SzkolnyApiException(null)
+        return parseResponse(response)
     }
 
     @Throws(Exception::class)

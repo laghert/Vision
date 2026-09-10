@@ -14,12 +14,14 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import androidx.navigation.NavOptions
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.danimahardhika.cafebar.CafeBar
 import com.danimahardhika.cafebar.CafeBarTheme
 import com.jetradarmobile.snowfall.SnowfallView
@@ -65,13 +67,14 @@ import pl.szczodrzynski.edziennik.data.db.entity.Profile
 import pl.szczodrzynski.edziennik.data.enums.FeatureType
 import pl.szczodrzynski.edziennik.data.enums.NavTarget
 import pl.szczodrzynski.edziennik.data.enums.NavTargetLocation
-import pl.szczodrzynski.edziennik.databinding.ActivitySzkolnyBinding
+import pl.szczodrzynski.edziennik.databinding.ActivityVisionBinding
 import pl.szczodrzynski.edziennik.ext.JsonObject
 import pl.szczodrzynski.edziennik.ext.getAppData
 import pl.szczodrzynski.edziennik.ext.getEnum
 import pl.szczodrzynski.edziennik.ext.getIntOrNull
 import pl.szczodrzynski.edziennik.ext.hasUIFeature
 import pl.szczodrzynski.edziennik.ext.isBeforeYear
+import pl.szczodrzynski.edziennik.ext.onClick
 import pl.szczodrzynski.edziennik.ext.keys
 import pl.szczodrzynski.edziennik.ext.putExtras
 import pl.szczodrzynski.edziennik.ext.resolveAttr
@@ -120,7 +123,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
-    val b: ActivitySzkolnyBinding by lazy { ActivitySzkolnyBinding.inflate(layoutInflater) }
+    val b: ActivityVisionBinding by lazy { ActivityVisionBinding.inflate(layoutInflater) }
     val navView: NavView by lazy { b.navView }
     val drawer: NavDrawer by lazy { navView.drawer }
     val bottomSheet: NavBottomSheet by lazy { navView.bottomSheet }
@@ -254,6 +257,39 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
                 miniDrawerVisibleLandscape = null
                 miniDrawerVisiblePortrait = app.config.ui.miniMenuVisible
+            }
+        }
+
+        b.bottomNavigation.apply {
+            menu.findItem(R.id.nav_home).icon = CommunityMaterial.Icon2.cmd_home_outline.toDrawable(this@MainActivity)
+            menu.findItem(R.id.nav_grades).icon = CommunityMaterial.Icon3.cmd_numeric_5_box_outline.toDrawable(this@MainActivity)
+            menu.findItem(R.id.nav_agenda).icon = CommunityMaterial.Icon.cmd_calendar_outline.toDrawable(this@MainActivity)
+            menu.findItem(R.id.nav_messages).icon = CommunityMaterial.Icon.cmd_email_outline.toDrawable(this@MainActivity)
+            menu.findItem(R.id.nav_more).icon = CommunityMaterial.Icon.cmd_dots_horizontal.toDrawable(this@MainActivity)
+
+            setOnItemSelectedListener { item ->
+                if (navLoading) return@setOnItemSelectedListener true
+                val target = when (item.itemId) {
+                    R.id.nav_home -> NavTarget.HOME
+                    R.id.nav_grades -> NavTarget.GRADES
+                    R.id.nav_agenda -> NavTarget.AGENDA
+                    R.id.nav_messages -> NavTarget.MESSAGES
+                    R.id.nav_more -> {
+                        bottomSheet.removeAllItems()
+                        bottomSheet += NavTarget.TIMETABLE.toBottomSheetItem(this@MainActivity)
+                        bottomSheet += NavTarget.ANNOUNCEMENTS.toBottomSheetItem(this@MainActivity)
+                        bottomSheet += NavTarget.BEHAVIOUR.toBottomSheetItem(this@MainActivity).apply {
+                            titleRes = R.string.menu_remarks
+                        }
+                        bottomSheet.open()
+                        return@setOnItemSelectedListener false
+                    }
+                    else -> return@setOnItemSelectedListener false
+                }
+                if (navTarget != target) {
+                    navigate(navTarget = target, skipBottomNavUpdate = true)
+                }
+                true
             }
         }
 
@@ -886,6 +922,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         navTarget: NavTarget? = null,
         args: Bundle? = null,
         skipBeforeNavigate: Boolean = false,
+        skipBottomNavUpdate: Boolean = false,
     ): Boolean {
         Timber.d("navigate(profileId = ${profile?.id ?: profileId}, target = ${navTarget?.name}, args = $args)")
         if (!(skipBeforeNavigate || navTarget == this.navTarget) && !canNavigate()) {
@@ -901,16 +938,16 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
         val loadNavTarget = navTarget ?: this.navTarget
         if (profile != null && profile.id != App.profileId) {
-            navigateImpl(profile, loadNavTarget, args, profileChanged = true)
+            navigateImpl(profile, loadNavTarget, args, profileChanged = true, skipBottomNavUpdate = skipBottomNavUpdate)
             return true
         }
         if (profileId != null && profileId != App.profileId) {
             app.profileLoad(profileId) {
-                navigateImpl(it, loadNavTarget, args, profileChanged = true)
+                navigateImpl(it, loadNavTarget, args, profileChanged = true, skipBottomNavUpdate = skipBottomNavUpdate)
             }
             return true
         }
-        navigateImpl(App.profile, loadNavTarget, args, profileChanged = false)
+        navigateImpl(App.profile, loadNavTarget, args, profileChanged = false, skipBottomNavUpdate = skipBottomNavUpdate)
         return true
     }
 
@@ -919,6 +956,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         navTarget: NavTarget,
         args: Bundle?,
         profileChanged: Boolean,
+        skipBottomNavUpdate: Boolean = false,
     ) {
         Timber.d("navigateImpl(profileId = ${profile.id}, target = ${navTarget.name}, args = $args)")
 
@@ -968,6 +1006,21 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         drawer.close()
         if (drawer.getSelection() != navTarget.id)
             drawer.setSelection(navTarget.id, fireOnClick = false)
+
+        if (!skipBottomNavUpdate) {
+            val bottomNavId = when (navTarget) {
+                NavTarget.HOME -> R.id.nav_home
+                NavTarget.GRADES -> R.id.nav_grades
+                NavTarget.AGENDA -> R.id.nav_agenda
+                NavTarget.MESSAGES -> R.id.nav_messages
+                NavTarget.TIMETABLE, NavTarget.ANNOUNCEMENTS, NavTarget.BEHAVIOUR -> R.id.nav_more
+                else -> null
+            }
+            if (bottomNavId != null && b.bottomNavigation.selectedItemId != bottomNavId) {
+                b.bottomNavigation.selectedItemId = bottomNavId
+            }
+        }
+
         navView.toolbar.setTitle(navTarget.titleRes ?: navTarget.nameRes)
         navView.bottomBar.fabEnable = false
         navView.bottomBar.fabExtended = false

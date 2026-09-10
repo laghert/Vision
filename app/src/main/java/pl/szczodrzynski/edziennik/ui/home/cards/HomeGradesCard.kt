@@ -17,7 +17,6 @@ import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
 import android.widget.TextView
 import androidx.core.view.plusAssign
-import androidx.core.view.setMargins
 import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.Observer
 import kotlinx.coroutines.CoroutineScope
@@ -62,9 +61,7 @@ class HomeGradesCard(
     override fun bind(position: Int, holder: HomeCardAdapter.ViewHolder) {
         holder.root.removeAllViews()
         b = CardHomeGradesBinding.inflate(LayoutInflater.from(holder.root.context))
-        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            setMargins(8.dp)
-        }
+        b.root.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         holder.root += b.root
 
         val sevenDaysAgo = Date.getToday().stepForward(0, 0, -7)
@@ -106,11 +103,11 @@ class HomeGradesCard(
         b.gradeList.removeAllViews()
 
         val textLayoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
-            setMargins(0, 0, 5.dp, 0)
+            setMargins(0, 0, 8.dp, 0)
         }
 
         val linearLayoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
-            setMargins(2.dp, 0, 2.dp, 5.dp)
+            setMargins(0, 0, 0, 8.dp)
         }
 
         subjects.forEach { subject ->
@@ -123,7 +120,7 @@ class HomeGradesCard(
                             24 + 24 /*left and right offsets*/ +
                             16 /*ellipsize width*/)) / 1.5f
 
-            subject.grades1.onEach { grade ->
+            for (grade in subject.grades1) {
                 val gradeName = GradeView(
                         gradeItem.context,
                         grade,
@@ -144,7 +141,7 @@ class HomeGradesCard(
                     }
 
                     gradeItem.addView(ellipsisText, textLayoutParams)
-                    return@forEach
+                    break
                 } else {
                     gradeItem.addView(gradeName, textLayoutParams)
                 }

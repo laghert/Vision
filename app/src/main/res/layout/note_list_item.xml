@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:paddingVertical="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,10 +28,12 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:ellipsize="end"
+                android:lineSpacingMultiplier="1.5"
                 android:maxLines="4"
                 android:minLines="2"
                 android:textAppearance="?textAppearanceBodyLarge"
-                tools:text="Temat notatki. Ale może też\nbyć treść tutaj." />            <!-- cmd_pencil_outline -->
+                tools:text="Temat notatki. Ale może też\nbyć treść tutaj." />
+            <!-- cmd_pencil_outline -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/editButton"
                 style="?materialIconButtonSecondaryStyle"
@@ -50,9 +52,12 @@
             android:id="@+id/addedBy"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:ellipsize="middle"
+            android:lineSpacingMultiplier="1.5"
             android:singleLine="true"
             android:textAppearance="?textAppearanceBodySmall"
+            android:textColor="?android:textColorSecondary"
             tools:text="Jakub Szczodrzyński • 23 października" />
     </LinearLayout>
 </FrameLayout>

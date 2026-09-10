@@ -16,7 +16,7 @@ def sign(
     iv: bytes,
     commit: bool = False,
 ):
-    SIGNING_PATH = f"{project_dir}/app/src/main/java/pl/szczodrzynski/edziennik/data/api/szkolny/interceptor/Signing.kt"
+    SIGNING_PATH = f"{project_dir}/app/src/main/java/pl/szczodrzynski/edziennik/data/api/vision/interceptor/Signing.kt"
     CPP_PATH = f"{project_dir}/app/src/main/cpp/szkolny-signing.cpp"
 
     with open(SIGNING_PATH, "r") as f:

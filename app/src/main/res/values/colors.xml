@@ -16,4 +16,5 @@
 
     <color name="ic_launcher_v1_background">#2196f3</color>
     <color name="ic_launcher_v5_background">#77B2FD</color>
+    <color name="ic_launcher_vision_background">#FFFFFF</color>
 </resources>

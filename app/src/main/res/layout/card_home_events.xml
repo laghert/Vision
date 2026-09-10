@@ -8,8 +8,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,7 +20,7 @@
             style="?materialIconButtonContainerStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="12dp"
             android:clickable="false"
             app:iiv_color="?colorOnPrimaryContainer"
             app:iiv_icon="cmd-calendar-multiple"
@@ -37,6 +36,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.4"
                 android:text="@string/card_events_header_title"
                 android:textAppearance="?textAppearanceTitleMedium" />
 
@@ -44,8 +44,11 @@
                 android:id="@+id/eventsNoData"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="left"
-                android:text="@string/events_no_nearest" />
+                android:layout_marginTop="4dp"
+                android:lineSpacingMultiplier="1.5"
+                android:text="@string/events_no_nearest"
+                android:textAppearance="?textAppearanceBodyMedium"
+                android:textColor="?android:textColorSecondary" />
         </LinearLayout>
     </LinearLayout>
 
@@ -54,6 +57,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clipToPadding="false"
+        android:layout_marginTop="12dp"
         tools:itemCount="3"
         tools:listitem="@layout/event_list_item"
         tools:visibility="visible" />

@@ -12,7 +12,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingHorizontal="4dp">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/list"
@@ -25,32 +26,34 @@
             android:id="@+id/configHintDivider"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="8dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginVertical="16dp"
             android:background="?colorOutlineVariant" />
 
         <LinearLayout
             android:id="@+id/configHint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="24dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginRight="12dp"
                 android:layout_weight="1"
+                android:lineSpacingMultiplier="1.4"
                 android:text="@string/home_configure_notice"
-                android:textAppearance="?textAppearanceBodySmall" />
+                android:textAppearance="?textAppearanceBodyMedium" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/configureCards"
-                style="?materialButtonSecondaryStyle"
+                style="@style/AppStyle.M3.Button.CardAction"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_marginRight="8dp"
                 android:text="@string/home_configure_add_remove" />
         </LinearLayout>
     </LinearLayout>

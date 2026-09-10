@@ -185,38 +185,59 @@
         <item name="android:textSize">14sp</item>
     </style>
 
+    <!-- M3 text appearances with improved line spacing and weight -->
     <style name="AppStyle.M3.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
     </style>
 
     <style name="AppStyle.M3.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
     </style>
 
     <style name="AppStyle.M3.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:lineSpacingMultiplier">1.3</item>
     </style>
 
-    <style name="AppStyle.M3.TitleLarge" parent="TextAppearance.Material3.TitleLarge" />
+    <style name="AppStyle.M3.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:lineSpacingMultiplier">1.3</item>
+    </style>
 
     <style name="AppStyle.M3.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:lineSpacingMultiplier">1.4</item>
     </style>
 
     <style name="AppStyle.M3.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:lineSpacingMultiplier">1.4</item>
     </style>
 
     <style name="AppStyle.M3.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:lineSpacingMultiplier">1.4</item>
     </style>
 
     <style name="AppStyle.M3.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:lineSpacingMultiplier">1.4</item>
     </style>
 
     <style name="AppStyle.M3.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
         <item name="android:textColor">?colorPrimary</item>
+        <item name="android:lineSpacingMultiplier">1.4</item>
+    </style>
+
+    <!-- Card button style for MD3 -->
+    <style name="AppStyle.M3.Button.CardAction" parent="Widget.Material3.Button.TonalButton">
+        <item name="android:paddingVertical">12dp</item>
+        <item name="android:paddingHorizontal">24dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="cornerRadius">16dp</item>
     </style>
 
 </resources>
