@@ -378,7 +378,7 @@ class MessagesComposeFragment : BaseFragment<MessagesComposeFragmentBinding, Mai
         // span from the text where the caret is
         b.subject.requestFocus()
         b.subject.clearFocus()
-        activity.navView.bottomSheet.hideKeyboard()
+        activity.hideKeyboard()
         b.text.clearFocus()
         b.text.setSelection(0)
 
@@ -389,7 +389,7 @@ class MessagesComposeFragment : BaseFragment<MessagesComposeFragmentBinding, Mai
 
         val body = getMessageBody()
 
-        activity.bottomSheet.hideKeyboard()
+        activity.hideKeyboard()
 
         SimpleDialog<Unit>(activity) {
             title(R.string.messages_compose_confirm_title)

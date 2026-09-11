@@ -35,23 +35,18 @@ internal fun BaseFragment<*, *>.setupMainActivity(activity: MainActivity) {
             }
     }
     if (items.isNotEmpty()) {
-        activity.navView.bottomSheet.prependItems(*items.toTypedArray())
+        activity.bottomSheet.prependItems(*items.toTypedArray())
     }
 
     getFab()?.let { (text, icon) ->
-        activity.navView.bottomBar.apply {
-            fabEnable = true
-            fabExtendedText = app.getString(text)
-            fabIcon = icon
-            setFabOnClickListener {
-                launch {
-                    onFabClick()
-                }
-            }
-        }
+        activity.fabController.configure(
+            text = app.getString(text),
+            icon = icon,
+            onClick = android.view.View.OnClickListener {
+                launch { onFabClick() }
+            },
+        )
     }
-
-    appBars += activity.navView.toolbar
 }
 
 internal fun BaseFragment<*, *>.setupLoginActivity(activity: LoginActivity) {}

@@ -37,10 +37,6 @@ class MiniMenuConfigDialog(
 
     override suspend fun onPositiveClick(): Boolean {
         app.config.ui.miniMenuButtons = getMultiSelection()
-        if (activity is MainActivity) {
-            activity.setDrawerItems()
-            activity.drawer.updateBadges()
-        }
         return DISMISS
     }
 }

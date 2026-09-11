@@ -233,8 +233,8 @@ class TimetableFragment : PagerFragment<FragmentTimetableV2Binding, MainActivity
     }
 
     override suspend fun onPageSelected(position: Int) {
-        activity.navView.bottomBar.fabEnable = items[position] != today
-        if (activity.navView.bottomBar.fabEnable && !fabShown) {
+        activity.fabController.enabled = items[position] != today
+        if (activity.fabController.enabled && !fabShown) {
             activity.gainAttentionFAB()
             fabShown = true
         }

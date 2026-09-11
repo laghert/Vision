@@ -71,8 +71,7 @@ class HomeArchiveCard(
                             this@HomeArchiveCard.profile.name
                         )
                         positive(R.string.ok) {
-                            activity.drawer.profileSelectionOpen()
-                            activity.drawer.open()
+                            activity.navigate(navTarget = NavTarget.PROFILE_MANAGER)
                         }
                     }.show()
                     return@launch

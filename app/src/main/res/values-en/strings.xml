@@ -649,6 +649,8 @@
     <string name="menu_message">Message</string>
     <string name="menu_message_compose">Compose</string>
     <string name="menu_messages">Messages</string>
+    <string name="nav_today">Today</string>
+    <string name="nav_plan">Plan</string>
     <string name="menu_more">More</string>
     <string name="menu_notices">Behaviour</string>
     <string name="menu_remarks">Remarks</string>

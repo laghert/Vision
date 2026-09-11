@@ -11,31 +11,23 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.Gravity
-import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.appcompat.widget.PopupMenu
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.ColorUtils
-import androidx.core.view.isVisible
+import androidx.navigation.NavController
 import androidx.navigation.NavOptions
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.jetradarmobile.snowfall.SnowfallView
+import androidx.navigation.compose.rememberNavController
+import com.google.android.material.snackbar.Snackbar
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.materialdrawer.model.DividerDrawerItem
-import com.mikepenz.materialdrawer.model.ExpandableDrawerItem
-import com.mikepenz.materialdrawer.model.ProfileDrawerItem
-import com.mikepenz.materialdrawer.model.ProfileSettingDrawerItem
-import com.mikepenz.materialdrawer.model.SecondaryDrawerItem
-import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem
-import com.mikepenz.materialdrawer.model.interfaces.descriptionRes
-import com.mikepenz.materialdrawer.model.interfaces.nameRes
-import com.mikepenz.materialdrawer.model.utils.hiddenInMiniDrawer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.greenrobot.eventbus.EventBus
@@ -59,25 +51,18 @@ import pl.szczodrzynski.edziennik.data.db.entity.Message
 import pl.szczodrzynski.edziennik.data.db.entity.Profile
 import pl.szczodrzynski.edziennik.data.enums.FeatureType
 import pl.szczodrzynski.edziennik.data.enums.NavTarget
-import pl.szczodrzynski.edziennik.data.enums.NavTargetLocation
-import pl.szczodrzynski.edziennik.databinding.ActivityVisionBinding
 import pl.szczodrzynski.edziennik.ext.JsonObject
 import pl.szczodrzynski.edziennik.ext.getAppData
 import pl.szczodrzynski.edziennik.ext.getEnum
 import pl.szczodrzynski.edziennik.ext.getIntOrNull
 import pl.szczodrzynski.edziennik.ext.hasUIFeature
 import pl.szczodrzynski.edziennik.ext.isBeforeYear
-import pl.szczodrzynski.edziennik.ext.onClick
-import pl.szczodrzynski.edziennik.ext.keys
 import pl.szczodrzynski.edziennik.ext.putExtras
 import pl.szczodrzynski.edziennik.ext.resolveAttr
-import pl.szczodrzynski.edziennik.ext.resolveString
-import pl.szczodrzynski.edziennik.ext.setTintColor
 import pl.szczodrzynski.edziennik.ext.shouldArchive
 import pl.szczodrzynski.edziennik.ext.takePositive
-import pl.szczodrzynski.edziennik.ext.toDrawable
-import pl.szczodrzynski.edziennik.ext.toImageHolder
 import pl.szczodrzynski.edziennik.ui.base.dialog.SimpleDialog
+import pl.szczodrzynski.edziennik.ui.designsystem.CalmFocusTheme
 import pl.szczodrzynski.edziennik.ui.dialogs.ChangelogDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.ErrorDetailsDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.settings.ProfileConfigDialog
@@ -87,65 +72,79 @@ import pl.szczodrzynski.edziennik.ui.login.LoginActivity
 import pl.szczodrzynski.edziennik.ui.main.ErrorSnackbar
 import pl.szczodrzynski.edziennik.ui.main.MainSnackbar
 import pl.szczodrzynski.edziennik.ui.messages.list.MessagesFragment
+import pl.szczodrzynski.edziennik.ui.navigation.CalmFocusMainShell
+import pl.szczodrzynski.edziennik.ui.navigation.CalmFocusRoute
+import pl.szczodrzynski.edziennik.ui.navigation.MainShellState
+import pl.szczodrzynski.edziennik.ui.navigation.createFragment
 import pl.szczodrzynski.edziennik.ui.timetable.TimetableFragment
-import pl.szczodrzynski.edziennik.utils.BigNightUtil
 import pl.szczodrzynski.edziennik.utils.PausedNavigationData
-import pl.szczodrzynski.edziennik.utils.Utils
 import pl.szczodrzynski.edziennik.utils.appManagerIntentList
 import pl.szczodrzynski.edziennik.utils.models.Date
-import pl.szczodrzynski.navlib.NavView
-import pl.szczodrzynski.navlib.bottomsheet.NavBottomSheet
 import pl.szczodrzynski.navlib.bottomsheet.items.BottomSheetPrimaryItem
 import pl.szczodrzynski.navlib.bottomsheet.items.BottomSheetSeparatorItem
-import pl.szczodrzynski.navlib.drawer.NavDrawer
-import pl.szczodrzynski.navlib.drawer.items.DrawerPrimaryItem
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity(), CoroutineScope {
-    companion object {
-        private const val TAG = "MainActivity"
-    }
-
     private var job = Job()
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
-    val b: ActivityVisionBinding by lazy { ActivityVisionBinding.inflate(layoutInflater) }
-    val navView: NavView by lazy { b.navView }
-    val drawer: NavDrawer by lazy { navView.drawer }
-    val bottomSheet: NavBottomSheet by lazy { navView.bottomSheet }
+    val app: App by lazy { applicationContext as App }
     val mainSnackbar: MainSnackbar by lazy { MainSnackbar(this) }
     val errorSnackbar: ErrorSnackbar by lazy { ErrorSnackbar(this) }
     val requestHandler by lazy { MainActivityRequestHandler(this) }
 
-    val swipeRefreshLayout: SwipeRefreshLayout by lazy { b.swipeRefreshLayout }
+    private lateinit var shellState: MainShellState
+    val bottomSheet get() = shellState.contextActions
+    val fabController get() = shellState.fab
+    val swipeRefreshLayout get() = shellState.refresh
 
     var onBeforeNavigate: (() -> Boolean)? = null
     private var pausedNavigationData: PausedNavigationData? = null
+    private var pausedNavigationResetsStack = false
+    private var pausedNavigateUp = false
+    private var pausedOpenMore = false
 
-    val app: App by lazy {
-        applicationContext as App
-    }
-
-    private val fragmentManager by lazy { supportFragmentManager }
     lateinit var navTarget: NavTarget
         private set
     private var navArguments: Bundle? = null
+    private var navController: NavController? = null
+    private var nextEntryId = System.currentTimeMillis()
+    private var pendingNavigation: PendingNavigation? = null
+    private var eventReceiversRegistered = false
 
-    private val navBackStack = mutableListOf<Pair<NavTarget, Bundle?>>()
-    private var navLoading = true
+    private data class PendingNavigation(
+        val target: NavTarget,
+        val arguments: Bundle?,
+        val replaceCurrent: Boolean,
+        val resetStack: Boolean,
+    )
 
-    /*     ____           _____                _
-          / __ \         / ____|              | |
-         | |  | |_ __   | |     _ __ ___  __ _| |_ ___
-         | |  | | '_ \  | |    | '__/ _ \/ _` | __/ _ \
-         | |__| | | | | | |____| | |  __/ (_| | ||  __/
-          \____/|_| |_|  \_____|_|  \___|\__,_|\__\__*/
+    private val destinationListener = NavController.OnDestinationChangedListener { controller, destination, arguments ->
+        if (!::shellState.isInitialized) return@OnDestinationChangedListener
+        bottomSheet.removeAllContextual()
+        fabController.reset()
+        swipeRefreshLayout.isEnabled = false
+        controller.currentBackStackEntry
+            ?.savedStateHandle
+            ?.get<Bundle>(CalmFocusRoute.SCREEN_ARGUMENTS_KEY)
+            ?.let { navArguments = it }
+        if (destination.route == CalmFocusRoute.SCREEN_PATTERN) {
+            arguments?.getInt(CalmFocusRoute.TARGET_ID_ARGUMENT)?.let(NavTarget::getById)?.let {
+                navTarget = it
+                shellState.target = it
+                updateTaskDescription(it)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Legacy fragments are recreated by the Compose destination host. Prevent FragmentManager
+        // from restoring them before their stable FragmentContainerView exists.
+        savedInstanceState?.remove("android:support:fragments")
         super.onCreate(savedInstanceState)
-
         Timber.i("Activity created")
 
         app.uiManager.applyTheme(this)
@@ -153,232 +152,94 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         app.buildManager.validateBuild(this)
 
         if (App.profileId == 0) {
-            Timber.i("Profile is not loaded")
             onProfileListEmptyEvent(ProfileListEmptyEvent())
             return
         }
 
-        Timber.i("Profile is valid, inflating views")
-
-        setContentView(b.root)
-
-        mainSnackbar.setCoordinator(b.navView.coordinator, b.navView.bottomBar)
-        errorSnackbar.setCoordinator(b.navView.coordinator, b.navView.bottomBar)
-
-        val versionBadge = app.buildManager.versionBadge
-        navView.nightlyText.isVisible = versionBadge != null
-        navView.nightlyText.text = versionBadge
-        if (versionBadge != null) {
-            navView.nightlyText.background.setTintColor(0xa0ff0000.toInt())
+        val launchExtras = Bundle().apply {
+            intent?.extras?.let { putAll(it) }
+            savedInstanceState?.let { putAll(it) }
         }
-
-        navLoading = true
-
-        b.navView.apply {
-            drawer.init(this@MainActivity)
-
-            val statusBarColor = android.R.attr.colorBackground.resolveAttr(context)
-            // fix for setting status bar color to window color, outside of navlib
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                window.statusBarColor = statusBarColor
+        val requestedProfileId = launchExtras.getIntOrNull("profileId").takePositive()
+        if (requestedProfileId != null && requestedProfileId != App.profileId) {
+            app.profileLoad(requestedProfileId) {
+                if (!isFinishing && !isDestroyed) initializeShell(launchExtras)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && ColorUtils.calculateLuminance(statusBarColor) > 0.6
-            ) {
-                @Suppress("deprecation")
-                window.decorView.systemUiVisibility =
-                    window.decorView.systemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            }
+        } else {
+            initializeShell(launchExtras)
+        }
+    }
 
-            toolbar.apply {
-                enable = true
-                enableMenuControls = true
-            }
+    private fun initializeShell(launchExtras: Bundle) {
+        val requestedTarget = launchExtras.getEnum<NavTarget>("fragmentId") ?: NavTarget.HOME
+        navTarget = if (
+            (requestedTarget.devModeOnly && !App.devMode) ||
+            (requestedTarget.featureType != null && !app.profile.hasUIFeature(requestedTarget.featureType)) ||
+            requestedTarget in setOf(
+                NavTarget.PROFILE_ADD,
+                NavTarget.PROFILE_MARK_AS_READ,
+                NavTarget.PROFILE_SYNC_ALL,
+            )
+        ) {
+            NavTarget.HOME
+        } else {
+            requestedTarget
+        }
+        navArguments = launchExtras.navigationArguments()
+        shellState = MainShellState(app.profile).also { it.target = navTarget }
 
-            bottomBar.apply {
-                enable = false
-                enableMenuControls = false
-                fabEnable = false
-                fabExtended = false
-                fabGravity = Gravity.END
-            }
-
-            bottomSheet.apply {
-                removeAllItems()
-                onCloseListener = {
-                    if (!app.config.ui.bottomSheetOpened)
-                        app.config.ui.bottomSheetOpened = true
-                }
-            }
-
-            drawer.apply {
-                setAccountHeaderBackground(app.config.ui.headerBackground)
-
-                drawerProfileListEmptyListener = {
-                    onProfileListEmptyEvent(ProfileListEmptyEvent())
-                }
-                drawerItemSelectedListener = { id, _, item ->
-                    if (item is ExpandableDrawerItem)
-                        false
-                    else
-                        navigate(navTarget = NavTarget.getById(id))
-                }
-                drawerProfileSelectedListener = { id, _, _, _ ->
-                    // why is this negated -_-
-                    !navigate(profileId = id)
-                }
-                drawerProfileLongClickListener = { _, profile, _, view ->
-                    if (view != null && profile is ProfileDrawerItem) {
-                        launch {
-                            val appProfile = withContext(Dispatchers.IO) {
-                                App.db.profileDao().getByIdNow(profile.identifier.toInt())
-                            } ?: return@launch
-                            drawer.close()
-                            ProfileConfigDialog(this@MainActivity, appProfile).show()
-                        }
-                        true
-                    } else {
-                        false
-                    }
-                }
-                drawerProfileImageLongClickListener = drawerProfileLongClickListener
-                drawerProfileSettingClickListener = this@MainActivity.profileSettingClickListener
-
-                miniDrawerVisibleLandscape = null
-                miniDrawerVisiblePortrait = app.config.ui.miniMenuVisible
+        enableEdgeToEdge()
+        setContent {
+            CalmFocusTheme(amoled = app.config.ui.themeBlackMode) {
+                CalmFocusMainShell(
+                    activity = this,
+                    state = shellState,
+                    initialRoute = CalmFocusRoute.Screen(navTarget, 0L),
+                    initialArguments = navArguments,
+                )
             }
         }
 
-        b.bottomNavigation.apply {
-            menu.findItem(R.id.nav_home).icon = CommunityMaterial.Icon2.cmd_home_outline.toDrawable(this@MainActivity)
-            menu.findItem(R.id.nav_grades).icon = CommunityMaterial.Icon3.cmd_numeric_5_box_outline.toDrawable(this@MainActivity)
-            menu.findItem(R.id.nav_agenda).icon = CommunityMaterial.Icon.cmd_calendar_outline.toDrawable(this@MainActivity)
-            menu.findItem(R.id.nav_messages).icon = CommunityMaterial.Icon.cmd_email_outline.toDrawable(this@MainActivity)
-            menu.findItem(R.id.nav_more).icon = CommunityMaterial.Icon.cmd_dots_horizontal.toDrawable(this@MainActivity)
-
-            setOnItemSelectedListener { item ->
-                if (navLoading) return@setOnItemSelectedListener true
-                val target = when (item.itemId) {
-                    R.id.nav_home -> NavTarget.HOME
-                    R.id.nav_grades -> NavTarget.GRADES
-                    R.id.nav_agenda -> NavTarget.AGENDA
-                    R.id.nav_messages -> NavTarget.MESSAGES
-                    R.id.nav_more -> {
-                        bottomSheet.removeAllItems()
-                        bottomSheet += NavTarget.TIMETABLE.toBottomSheetItem(this@MainActivity)
-                        bottomSheet += NavTarget.ANNOUNCEMENTS.toBottomSheetItem(this@MainActivity)
-                        bottomSheet += NavTarget.BEHAVIOUR.toBottomSheetItem(this@MainActivity).apply {
-                            titleRes = R.string.menu_remarks
-                        }
-                        bottomSheet.open()
-                        return@setOnItemSelectedListener false
-                    }
-                    else -> return@setOnItemSelectedListener false
-                }
-                if (navTarget != target) {
-                    navigate(navTarget = target, skipBottomNavUpdate = true)
-                }
-                true
-            }
-        }
-
-        navTarget = NavTarget.HOME
-
-        if (savedInstanceState != null) {
-            intent?.putExtras(savedInstanceState)
-            savedInstanceState.clear()
-        }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = navigateUp()
+        })
 
         app.db.profileDao().all.observe(this) { profiles ->
             val allArchived = profiles.all { it.archived }
-            drawer.setProfileList(profiles.filter {
-                it.id >= 0 && (!it.archived || allArchived)
-            }.toMutableList())
-            //prepend the archived profile if loaded
-            if (app.profile.archived && !allArchived) {
-                drawer.prependProfile(Profile(
-                    id = app.profile.id,
-                    loginStoreId = app.profile.loginStoreId,
-                    loginStoreType = app.profile.loginStoreType,
-                    name = app.profile.name,
-                    subname = "Archiwum - ${app.profile.subname}"
-                ).also {
-                    it.archived = true
-                })
-            }
-            drawer.currentProfile = App.profileId
+            shellState.profiles = profiles.filter { it.id >= 0 && (!it.archived || allArchived) }
+        }
+        app.db.metadataDao().unreadCounts.observe(this) {
+            shellState.unreadCounters = it
         }
 
-        setDrawerItems()
-
-        handleIntent(intent?.extras)
-
-        app.db.metadataDao().unreadCounts.observe(this) { unreadCounters ->
-            drawer.setUnreadCounterList(unreadCounters)
-        }
-
-        swipeRefreshLayout.setOnRefreshListener { launch { syncCurrentFeature() } }
-        swipeRefreshLayout.setColorSchemeResources(
-            R.color.md_blue_500,
-            R.color.md_amber_500,
-            R.color.md_green_500
-        )
-
+        setupContextActions()
+        handleIntent(launchExtras, isInitial = true)
         SyncWorker.scheduleNext(app)
+        setAppBackground()
+        registerEventReceiversIfNeeded()
 
-        // if loaded profile is archived, switch to the up-to-date version of it
         if (app.profile.archived) {
             launch {
-                if (app.profile.archiveId != null) {
-                    val profile = withContext(Dispatchers.IO) {
-                        app.db.profileDao().getNotArchivedOf(app.profile.archiveId!!)
-                    }
-                    if (profile != null)
-                        navigate(profile = profile)
-                    else
-                        navigate(profileId = 0)
-                } else {
-                    navigate(profileId = 0)
+                val profile = app.profile.archiveId?.let { archiveId ->
+                    withContext(Dispatchers.IO) { app.db.profileDao().getNotArchivedOf(archiveId) }
                 }
+                if (profile != null) selectProfile(profile) else navigate(profileId = 0)
             }
         }
 
-        // APP BACKGROUND
-        setAppBackground()
-
-        // IT'S WINTER MY DUDES
-        val today = Date.getToday()
-        if ((today.month / 3 % 4 == 0) && app.config.ui.snowfall) {
-            b.rootFrame.addView(layoutInflater.inflate(R.layout.snowfall, b.rootFrame, false))
-        } else if (app.config.ui.eggfall && BigNightUtil().isDataWielkanocyNearDzisiaj()) {
-            val eggfall = layoutInflater.inflate(
-                R.layout.eggfall,
-                b.rootFrame,
-                false
-            ) as SnowfallView
-            eggfall.setSnowflakeBitmaps(listOf(
-                BitmapFactory.decodeResource(resources, R.drawable.egg1),
-                BitmapFactory.decodeResource(resources, R.drawable.egg2),
-                BitmapFactory.decodeResource(resources, R.drawable.egg3),
-                BitmapFactory.decodeResource(resources, R.drawable.egg4),
-                BitmapFactory.decodeResource(resources, R.drawable.egg5),
-                BitmapFactory.decodeResource(resources, R.drawable.egg6)
-            ))
-            b.rootFrame.addView(eggfall)
-        }
-
-        // WHAT'S NEW DIALOG
         if (app.config.appVersion < BuildConfig.VERSION_CODE) {
             ChangelogDialog(this).show()
-            if (app.config.appVersion < 170) {
-                //Intent intent = new Intent(this, ChangelogIntroActivity.class);
-                //startActivity(intent);
-            } else {
-                app.config.appVersion = BuildConfig.VERSION_CODE
-            }
+            if (app.config.appVersion >= 170) app.config.appVersion = BuildConfig.VERSION_CODE
         }
+    }
 
-        // CONTEXT MENU ITEMS
+    private fun Bundle.navigationArguments() = Bundle(this).apply {
+        remove("profileId")
+        remove("fragmentId")
+        remove("reloadProfileId")
+    }
+
+    private fun setupContextActions() {
         bottomSheet.removeAllItems()
         bottomSheet.appendItems(
             BottomSheetPrimaryItem(false)
@@ -390,54 +251,341 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 },
             BottomSheetSeparatorItem(false),
         )
-        for (target in NavTarget.values()) {
-            if (target.location != NavTargetLocation.BOTTOM_SHEET)
-                continue
-            if (target.devModeOnly && !App.devMode)
-                continue
-            bottomSheet += target.toBottomSheetItem(this)
+        if (App.devMode) {
+            bottomSheet += BottomSheetPrimaryItem(false)
+                .withTitle(NavTarget.DEBUG.nameRes)
+                .withIcon(CommunityMaterial.Icon.cmd_android_debug_bridge)
+                .withOnClickListener { navigate(navTarget = NavTarget.DEBUG) }
+        }
+        bottomSheet.onCloseListener = {
+            if (!app.config.ui.bottomSheetOpened) app.config.ui.bottomSheetOpened = true
         }
     }
 
-    private var profileSettingClickListener = { itemId: Int, _: View? ->
-        when (val item = NavTarget.getById(itemId)) {
-            NavTarget.PROFILE_ADD -> {
-                requestHandler.requestLogin()
-            }
-            NavTarget.PROFILE_SYNC_ALL -> {
-                EdziennikTask.sync().enqueue(this)
-            }
-            NavTarget.PROFILE_MARK_AS_READ -> {
-                launch {
-                    withContext(Dispatchers.Default) {
-                        app.db.profileDao().allNow.forEach { profile ->
-                            if (!profile.getAppData().uiConfig.enableMarkAsReadAnnouncements)
-                                app.db.metadataDao()
-                                    .setAllSeenExceptMessagesAndAnnouncements(profile.id, true)
-                            else
-                                app.db.metadataDao().setAllSeenExceptMessages(profile.id, true)
+    fun availableMoreTargets(): List<NavTarget> = listOf(
+        NavTarget.AGENDA,
+        NavTarget.HOMEWORK,
+        NavTarget.BEHAVIOUR,
+        NavTarget.ATTENDANCE,
+        NavTarget.ANNOUNCEMENTS,
+        NavTarget.NOTES,
+        NavTarget.TEACHERS,
+        NavTarget.NOTIFICATIONS,
+        NavTarget.SETTINGS,
+        NavTarget.LAB,
+        NavTarget.TEMPLATE,
+        NavTarget.DEBUG,
+    ).filter { target ->
+        (!target.devModeOnly || App.devMode) &&
+            (target.featureType == null || app.profile.hasUIFeature(target.featureType))
+    }
+
+    fun selectProfile(profile: Profile) {
+        navigate(profileId = profile.id, navTarget = navTarget)
+    }
+
+    fun handleProfileAction(target: NavTarget) {
+        when (target) {
+            NavTarget.PROFILE_ADD -> requestHandler.requestLogin()
+            NavTarget.PROFILE_SYNC_ALL -> EdziennikTask.sync().enqueue(this)
+            NavTarget.PROFILE_MARK_AS_READ -> launch {
+                withContext(Dispatchers.Default) {
+                    app.db.profileDao().allNow.forEach { profile ->
+                        if (!profile.getAppData().uiConfig.enableMarkAsReadAnnouncements) {
+                            app.db.metadataDao().setAllSeenExceptMessagesAndAnnouncements(profile.id, true)
+                        } else {
+                            app.db.metadataDao().setAllSeenExceptMessages(profile.id, true)
                         }
                     }
-                    Toast.makeText(this@MainActivity,
-                        R.string.main_menu_mark_as_read_success,
-                        Toast.LENGTH_SHORT).show()
                 }
+                Toast.makeText(
+                    this@MainActivity,
+                    R.string.main_menu_mark_as_read_success,
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
-            else -> {
-                navigate(navTarget = item)
-            }
+            else -> navigate(navTarget = target)
         }
-        false
     }
 
-    /*     _____
-          / ____|
-         | (___  _   _ _ __   ___
-          \___ \| | | | '_ \ / __|
-          ____) | |_| | | | | (__
-         |_____/ \__, |_| |_|\___|
-                  __/ |
-                 |__*/
+    fun selectShellTarget(target: NavTarget) {
+        val controller = navController ?: return
+        val currentEntry = controller.currentBackStackEntry
+        if (currentEntry?.destination?.route == CalmFocusRoute.More.value && target == navTarget) {
+            controller.popBackStack()
+            return
+        }
+        val currentTargetId = currentEntry?.arguments?.getInt(CalmFocusRoute.TARGET_ID_ARGUMENT)
+        if (currentEntry?.destination?.route == CalmFocusRoute.SCREEN_PATTERN && currentTargetId == target.id) {
+            return
+        }
+        navigate(navTarget = target, resetBackStack = true)
+    }
+
+    fun selectMoreTarget(target: NavTarget) {
+        navigate(navTarget = target)
+    }
+
+    fun openMore(skipBeforeNavigate: Boolean = false) {
+        if (!skipBeforeNavigate && !canNavigate()) {
+            pausedOpenMore = true
+            return
+        }
+        pausedOpenMore = false
+        bottomSheet.close()
+        navController?.navigate(CalmFocusRoute.More.value) {
+            launchSingleTop = true
+        }
+    }
+
+    internal fun bindNavController(controller: NavController) {
+        navController?.removeOnDestinationChangedListener(destinationListener)
+        navController = controller
+        controller.addOnDestinationChangedListener(destinationListener)
+        pendingNavigation?.let { pending ->
+            pendingNavigation = null
+            navigateController(
+                pending.target,
+                pending.arguments,
+                pending.replaceCurrent,
+                pending.resetStack,
+            )
+        }
+    }
+
+    internal fun unbindNavController(controller: NavController) {
+        if (navController === controller) {
+            controller.removeOnDestinationChangedListener(destinationListener)
+            navController = null
+        }
+    }
+
+    internal fun mountFragment(
+        target: NavTarget,
+        arguments: Bundle?,
+        containerId: Int,
+        tag: String,
+    ) {
+        val existing = supportFragmentManager.findFragmentByTag(tag)
+        if (existing != null && existing.id == containerId) return
+        val fragment = target.createFragment(arguments) ?: return
+        supportFragmentManager.beginTransaction().apply {
+            existing?.let(::remove)
+            replace(containerId, fragment, tag)
+        }.commitAllowingStateLoss()
+    }
+
+    internal fun unmountFragment(tag: String) {
+        supportFragmentManager.findFragmentByTag(tag)?.let { fragment ->
+            supportFragmentManager.beginTransaction()
+                .remove(fragment)
+                .commitAllowingStateLoss()
+        }
+    }
+
+    internal fun bindSnackbarHost(coordinator: CoordinatorLayout) {
+        mainSnackbar.setCoordinator(coordinator)
+        errorSnackbar.setCoordinator(coordinator)
+    }
+
+    internal fun refreshCurrentFeature() {
+        launch { syncCurrentFeature() }
+    }
+
+    private fun canNavigate(): Boolean = onBeforeNavigate?.invoke() != false
+
+    fun resumePausedNavigation(): Boolean {
+        if (pausedNavigateUp) {
+            pausedNavigateUp = false
+            navigateUp(skipBeforeNavigate = true)
+            return true
+        }
+        if (pausedOpenMore) {
+            pausedOpenMore = false
+            openMore(skipBeforeNavigate = true)
+            return true
+        }
+        val data = pausedNavigationData ?: return false
+        val resetBackStack = pausedNavigationResetsStack
+        pausedNavigationData = null
+        pausedNavigationResetsStack = false
+        return navigate(
+            profileId = data.profileId,
+            navTarget = data.navTarget,
+            args = data.args,
+            skipBeforeNavigate = true,
+            resetBackStack = resetBackStack,
+        )
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun navigate(
+        profileId: Int? = null,
+        profile: Profile? = null,
+        navTarget: NavTarget? = null,
+        args: Bundle? = null,
+        skipBeforeNavigate: Boolean = false,
+        skipBottomNavUpdate: Boolean = false,
+        resetBackStack: Boolean = false,
+    ): Boolean {
+        val target = navTarget ?: this.navTarget
+        val requestedProfileId = profile?.id ?: profileId
+        val profileChanging = requestedProfileId != null && requestedProfileId != App.profileId
+        Timber.d("navigate(profileId = $requestedProfileId, target = ${target.name}, args = $args)")
+        if (!skipBeforeNavigate && (profileChanging || target != this.navTarget) && !canNavigate()) {
+            bottomSheet.close()
+            pausedNavigationData = PausedNavigationData(requestedProfileId, target, args)
+            pausedNavigationResetsStack = resetBackStack || profileChanging
+            return false
+        }
+        pausedNavigateUp = false
+        pausedOpenMore = false
+
+        when {
+            profile != null && profile.id != App.profileId -> {
+                navigateImpl(
+                    profile,
+                    target,
+                    args,
+                    profileChanged = true,
+                    resetBackStack = true,
+                )
+            }
+            profileId != null && profileId != App.profileId -> {
+                app.profileLoad(profileId) {
+                    navigateImpl(
+                        it,
+                        target,
+                        args,
+                        profileChanged = true,
+                        resetBackStack = true,
+                    )
+                }
+            }
+            else -> navigateImpl(
+                App.profile,
+                target,
+                args,
+                profileChanged = false,
+                resetBackStack = resetBackStack,
+            )
+        }
+        return true
+    }
+
+    private fun navigateImpl(
+        profile: Profile,
+        target: NavTarget,
+        args: Bundle?,
+        profileChanged: Boolean,
+        resetBackStack: Boolean,
+    ) {
+        if (target.featureType != null && !profile.hasUIFeature(target.featureType)) {
+            navigateImpl(profile, NavTarget.HOME, args, profileChanged, resetBackStack)
+            return
+        }
+        if (target == NavTarget.PROFILE_ADD ||
+            target == NavTarget.PROFILE_MARK_AS_READ ||
+            target == NavTarget.PROFILE_SYNC_ALL
+        ) {
+            handleProfileAction(target)
+            return
+        }
+
+        if (profileChanged) {
+            if (App.profileId != profile.id) app.profileLoad(profile)
+            MessagesFragment.pageSelection = -1
+            shellState.profile = app.profile
+        }
+
+        val currentEntry = navController?.currentBackStackEntry
+        val replacingCurrentTarget = currentEntry?.destination?.route == CalmFocusRoute.More.value ||
+            (currentEntry?.destination?.route == CalmFocusRoute.SCREEN_PATTERN &&
+                currentEntry.arguments?.getInt(CalmFocusRoute.TARGET_ID_ARGUMENT) == target.id)
+        swipeRefreshLayout.isEnabled = false
+        bottomSheet.close()
+        bottomSheet.removeAllContextual()
+        fabController.reset()
+        navTarget = target
+        navArguments = args ?: Bundle()
+        shellState.target = target
+        shellState.subtitle = null
+        navigateController(
+            target,
+            navArguments,
+            replaceCurrent = replacingCurrentTarget,
+            resetStack = resetBackStack || profileChanged,
+        )
+    }
+
+    private fun navigateController(
+        target: NavTarget,
+        args: Bundle?,
+        replaceCurrent: Boolean,
+        resetStack: Boolean,
+    ) {
+        val controller = navController
+        if (controller == null) {
+            pendingNavigation = PendingNavigation(target, args, replaceCurrent, resetStack)
+            return
+        }
+        val entryId = nextEntryId++
+        controller.navigate(CalmFocusRoute.Screen(target, entryId).value) {
+            when {
+                resetStack -> popUpTo(controller.graph.id) {
+                    inclusive = false
+                }
+                replaceCurrent -> popUpTo(controller.currentDestination?.route.orEmpty()) {
+                    inclusive = true
+                }
+            }
+        }
+        controller.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(CalmFocusRoute.SCREEN_ARGUMENTS_KEY, args ?: Bundle())
+        navArguments = args ?: Bundle()
+    }
+
+    fun reloadTarget() = navigate(navTarget = navTarget, args = navArguments)
+
+    fun navigateUp(skipBeforeNavigate: Boolean = false) {
+        if (!skipBeforeNavigate && !canNavigate()) {
+            pausedNavigateUp = true
+            return
+        }
+        pausedNavigateUp = false
+        bottomSheet.close()
+        if (navController?.popBackStack() == true) return
+        navTarget.popTo?.let {
+            navigate(navTarget = it, skipBeforeNavigate = true)
+            return
+        }
+        finishAfterTransition()
+    }
+
+    fun gainAttention() = Unit
+
+    fun gainAttentionFAB() {
+        fabController.extended = false
+        window.decorView.postDelayed({ fabController.extended = true }, 1000)
+        window.decorView.postDelayed({ fabController.extended = false }, 3000)
+    }
+
+    fun hideKeyboard() {
+        val manager = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        manager?.hideSoftInputFromWindow(currentFocus?.windowToken ?: window.decorView.windowToken, 0)
+    }
+
+    fun setAppBackground() {
+        try {
+            window.decorView.background = app.config.ui.appBackground?.let {
+                if (it.endsWith(".gif")) GifDrawable(it) else BitmapDrawable.createFromPath(it)
+            }
+        } catch (e: Exception) {
+            Timber.e(e)
+        }
+    }
+
     private suspend fun syncCurrentFeature() {
         if (app.profile.archived) {
             SimpleDialog<Unit>(this) {
@@ -445,7 +593,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 message(
                     R.string.profile_archived_text,
                     app.profile.studentSchoolYearStart,
-                    app.profile.studentSchoolYearStart + 1
+                    app.profile.studentSchoolYearStart + 1,
                 )
                 positive(R.string.ok)
             }.show()
@@ -455,20 +603,14 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         if (app.profile.shouldArchive()) {
             SimpleDialog<Unit>(this) {
                 title(R.string.profile_archiving_title)
-                message(
-                    R.string.profile_archiving_format,
-                    app.profile.dateYearEnd.formattedString
-                )
+                message(R.string.profile_archiving_format, app.profile.dateYearEnd.formattedString)
                 positive(R.string.ok)
             }.show()
         }
         if (app.profile.isBeforeYear()) {
             SimpleDialog<Unit>(this) {
                 title(R.string.profile_year_not_started_title)
-                message(
-                    R.string.profile_year_not_started_format,
-                    app.profile.dateSemester1Start.formattedString
-                )
+                message(R.string.profile_year_not_started_format, app.profile.dateSemester1Start.formattedString)
                 positive(R.string.ok)
             }.show()
             swipeRefreshLayout.isRefreshing = false
@@ -478,31 +620,89 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         swipeRefreshLayout.isRefreshing = true
         Toast.makeText(this, fragmentToSyncName(navTarget), Toast.LENGTH_SHORT).show()
         val featureType = when (navTarget) {
-            NavTarget.MESSAGES -> when (MessagesFragment.pageSelection) {
-                Message.TYPE_SENT -> FeatureType.MESSAGES_SENT
-                else -> FeatureType.MESSAGES_INBOX
+            NavTarget.MESSAGES -> if (MessagesFragment.pageSelection == Message.TYPE_SENT) {
+                FeatureType.MESSAGES_SENT
+            } else {
+                FeatureType.MESSAGES_INBOX
             }
             else -> navTarget.featureType
         }
         val arguments = when (navTarget) {
-            NavTarget.TIMETABLE -> JsonObject("weekStart" to TimetableFragment.pageSelection?.weekStart?.stringY_m_d)
+            NavTarget.TIMETABLE -> JsonObject(
+                "weekStart" to TimetableFragment.pageSelection?.weekStart?.stringY_m_d,
+            )
             else -> null
         }
         EdziennikTask.syncProfile(
             App.profileId,
-            featureType?.let { setOf(it) },
-            arguments = arguments
+            featureType?.let(::setOf),
+            arguments = arguments,
         ).enqueue(this)
+    }
+
+    private fun fragmentToSyncName(target: NavTarget): Int = when (target) {
+        NavTarget.TIMETABLE -> R.string.sync_feature_timetable
+        NavTarget.AGENDA -> R.string.sync_feature_agenda
+        NavTarget.GRADES -> R.string.sync_feature_grades
+        NavTarget.HOMEWORK -> R.string.sync_feature_homework
+        NavTarget.BEHAVIOUR -> R.string.sync_feature_notices
+        NavTarget.ATTENDANCE -> R.string.sync_feature_attendance
+        NavTarget.MESSAGES -> if (MessagesFragment.pageSelection == Message.TYPE_SENT) {
+            R.string.sync_feature_messages_outbox
+        } else {
+            R.string.sync_feature_messages_inbox
+        }
+        NavTarget.ANNOUNCEMENTS -> R.string.sync_feature_announcements
+        else -> R.string.sync_feature_syncing_all
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onApiTaskStartedEvent(event: ApiTaskStartedEvent) {
         swipeRefreshLayout.isRefreshing = true
         if (event.profileId == App.profileId) {
-            navView.toolbar.apply {
-                subtitle = getString(R.string.toolbar_subtitle_syncing)
+            shellState.subtitle = getString(R.string.toolbar_subtitle_syncing)
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onApiTaskProgressEvent(event: ApiTaskProgressEvent) {
+        if (event.profileId == App.profileId) {
+            shellState.subtitle = if (event.progress < 0f) {
+                event.progressText.orEmpty()
+            } else {
+                getString(
+                    R.string.toolbar_subtitle_syncing_format,
+                    event.progress.roundToInt(),
+                    event.progressText.orEmpty(),
+                )
             }
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    fun onApiTaskFinishedEvent(event: ApiTaskFinishedEvent) {
+        EventBus.getDefault().removeStickyEvent(event)
+        if (event.profileId == App.profileId) shellState.subtitle = null
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    fun onApiTaskAllFinishedEvent(event: ApiTaskAllFinishedEvent) {
+        EventBus.getDefault().removeStickyEvent(event)
+        swipeRefreshLayout.isRefreshing = false
+        shellState.subtitle = null
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    fun onApiTaskErrorEvent(event: ApiTaskErrorEvent) {
+        EventBus.getDefault().removeStickyEvent(event)
+        if (event.error.errorCode == ERROR_VULCAN_API_DEPRECATED &&
+            event.error.profileId == App.profileId
+        ) {
+            ErrorDetailsDialog(this, listOf(event.error)).show()
+        }
+        shellState.subtitle = null
+        mainSnackbar.dismiss()
+        errorSnackbar.addError(event.error).show()
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -512,78 +712,28 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         finish()
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onApiTaskProgressEvent(event: ApiTaskProgressEvent) {
-        if (event.profileId == App.profileId) {
-            navView.toolbar.apply {
-                subtitle = if (event.progress < 0f)
-                    event.progressText ?: ""
-                else
-                    getString(
-                        R.string.toolbar_subtitle_syncing_format,
-                        event.progress.roundToInt(),
-                        event.progressText ?: "",
-                    )
-
-            }
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
-    fun onApiTaskFinishedEvent(event: ApiTaskFinishedEvent) {
-        EventBus.getDefault().removeStickyEvent(event)
-        if (event.profileId == App.profileId) {
-            navView.toolbar.apply {
-                subtitle = "Gotowe"
-            }
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
-    fun onApiTaskAllFinishedEvent(event: ApiTaskAllFinishedEvent) {
-        EventBus.getDefault().removeStickyEvent(event)
-        swipeRefreshLayout.isRefreshing = false
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
-    fun onApiTaskErrorEvent(event: ApiTaskErrorEvent) {
-        EventBus.getDefault().removeStickyEvent(event)
-        if (event.error.errorCode == ERROR_VULCAN_API_DEPRECATED) {
-            if (event.error.profileId != App.profileId)
-                return
-            ErrorDetailsDialog(this, listOf(event.error)).show()
-        }
-        navView.toolbar.apply {
-            subtitle = "Gotowe"
-        }
-        mainSnackbar.dismiss()
-        errorSnackbar.addError(event.error).show()
-    }
-
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     fun onAppManagerDetectedEvent(event: AppManagerDetectedEvent) {
         EventBus.getDefault().removeStickyEvent(event)
-        if (app.config.sync.dontShowAppManagerDialog)
-            return
+        if (app.config.sync.dontShowAppManagerDialog) return
         SimpleDialog<Unit>(this) {
             title(R.string.app_manager_dialog_title)
             message(R.string.app_manager_dialog_text)
             positive(R.string.ok) {
                 try {
-                    for (intent in appManagerIntentList) {
-                        if (packageManager.resolveActivity(intent,
-                                PackageManager.MATCH_DEFAULT_ONLY) != null
-                        ) {
-                            startActivity(intent)
-                        }
-                    }
+                    appManagerIntentList
+                        .filter { packageManager.resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null }
+                        .forEach(::startActivity)
                 } catch (e: Exception) {
                     try {
                         startActivity(Intent(Settings.ACTION_SETTINGS))
-                    } catch (e: Exception) {
-                        Timber.e(e)
-                        Toast.makeText(this@MainActivity, R.string.app_manager_open_failed, Toast.LENGTH_SHORT)
-                            .show()
+                    } catch (inner: Exception) {
+                        Timber.e(inner)
+                        Toast.makeText(
+                            this@MainActivity,
+                            R.string.app_manager_open_failed,
+                            Toast.LENGTH_SHORT,
+                        ).show()
                     }
                 }
             }
@@ -599,72 +749,43 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         app.userActionManager.execute(this, event, UserActionManager.UserActionCallback())
     }
 
-    private fun fragmentToSyncName(navTarget: NavTarget): Int {
-        return when (navTarget) {
-            NavTarget.TIMETABLE -> R.string.sync_feature_timetable
-            NavTarget.AGENDA -> R.string.sync_feature_agenda
-            NavTarget.GRADES -> R.string.sync_feature_grades
-            NavTarget.HOMEWORK -> R.string.sync_feature_homework
-            NavTarget.BEHAVIOUR -> R.string.sync_feature_notices
-            NavTarget.ATTENDANCE -> R.string.sync_feature_attendance
-            NavTarget.MESSAGES -> when (MessagesFragment.pageSelection) {
-                Message.TYPE_SENT -> R.string.sync_feature_messages_outbox
-                else -> R.string.sync_feature_messages_inbox
-            }
-            NavTarget.ANNOUNCEMENTS -> R.string.sync_feature_announcements
-            else -> R.string.sync_feature_syncing_all
-        }
-    }
-
-    /*    _____       _             _
-         |_   _|     | |           | |
-           | |  _ __ | |_ ___ _ __ | |_ ___
-           | | | '_ \| __/ _ \ '_ \| __/ __|
-          _| |_| | | | ||  __/ | | | |_\__ \
-         |_____|_| |_|\__\___|_| |_|\__|__*/
-    private val intentReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    private val intentReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             handleIntent(intent?.extras)
         }
     }
 
-    fun handleIntent(extras: Bundle?) {
+    fun handleIntent(extras: Bundle?) = handleIntent(extras, isInitial = false)
+
+    private fun handleIntent(extras: Bundle?, isInitial: Boolean) {
         Timber.d("handleIntent() ${extras?.keySet()}")
-
         val intentProfileId = extras.getIntOrNull("profileId").takePositive()
-        var intentNavTarget = extras.getEnum<NavTarget>("fragmentId")
+        val intentTarget = extras.getEnum<NavTarget>("fragmentId")
 
-        if (extras?.containsKey("action") == true) {
-            val handled = when (extras.getString("action")) {
-                "userActionRequired" -> {
-                    val event = UserActionRequiredEvent(
+        val handledAction = when (extras?.getString("action")) {
+            "userActionRequired" -> {
+                val type = extras.getEnum<UserActionRequiredEvent.Type>("type") ?: return
+                val params = extras.getBundle("params") ?: return
+                app.userActionManager.execute(
+                    this,
+                    UserActionRequiredEvent(
                         profileId = extras.getInt("profileId"),
-                        type = extras.getEnum<UserActionRequiredEvent.Type>("type") ?: return,
-                        params = extras.getBundle("params") ?: return,
+                        type = type,
+                        params = params,
                         errorText = 0,
-                    )
-                    app.userActionManager.execute(this,
-                        event,
-                        UserActionManager.UserActionCallback())
-                    true
-                }
-                "createManualEvent" -> {
-                    val date = extras.getString("eventDate")
-                        ?.let { Date.fromY_m_d(it) }
-                        ?: Date.getToday()
-                    EventManualDialog(
-                        this,
-                        App.profileId,
-                        defaultDate = date
-                    ).show()
-                    true
-                }
-                else -> false
+                    ),
+                    UserActionManager.UserActionCallback(),
+                )
+                true
             }
-            if (handled && !navLoading) {
-                return
+            "createManualEvent" -> {
+                val date = extras.getString("eventDate")?.let(Date::fromY_m_d) ?: Date.getToday()
+                EventManualDialog(this, App.profileId, defaultDate = date).show()
+                true
             }
+            else -> false
         }
+        if (handledAction && !isInitial) return
 
         if (extras?.containsKey("reloadProfileId") == true) {
             val reloadProfileId = extras.getIntOrNull("reloadProfileId").takePositive()
@@ -674,101 +795,77 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             }
         }
 
-        extras?.remove("profileId")
-        extras?.remove("fragmentId")
-        extras?.remove("reloadProfileId")
-
-        /*if (intentTargetId == -1 && navController.currentDestination?.id == R.id.loadingFragment) {
-            intentTargetId = navTarget.id
-        }*/
-
-        if (navLoading)
-            b.fragment.removeAllViews()
-
+        if (isInitial && (intentProfileId == null || intentProfileId == App.profileId)) return
+        val args = extras?.navigationArguments()
         when {
             app.profile.id == 0 -> navigate(
                 profileId = intentProfileId ?: app.config.lastProfileId,
-                navTarget = intentNavTarget,
-                args = extras,
+                navTarget = intentTarget ?: navTarget,
+                args = args,
             )
             intentProfileId != null -> navigate(
                 profileId = intentProfileId,
-                navTarget = intentNavTarget,
-                args = extras,
+                navTarget = intentTarget ?: navTarget,
+                args = args,
             )
-            intentNavTarget != null -> navigate(
-                navTarget = intentNavTarget,
-                args = extras,
-            )
-            navLoading -> navigate()
-            else -> drawer.currentProfile = app.profile.id
+            intentTarget != null -> navigate(navTarget = intentTarget, args = args)
         }
-        navLoading = false
     }
 
-    override fun recreate() {
-        recreate(navTarget)
-    }
+    override fun recreate() = recreate(navTarget)
 
-    fun recreate(navTarget: NavTarget) {
-        recreate(navTarget, null)
-    }
+    fun recreate(navTarget: NavTarget) = recreate(navTarget, null)
 
     fun recreate(navTarget: NavTarget? = null, arguments: Bundle? = null) {
-        val intent = Intent(this, MainActivity::class.java)
-        if (arguments != null)
-            intent.putExtras(arguments)
-        if (navTarget != null) {
-            intent.putExtras("fragmentId" to navTarget)
-        }
+        val restartIntent = Intent(this, MainActivity::class.java)
+        arguments?.let(restartIntent::putExtras)
+        navTarget?.let { restartIntent.putExtras("fragmentId" to it) }
         finish()
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
-        startActivity(intent)
+        startActivity(restartIntent)
     }
 
-    override fun onStart() {
-        Timber.i("Activity started")
-        super.onStart()
-    }
-
-    override fun onStop() {
-        Timber.i("Activity stopped")
-        super.onStop()
-    }
-
-    override fun onResume() {
-        Timber.i("Activity resumed")
-        val filter = IntentFilter()
-        filter.addAction(Intent.ACTION_MAIN)
+    private fun registerEventReceiversIfNeeded() {
+        if (!::shellState.isInitialized || eventReceiversRegistered) return
         ContextCompat.registerReceiver(
             this,
             intentReceiver,
-            filter,
+            IntentFilter(Intent.ACTION_MAIN),
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
         EventBus.getDefault().register(this)
+        eventReceiversRegistered = true
+    }
+
+    override fun onResume() {
         super.onResume()
+        registerEventReceiversIfNeeded()
     }
 
     override fun onPause() {
-        Timber.i("Activity paused")
-        unregisterReceiver(intentReceiver)
-        EventBus.getDefault().unregister(this)
+        if (eventReceiversRegistered) {
+            unregisterReceiver(intentReceiver)
+            EventBus.getDefault().unregister(this)
+            eventReceiversRegistered = false
+        }
         super.onPause()
     }
 
     override fun onDestroy() {
-        Timber.i("Activity destroyed")
+        job.cancel()
         super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        if (!::navTarget.isInitialized) return
         outState.putExtras("fragmentId" to navTarget)
+        navArguments?.let(outState::putAll)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntent(intent.extras)
     }
 
@@ -778,396 +875,22 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         requestHandler.handleResult(requestCode, resultCode, data)
     }
 
-    /*    _                     _                  _   _               _
-         | |                   | |                | | | |             | |
-         | |     ___   __ _  __| |  _ __ ___   ___| |_| |__   ___   __| |___
-         | |    / _ \ / _` |/ _` | | '_ ` _ \ / _ \ __| '_ \ / _ \ / _` / __|
-         | |___| (_) | (_| | (_| | | | | | | |  __/ |_| | | | (_) | (_| \__ \
-         |______\___/ \__,_|\__,_| |_| |_| |_|\___|\__|_| |_|\___/ \__,_|__*/
-    val navOptions = NavOptions.Builder()
-        .setEnterAnim(R.anim.task_open_enter) // new fragment enter
-        .setExitAnim(R.anim.task_open_exit) // old fragment exit
-        .setPopEnterAnim(R.anim.task_close_enter) // old fragment enter back
-        .setPopExitAnim(R.anim.task_close_exit) // new fragment exit
-        .build()
-
-    private fun canNavigate(): Boolean = onBeforeNavigate?.invoke() != false
-
-    fun resumePausedNavigation(): Boolean {
-        val data = pausedNavigationData ?: return false
-        navigate(
-            profileId = data.profileId,
-            navTarget = data.navTarget,
-            args = data.args,
-            skipBeforeNavigate = true,
+    private fun updateTaskDescription(target: NavTarget) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
+        val bitmap = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher_v5)
+        @Suppress("deprecation")
+        setTaskDescription(
+            ActivityManager.TaskDescription(
+                if (target == NavTarget.HOME) getString(R.string.app_name)
+                else getString(R.string.app_task_format, getString(target.nameRes)),
+                bitmap,
+                R.attr.colorPrimary.resolveAttr(this),
+            ),
         )
-        pausedNavigationData = null
-        return true
-    }
-
-    fun navigate(
-        profileId: Int? = null,
-        profile: Profile? = null,
-        navTarget: NavTarget? = null,
-        args: Bundle? = null,
-        skipBeforeNavigate: Boolean = false,
-        skipBottomNavUpdate: Boolean = false,
-    ): Boolean {
-        Timber.d("navigate(profileId = ${profile?.id ?: profileId}, target = ${navTarget?.name}, args = $args)")
-        if (!(skipBeforeNavigate || navTarget == this.navTarget) && !canNavigate()) {
-            bottomSheet.close()
-            drawer.close()
-            // restore the previous profile if changing it with the drawer
-            // well, it still does not change the toolbar profile image,
-            // but that's now NavView's problem, not mine.
-            drawer.currentProfile = App.profile.id
-            pausedNavigationData = PausedNavigationData(profileId, navTarget, args)
-            return false
-        }
-
-        val loadNavTarget = navTarget ?: this.navTarget
-        if (profile != null && profile.id != App.profileId) {
-            navigateImpl(profile, loadNavTarget, args, profileChanged = true, skipBottomNavUpdate = skipBottomNavUpdate)
-            return true
-        }
-        if (profileId != null && profileId != App.profileId) {
-            app.profileLoad(profileId) {
-                navigateImpl(it, loadNavTarget, args, profileChanged = true, skipBottomNavUpdate = skipBottomNavUpdate)
-            }
-            return true
-        }
-        navigateImpl(App.profile, loadNavTarget, args, profileChanged = false, skipBottomNavUpdate = skipBottomNavUpdate)
-        return true
-    }
-
-    private fun navigateImpl(
-        profile: Profile,
-        navTarget: NavTarget,
-        args: Bundle?,
-        profileChanged: Boolean,
-        skipBottomNavUpdate: Boolean = false,
-    ) {
-        Timber.d("navigateImpl(profileId = ${profile.id}, target = ${navTarget.name}, args = $args)")
-
-        if (navTarget.featureType != null && !profile.hasUIFeature(navTarget.featureType)) {
-            navigateImpl(profile, NavTarget.HOME, args, profileChanged)
-            return
-        }
-
-        if (profileChanged) {
-            if (App.profileId != profile.id)
-                app.profileLoad(profile)
-            MessagesFragment.pageSelection = -1
-            // set new drawer items for this profile
-            setDrawerItems()
-
-            val previousArchivedId = if (app.profile.archived) app.profile.id else null
-            if (previousArchivedId != null) {
-                // prevents accidentally removing the first item if the archived profile is not shown
-                drawer.removeProfileById(previousArchivedId)
-            }
-            if (profile.archived) {
-                // add the same profile but with a different name
-                // (other fields are not needed by the drawer)
-                drawer.prependProfile(Profile(
-                    id = profile.id,
-                    loginStoreId = profile.loginStoreId,
-                    loginStoreType = profile.loginStoreType,
-                    name = profile.name,
-                    subname = "Archiwum - ${profile.subname}"
-                ).also {
-                    it.archived = true
-                })
-            }
-
-            // the drawer profile is updated automatically when the drawer item is clicked
-            // update it manually when switching profiles from other source
-            //if (drawer.currentProfile != app.profile.id)
-            drawer.currentProfile = App.profileId
-        }
-
-        val arguments = args
-            ?: navBackStack.firstOrNull { it.first == navTarget }?.second
-            ?: Bundle()
-        swipeRefreshLayout.isEnabled = false
-        bottomSheet.close()
-        bottomSheet.removeAllContextual()
-        drawer.close()
-        if (drawer.getSelection() != navTarget.id)
-            drawer.setSelection(navTarget.id, fireOnClick = false)
-
-        if (!skipBottomNavUpdate) {
-            val bottomNavId = when (navTarget) {
-                NavTarget.HOME -> R.id.nav_home
-                NavTarget.GRADES -> R.id.nav_grades
-                NavTarget.AGENDA -> R.id.nav_agenda
-                NavTarget.MESSAGES -> R.id.nav_messages
-                NavTarget.TIMETABLE, NavTarget.ANNOUNCEMENTS, NavTarget.BEHAVIOUR -> R.id.nav_more
-                else -> null
-            }
-            if (bottomNavId != null && b.bottomNavigation.selectedItemId != bottomNavId) {
-                b.bottomNavigation.selectedItemId = bottomNavId
-            }
-        }
-
-        navView.toolbar.setTitle(navTarget.titleRes ?: navTarget.nameRes)
-        navView.bottomBar.fabEnable = false
-        navView.bottomBar.fabExtended = false
-        navView.bottomBar.setFabOnClickListener(null)
-
-        Timber.d("Navigating from ${this.navTarget.name} to ${navTarget.name}")
-
-        val fragment = navTarget.fragmentClass?.getDeclaredConstructor()?.newInstance() ?: return
-        fragment.arguments = arguments
-        val transaction = fragmentManager.beginTransaction()
-
-        if (navTarget == this.navTarget) {
-            // just reload the current target
-            transaction.setCustomAnimations(
-                R.anim.fade_in,
-                R.anim.fade_out
-            )
-        } else {
-            navBackStack.keys().lastIndexOf(navTarget).let {
-                if (it == -1)
-                    return@let navTarget
-                // pop the back stack up until that target
-                transaction.setCustomAnimations(
-                    R.anim.task_close_enter,
-                    R.anim.task_close_exit
-                )
-
-                // navigating grades_add -> grades
-                // navTarget == grades_add
-                // navBackStack = [home, grades, grades_editor]
-                // it == 1
-                //
-                // navTarget = target
-                // remove 1
-                // remove 2
-                val popCount = navBackStack.size - it
-                for (i in 0 until popCount) {
-                    navBackStack.removeAt(navBackStack.lastIndex)
-                }
-                this.navTarget = navTarget
-                this.navArguments = arguments
-
-                return@let null
-            }?.let {
-                // target is neither current nor in the back stack
-                // so navigate to it
-                transaction.setCustomAnimations(
-                    R.anim.task_open_enter,
-                    R.anim.task_open_exit
-                )
-                navBackStack.add(this.navTarget to this.navArguments)
-                this.navTarget = navTarget
-                this.navArguments = arguments
-            }
-        }
-
-        if (navTarget.popTo == NavTarget.HOME) {
-            // if the current has popToHome, let only home be in the back stack
-            // probably `if (navTarget.popToHome)` in popBackStack() is not needed now
-            val popCount = navBackStack.size - 1
-            for (i in 0 until popCount) {
-                navBackStack.removeAt(navBackStack.lastIndex)
-            }
-        }
-
-        Timber.d("Current fragment ${navTarget.name}, back stack:")
-        navBackStack.forEachIndexed { index, item ->
-            Timber.d(" - $index: ${item.first.name}")
-        }
-
-        transaction.replace(R.id.fragment, fragment)
-        transaction.commitAllowingStateLoss()
-
-        // TASK DESCRIPTION
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val bm = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher_v5)
-
-            @Suppress("deprecation")
-            val taskDesc = ActivityManager.TaskDescription(
-                if (navTarget == NavTarget.HOME)
-                    getString(R.string.app_name)
-                else
-                    getString(R.string.app_task_format, getString(navTarget.nameRes)),
-                bm,
-                R.attr.colorPrimary.resolveAttr(this)
-            )
-            setTaskDescription(taskDesc)
-        }
-        return
-    }
-
-    fun reloadTarget() = navigate()
-
-    private fun popBackStack(skipBeforeNavigate: Boolean = false): Boolean {
-        if (navBackStack.size == 0) {
-            return false
-        }
-        // TODO back stack argument support
-        if (navTarget.popTo != null) {
-            navigate(
-                navTarget = navTarget.popTo,
-                skipBeforeNavigate = skipBeforeNavigate,
-            )
-        } else {
-            navBackStack.last().let {
-                navigate(
-                    navTarget = it.first,
-                    args = it.second,
-                    skipBeforeNavigate = skipBeforeNavigate,
-                )
-            }
-        }
-        return true
-    }
-
-    fun navigateUp(skipBeforeNavigate: Boolean = false) {
-        if (!popBackStack(skipBeforeNavigate)) {
-            super.onBackPressed()
-        }
-    }
-
-    /**
-     * Use the NavLib's menu button ripple to gain user attention
-     * that something has changed in the bottom sheet.
-     */
-    fun gainAttention() {
-        if (app.config.ui.bottomSheetOpened)
-            return
-    }
-
-    fun gainAttentionFAB() {
-        navView.bottomBar.fabExtended = false
-
-        b.navView.postDelayed({
-            navView.bottomBar.fabExtended = true
-        }, 1000)
-
-        b.navView.postDelayed({
-            navView.bottomBar.fabExtended = false
-        }, 3000)
-    }
-
-    fun setAppBackground() {
-        try {
-            b.root.background = app.config.ui.appBackground?.let {
-                if (it.endsWith(".gif"))
-                    GifDrawable(it)
-                else
-                    BitmapDrawable.createFromPath(it)
-            }
-        } catch (e: Exception) {
-            Timber.e(e)
-        }
-    }
-
-    /*    _____                                _ _
-         |  __ \                              (_) |
-         | |  | |_ __ __ ___      _____ _ __   _| |_ ___ _ __ ___  ___
-         | |  | | '__/ _` \ \ /\ / / _ \ '__| | | __/ _ \ '_ ` _ \/ __|
-         | |__| | | | (_| |\ V  V /  __/ |    | | ||  __/ | | | | \__ \
-         |_____/|_|  \__,_| \_/\_/ \___|_|    |_|\__\___|_| |_| |_|__*/
-    private fun createDrawerItem(target: NavTarget, level: Int = 1): IDrawerItem<*> {
-        val item = when {
-            // target.subItems != null -> ExpandableDrawerItem()
-            level > 1 -> SecondaryDrawerItem()
-            else -> DrawerPrimaryItem()
-        }
-
-        item.also {
-            it.identifier = target.id.toLong()
-            it.nameRes = target.nameRes
-            it.descriptionRes = target.descriptionRes ?: -1
-            it.icon = target.icon?.toImageHolder()
-            it.hiddenInMiniDrawer = !app.config.ui.miniMenuButtons.contains(target)
-            if (it is DrawerPrimaryItem)
-                it.appTitle = target.titleRes?.resolveString(this)
-            if (/* it is ColorfulBadgeable && */ target.badgeType != null)
-                it.badgeStyle = drawer.badgeStyle
-            it.isSelectedBackgroundAnimated = false
-            it.level = level
-        }
-        if (target.badgeType != null)
-            drawer.addUnreadCounterType(target.badgeType.id, target.id)
-
-        /* item.subItems = target.subItems?.map {
-            createDrawerItem(it, level + 1)
-        }?.toMutableList() ?: mutableListOf() */
-
-        return item
-    }
-
-    fun setDrawerItems() {
-        Timber.d("setDrawerItems() app.profile = ${app.profile}")
-        val drawerItems = arrayListOf<IDrawerItem<*>>()
-        val drawerItemsMore = arrayListOf<IDrawerItem<*>>()
-        val drawerItemsBottom = arrayListOf<IDrawerItem<*>>()
-        val drawerProfiles = arrayListOf<ProfileSettingDrawerItem>()
-
-        for (target in NavTarget.values()) {
-            if (target.devModeOnly && !App.devMode)
-                continue
-            if (target.featureType != null && !app.profile.hasUIFeature(target.featureType))
-                continue
-
-            when (target.location) {
-                NavTargetLocation.DRAWER -> {
-                    drawerItems += createDrawerItem(target, level = 1)
-                }
-                NavTargetLocation.DRAWER_MORE -> {
-                    drawerItemsMore += createDrawerItem(target, level = 2)
-                }
-                NavTargetLocation.DRAWER_BOTTOM -> {
-                    drawerItemsBottom += createDrawerItem(target, level = 1)
-                }
-                NavTargetLocation.PROFILE_LIST -> {
-                    drawerProfiles += ProfileSettingDrawerItem().also {
-                        it.identifier = target.id.toLong()
-                        it.nameRes = target.nameRes
-                        it.descriptionRes = target.descriptionRes ?: -1
-                        it.icon = target.icon?.toImageHolder()
-                    }
-                }
-                else -> continue
-            }
-        }
-
-        drawerItems += ExpandableDrawerItem().also {
-            it.identifier = -1L
-            it.nameRes = R.string.menu_more
-            it.icon = CommunityMaterial.Icon.cmd_dots_horizontal.toImageHolder()
-            it.subItems = drawerItemsMore.toMutableList()
-            it.isSelectedBackgroundAnimated = false
-            it.isSelectable = false
-        }
-        drawerItems += DividerDrawerItem()
-        drawerItems += drawerItemsBottom
-
-        // seems that this cannot be open, because the itemAdapter has Profile items
-        // instead of normal Drawer items...
-        drawer.profileSelectionClose()
-        drawer.setItems(*drawerItems.toTypedArray())
-        drawer.removeAllProfileSettings()
-        drawer.addProfileSettings(*drawerProfiles.toTypedArray())
-    }
-
-    override fun onBackPressed() {
-        if (App.config.ui.openDrawerOnBackPressed) {
-            if (drawer.isOpen)
-                navigateUp()
-            else if (!navView.onBackPressed())
-                drawer.open()
-        } else {
-            if (!navView.onBackPressed())
-                navigateUp()
-        }
     }
 
     fun error(error: ApiError) = errorSnackbar.addError(error).show()
+
     fun snackbar(
         text: String,
         actionText: String? = null,

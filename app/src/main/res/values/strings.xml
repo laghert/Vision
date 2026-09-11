@@ -709,6 +709,8 @@
     <string name="menu_message">Wiadomość</string>
     <string name="menu_message_compose">Napisz wiadomość</string>
     <string name="menu_messages">Wiadomości</string>
+    <string name="nav_today">Dzisiaj</string>
+    <string name="nav_plan">Plan</string>
     <string name="menu_more">Więcej</string>
     <string name="menu_notices">Zachowanie</string>
     <string name="menu_remarks">Uwagi</string>

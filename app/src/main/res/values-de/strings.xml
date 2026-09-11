@@ -647,6 +647,8 @@
     <string name="menu_message">Nachricht</string>
     <string name="menu_message_compose">Schreiben Sie eine Nachricht</string>
     <string name="menu_messages">Nachrichten</string>
+    <string name="nav_today">Heute</string>
+    <string name="nav_plan">Plan</string>
     <string name="menu_more">Mehr</string>
     <string name="menu_notices">Verhalten</string>
     <string name="menu_remarks">Anmerkungen</string>
