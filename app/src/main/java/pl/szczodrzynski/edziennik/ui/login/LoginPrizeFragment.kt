@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import coil.load
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,7 +48,6 @@ class LoginPrizeFragment : Fragment(), CoroutineScope {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        b.button.load("https://szkolny.eu/game/button.png")
         b.button.onClick {
             launch {
                 DevModeDialog(activity).showModal()

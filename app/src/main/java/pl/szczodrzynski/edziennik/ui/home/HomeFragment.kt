@@ -29,7 +29,6 @@ import pl.szczodrzynski.edziennik.ext.onClick
 import pl.szczodrzynski.edziennik.ui.base.fragment.BaseFragment
 import pl.szczodrzynski.edziennik.ui.dialogs.settings.StudentNumberDialog
 import pl.szczodrzynski.edziennik.ui.home.cards.HomeArchiveCard
-import pl.szczodrzynski.edziennik.ui.home.cards.HomeAvailabilityCard
 import pl.szczodrzynski.edziennik.ui.home.cards.HomeEventsCard
 import pl.szczodrzynski.edziennik.ui.home.cards.HomeGradesCard
 import pl.szczodrzynski.edziennik.ui.home.cards.HomeLuckyNumberCard
@@ -162,12 +161,6 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>(
         //    items += HomeDebugCard(100, app, activity, this, app.profile)
         if (app.profile.archived)
             items.add(0, HomeArchiveCard(101, app, activity, this, app.profile))
-
-        val status = app.availabilityManager.check(app.profile, cacheOnly = true)?.status
-        val update = app.config.update
-        if (update != null && app.updateManager.isApplicable(update) || status?.userMessage != null) {
-            items.add(0, HomeAvailabilityCard(102, app, activity, this, app.profile))
-        }
 
         val adapter = HomeCardAdapter(items)
         val itemTouchHelper = ItemTouchHelper(CardItemTouchHelperCallback(adapter) {

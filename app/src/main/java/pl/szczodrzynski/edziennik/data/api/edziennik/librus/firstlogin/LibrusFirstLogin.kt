@@ -30,7 +30,7 @@ class LibrusFirstLogin(val data: DataLibrus, val onSuccess: () -> Unit) {
         if (data.loginStore.mode == LoginMode.LIBRUS_EMAIL) {
             // email login: use Portal for account list
             LibrusLoginPortal(data) {
-                portal.portalGet(TAG, if (data.fakeLogin) FAKE_LIBRUS_ACCOUNTS else LIBRUS_ACCOUNTS_URL) { json, response ->
+                portal.portalGet(TAG, LIBRUS_ACCOUNTS_URL) { json, response ->
                     val accounts = json.getJsonArray("accounts")
 
                     if (accounts == null || accounts.size() < 1) {

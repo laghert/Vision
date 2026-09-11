@@ -28,7 +28,7 @@ open class LibrusApi(open val data: DataLibrus, open val lastSync: Long?) {
 
     fun apiGet(tag: String, endpoint: String, method: Int = GET, payload: JsonObject? = null, ignoreErrors: List<Int> = emptyList(), onSuccess: (json: JsonObject) -> Unit) {
 
-        Timber.tag(tag).d("Request: Librus/Api - ${if (data.fakeLogin) FAKE_LIBRUS_API else LIBRUS_API_URL}/$endpoint")
+        Timber.tag(tag).d("Request: Librus/Api - $LIBRUS_API_URL/$endpoint")
 
         val callback = object : JsonCallbackHandler() {
             override fun onSuccess(json: JsonObject?, response: Response?) {
@@ -105,7 +105,7 @@ open class LibrusApi(open val data: DataLibrus, open val lastSync: Long?) {
         }
 
         Request.builder()
-                .url("${if (data.fakeLogin) FAKE_LIBRUS_API else LIBRUS_API_URL}/$endpoint")
+                .url("$LIBRUS_API_URL/$endpoint")
                 .userAgent(LIBRUS_USER_AGENT)
                 .addHeader("Authorization", "Bearer ${data.apiAccessToken}")
                 .apply {

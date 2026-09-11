@@ -63,7 +63,7 @@ class Demo(
             loginStoreId = loginStore.id,
             loginStoreType = LoginType.DEMO,
             name = "Jan Szkolny",
-            subname = "Szkolny.eu",
+            subname = "Calm Focus Demo",
             studentNameLong = "Jan Szkolny",
             studentNameShort = "Jan S.",
             accountName = null,

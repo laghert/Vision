@@ -7,7 +7,6 @@ package pl.szczodrzynski.edziennik.ui.login
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -16,7 +15,6 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
-import android.widget.Toast
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -25,10 +23,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.R
-import pl.szczodrzynski.edziennik.core.manager.AvailabilityManager.Error.Type
 import pl.szczodrzynski.edziennik.data.enums.LoginMode
 import pl.szczodrzynski.edziennik.data.enums.LoginType
 import pl.szczodrzynski.edziennik.databinding.LoginChooserFragmentBinding
@@ -39,10 +35,7 @@ import pl.szczodrzynski.edziennik.ext.setText
 import pl.szczodrzynski.edziennik.ext.setTintColor
 import pl.szczodrzynski.edziennik.ui.base.dialog.SimpleDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.DevModeDialog
-import pl.szczodrzynski.edziennik.ui.dialogs.sync.RegisterUnavailableDialog
-import pl.szczodrzynski.edziennik.ui.feedback.FeedbackActivity
 import pl.szczodrzynski.edziennik.utils.SimpleDividerItemDecoration
-import pl.szczodrzynski.edziennik.utils.html.BetterHtml
 import pl.szczodrzynski.edziennik.utils.models.Date
 import kotlin.coroutines.CoroutineContext
 
@@ -149,9 +142,7 @@ class LoginChooserFragment : Fragment(), CoroutineScope {
             addItemDecoration(SimpleDividerItemDecoration(context))
         }
 
-        b.helpButton.onClick {
-            startActivity(Intent(activity, FeedbackActivity::class.java))
-        }
+        b.helpButton.isVisible = false
 
         // eggs
         b.footnoteText.onClick {
@@ -263,23 +254,7 @@ class LoginChooserFragment : Fragment(), CoroutineScope {
             return
         }
 
-        if (!app.config.privacyPolicyAccepted) {
-            SimpleDialog<Unit>(activity) {
-                title(R.string.privacy_policy)
-                message(BetterHtml.fromHtml(activity, R.string.privacy_policy_dialog_html))
-                positive(R.string.i_agree) {
-                    app.config.privacyPolicyAccepted = true
-                    onLoginModeClicked(loginType, loginMode)
-                }
-                negative(R.string.i_disagree)
-            }.show()
-            return
-        }
-
         launch {
-            if (!checkAvailability(loginType.loginType))
-                return@launch
-
             if (loginMode.isTesting || loginMode.isDevOnly) {
                 SimpleDialog<Unit>(activity) {
                     title(R.string.login_chooser_testing_title)
@@ -309,26 +284,5 @@ class LoginChooserFragment : Fragment(), CoroutineScope {
                 "loginType" to loginType.loginType,
                 "loginMode" to loginMode.loginMode
         ), activity.navOptions)
-    }
-
-    private suspend fun checkAvailability(loginType: LoginType): Boolean {
-        val error = withContext(Dispatchers.IO) {
-            app.availabilityManager.check(loginType)
-        } ?: return true
-
-        return when (error.type) {
-            Type.NOT_AVAILABLE -> {
-                RegisterUnavailableDialog(activity, error.status!!).show()
-                false
-            }
-            Type.API_ERROR -> {
-                activity.errorSnackbar.addError(error.apiError!!).show()
-                false
-            }
-            Type.NO_API_ACCESS -> {
-                Toast.makeText(activity, R.string.error_no_api_access, Toast.LENGTH_SHORT).show()
-                true
-            }
-        }
     }
 }

@@ -22,7 +22,6 @@ import java.util.*
             Index(value = ["profileId", "eventType"])
         ])
 open class Event(
-        /* This needs to be mutable: see SzkolnyApi.getEvents() */
         var profileId: Int,
         @ColumnInfo(name = "eventId")
         var id: Long,

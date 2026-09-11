@@ -12,15 +12,7 @@ const val POST = 1
 
 val SYSTEM_USER_AGENT = System.getProperty("http.agent") ?: "Dalvik/2.1.0 Android"
 
-val SERVER_USER_AGENT = "Szkolny.eu/${BuildConfig.VERSION_NAME} $SYSTEM_USER_AGENT"
-
-const val FAKE_LIBRUS_API = "https://librus.szkolny.eu/api"
-const val FAKE_LIBRUS_PORTAL = "https://librus.szkolny.eu"
-const val FAKE_LIBRUS_AUTHORIZE = "https://librus.szkolny.eu/authorize.php"
-const val FAKE_LIBRUS_LOGIN = "https://librus.szkolny.eu/login_action.php"
-const val FAKE_LIBRUS_TOKEN = "https://librus.szkolny.eu/access_token.php"
-const val FAKE_LIBRUS_ACCOUNT = "/synergia_accounts_fresh.php?login="
-const val FAKE_LIBRUS_ACCOUNTS = "/synergia_accounts.php"
+val SERVER_USER_AGENT = "CalmFocus/${BuildConfig.VERSION_NAME} $SYSTEM_USER_AGENT"
 
 val LIBRUS_USER_AGENT = "${SYSTEM_USER_AGENT}LibrusMobileApp"
 const val SYNERGIA_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Gecko/20100101 Firefox/62.0"
@@ -66,7 +58,7 @@ val MOBIDZIENNIK_USER_AGENT = SYSTEM_USER_AGENT
 const val VULCAN_HEBE_USER_AGENT = "Dart/2.10 (dart:io)"
 const val VULCAN_HEBE_APP_NAME = "DzienniczekPlus 2.0"
 const val VULCAN_HEBE_APP_VERSION = "22.09.02 (G)"
-private const val VULCAN_API_DEVICE_NAME_PREFIX = "Szkolny.eu "
+private const val VULCAN_API_DEVICE_NAME_PREFIX = "Calm Focus "
 private const val VULCAN_API_DEVICE_NAME_SUFFIX = " - nie usuwać"
 val VULCAN_API_DEVICE_NAME by lazy {
     val base = "$VULCAN_API_DEVICE_NAME_PREFIX${Build.MODEL}"

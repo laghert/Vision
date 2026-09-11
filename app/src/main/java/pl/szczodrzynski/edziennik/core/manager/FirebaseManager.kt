@@ -7,7 +7,6 @@ package pl.szczodrzynski.edziennik.core.manager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.iid.FirebaseInstanceId
-import com.google.firebase.messaging.FirebaseMessaging
 import pl.szczodrzynski.edziennik.App
 import timber.log.Timber
 
@@ -69,21 +68,6 @@ class FirebaseManager(val app: App) {
     )
 
     fun initializeApps() {
-        try {
-            // skip Firebase setup if the default app is not initialized
-            // (e.g. in the crash process)
-            FirebaseApp.getInstance()
-        } catch (e: IllegalStateException) {
-            return
-        }
-
-        FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener { result ->
-            val token = result.token
-            Timber.i("Got App token: $token")
-            app.config.sync.tokenApp = token
-        }
-        FirebaseMessaging.getInstance().subscribeToTopic(app.packageName)
-
         instances.forEach {
             val options = FirebaseOptions.Builder()
                 .setProjectId(it.projectId)

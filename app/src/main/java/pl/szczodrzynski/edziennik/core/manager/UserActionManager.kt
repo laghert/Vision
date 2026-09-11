@@ -58,7 +58,7 @@ class UserActionManager(val app: App) {
             NotificationCompat.Builder(app, app.notificationManager.userAttention.key)
                 .setContentTitle(app.getString(R.string.notification_user_action_required_title))
                 .setContentText(text)
-                .setSmallIcon(R.drawable.ic_error_outline)
+                .setSmallIcon(android.R.drawable.stat_notify_error)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(text))
                 .setColor(0xff2196f3.toInt())
                 .setLights(0xff2196f3.toInt(), 2000, 2000)

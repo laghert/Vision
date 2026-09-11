@@ -18,7 +18,6 @@ import pl.szczodrzynski.edziennik.ui.attendance.AttendanceFragment
 import pl.szczodrzynski.edziennik.ui.behaviour.BehaviourFragment
 import pl.szczodrzynski.edziennik.ui.debug.DebugFragment
 import pl.szczodrzynski.edziennik.ui.debug.LabFragment
-import pl.szczodrzynski.edziennik.ui.feedback.FeedbackFragment
 import pl.szczodrzynski.edziennik.ui.grades.GradesListFragment
 import pl.szczodrzynski.edziennik.ui.grades.editor.GradesEditorFragment
 import pl.szczodrzynski.edziennik.ui.home.HomeFragment
@@ -30,11 +29,9 @@ import pl.szczodrzynski.edziennik.ui.notes.NotesFragment
 import pl.szczodrzynski.edziennik.ui.notifications.NotificationsListFragment
 import pl.szczodrzynski.edziennik.ui.settings.ProfileManagerFragment
 import pl.szczodrzynski.edziennik.ui.settings.SettingsFragment
-import pl.szczodrzynski.edziennik.ui.settings.contributors.ContributorsFragment
 import pl.szczodrzynski.edziennik.ui.teachers.TeachersListFragment
 import pl.szczodrzynski.edziennik.ui.template.TemplateFragment
 import pl.szczodrzynski.edziennik.ui.timetable.TimetableFragment
-import pl.szczodrzynski.edziennik.ui.webpush.WebPushFragment
 import pl.szczodrzynski.navlib.bottomsheet.items.BottomSheetPrimaryItem
 
 enum class NavTarget(
@@ -219,13 +216,6 @@ enum class NavTarget(
         nameRes = R.string.menu_sync_all,
         icon = CommunityMaterial.Icon.cmd_download_outline,
     ),
-    FEEDBACK(
-        id = 120,
-        fragmentClass = FeedbackFragment::class.java,
-        location = NavTargetLocation.BOTTOM_SHEET,
-        nameRes = R.string.menu_feedback,
-        icon = CommunityMaterial.Icon2.cmd_help_circle_outline,
-    ),
     DEBUG(
         id = 102,
         fragmentClass = DebugFragment::class.java,
@@ -249,16 +239,6 @@ enum class NavTarget(
         id = 504,
         fragmentClass = MessagesComposeFragment::class.java,
         nameRes = R.string.menu_message_compose,
-    ),
-    WEB_PUSH(
-        id = 140,
-        fragmentClass = WebPushFragment::class.java,
-        nameRes = R.string.menu_web_push,
-    ),
-    CONTRIBUTORS(
-        id = 150,
-        fragmentClass = ContributorsFragment::class.java,
-        nameRes = R.string.contributors,
     );
 
     companion object {

@@ -394,7 +394,7 @@ class MessagesComposeFragment : BaseFragment<MessagesComposeFragmentBinding, Mai
         SimpleDialog<Unit>(activity) {
             title(R.string.messages_compose_confirm_title)
             message(R.string.messages_compose_confirm_text)
-            positive(R.string.send) {
+            positive(R.string.messages_compose_send) {
                 EdziennikTask.messageSend(App.profileId, recipients, subject.trim(), body)
                     .enqueue(activity)
             }

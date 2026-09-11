@@ -39,8 +39,6 @@ class ProfileConfig(
     val sync by lazy { Sync() }
     val attendance by lazy { Attendance() }
 
-    var shareByDefault: Boolean by config<Boolean>(false)
-
     inner class Grades {
         var averageWithoutWeight: Boolean by config<Boolean>(true)
         var colorMode: Int by config<Int>(COLOR_MODE_WEIGHTED)

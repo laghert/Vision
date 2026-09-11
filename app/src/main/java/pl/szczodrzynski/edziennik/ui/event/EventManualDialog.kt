@@ -24,7 +24,6 @@ import pl.szczodrzynski.edziennik.data.api.edziennik.EdziennikTask
 import pl.szczodrzynski.edziennik.data.api.events.ApiTaskAllFinishedEvent
 import pl.szczodrzynski.edziennik.data.api.events.ApiTaskErrorEvent
 import pl.szczodrzynski.edziennik.data.api.events.ApiTaskFinishedEvent
-import pl.szczodrzynski.edziennik.data.api.szkolny.SzkolnyApi
 import pl.szczodrzynski.edziennik.data.config.AppData
 import pl.szczodrzynski.edziennik.data.db.entity.Event
 import pl.szczodrzynski.edziennik.data.db.entity.Metadata
@@ -47,7 +46,6 @@ import pl.szczodrzynski.edziennik.ui.base.dialog.BaseDialog
 import pl.szczodrzynski.edziennik.ui.base.dialog.BindingDialog
 import pl.szczodrzynski.edziennik.ui.base.dialog.SimpleDialog
 import pl.szczodrzynski.edziennik.ui.base.views.TimeDropdown.Companion.DISPLAY_LESSONS
-import pl.szczodrzynski.edziennik.ui.dialogs.settings.RegistrationConfigDialog
 import pl.szczodrzynski.edziennik.utils.Anim
 import pl.szczodrzynski.edziennik.utils.html.BetterHtml
 import pl.szczodrzynski.edziennik.utils.models.Date
@@ -74,25 +72,14 @@ class EventManualDialog(
     override fun getNeutralButtonText() = if (editingEvent != null) R.string.remove else null
     override fun getNegativeButtonText() = R.string.cancel
 
-    private lateinit var profile: Profile
     private lateinit var stylingConfig: StylingConfigBase
 
     private val textStylingManager
         get() = app.textStylingManager
 
     private var customColor: Int? = null
-    private val editingShared = editingEvent?.sharedBy != null
-    private val editingOwn = editingEvent?.sharedBy == "self"
-    private var removeEventDialog: AlertDialog? = null
-
-    private val api by lazy {
-        SzkolnyApi(app)
-    }
-
     private var enqueuedWeekDialog: BaseDialog<*>? = null
     private var enqueuedWeekStart = Date.getToday()
-
-    private var progressDialog: BaseDialog<*>? = null
 
     override suspend fun onPositiveClick(): Boolean {
         saveEvent()
@@ -106,7 +93,6 @@ class EventManualDialog(
 
     override suspend fun onDismiss() {
         enqueuedWeekDialog?.dismiss()
-        progressDialog?.dismiss()
     }
 
     override suspend fun onShow() {
@@ -137,33 +123,7 @@ class EventManualDialog(
         )
 
         stylingConfig = StylingConfigBase(editText = b.topic, htmlMode = SIMPLE)
-
-        updateShareText()
-        b.shareSwitch.onChange { _, isChecked ->
-            updateShareText(isChecked)
-        }
-
         loadLists()
-
-        val shareByDefault = app.profile.config.shareByDefault && profile.canShare
-
-        b.shareSwitch.isChecked = editingShared || editingEvent == null && shareByDefault
-        b.shareSwitch.isEnabled = !editingShared || editingOwn
-    }
-
-    private fun updateShareText(checked: Boolean = b.shareSwitch.isChecked) {
-        b.shareDetails.visibility = if (checked || editingShared)
-            View.VISIBLE
-        else View.GONE
-
-        val text = when {
-            checked && editingShared && editingOwn -> R.string.dialog_event_manual_share_will_change
-            checked && editingShared -> R.string.dialog_event_manual_share_will_request
-            !checked && editingShared -> R.string.dialog_event_manual_share_will_remove
-            else -> R.string.dialog_event_manual_share_first_notice
-        }
-
-        b.shareDetails.setText(text, editingEvent?.sharedByName ?: "")
     }
 
     private fun syncTimetable(date: Date) {
@@ -191,36 +151,11 @@ class EventManualDialog(
         ).enqueue(activity)
     }
 
-    private fun showSharingProgressDialog() {
-        if (progressDialog != null) {
-            return
-        }
-
-        progressDialog = SimpleDialog<Unit>(activity) {
-            title(R.string.please_wait)
-            message(R.string.event_sharing_text)
-            cancelable(false)
-        }.show()
-    }
-
-    private fun showRemovingProgressDialog() {
-        if (progressDialog != null) {
-            return
-        }
-
-        progressDialog = SimpleDialog<Unit>(activity) {
-            title(R.string.please_wait)
-            message(R.string.event_removing_text)
-            cancelable(false)
-        }.show()
-    }
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onApiTaskFinishedEvent(event: ApiTaskFinishedEvent) {
         if (event.profileId == profileId) {
             enqueuedWeekDialog?.dismiss()
             enqueuedWeekDialog = null
-            progressDialog?.dismiss()
             launch {
                 b.timeDropdown.loadItems()
                 b.timeDropdown.selectDefault(editingEvent?.time)
@@ -233,14 +168,12 @@ class EventManualDialog(
     fun onApiTaskAllFinishedEvent(event: ApiTaskAllFinishedEvent) {
         enqueuedWeekDialog?.dismiss()
         enqueuedWeekDialog = null
-        progressDialog?.dismiss()
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onApiTaskErrorEvent(event: ApiTaskErrorEvent) {
         enqueuedWeekDialog?.dismiss()
         enqueuedWeekDialog = null
-        progressDialog?.dismiss()
     }
 
     private suspend fun loadLists() {
@@ -251,8 +184,6 @@ class EventManualDialog(
             Toast.makeText(activity, R.string.event_manual_no_profile, Toast.LENGTH_SHORT).show()
             return
         }
-        this@EventManualDialog.profile = profile
-
         with (b.dateDropdown) {
             db = app.db
             profileId = this@EventManualDialog.profileId
@@ -381,16 +312,11 @@ class EventManualDialog(
     }
 
     private fun showRemoveEventDialog() {
-        val shareNotice = when {
-            editingShared && editingOwn -> "\n\n"+activity.getString(R.string.dialog_event_manual_remove_shared_self)
-            editingShared && !editingOwn -> "\n\n"+activity.getString(R.string.dialog_event_manual_remove_shared)
-            else -> ""
-        }
         SimpleDialog<Unit>(activity) {
             title(R.string.are_you_sure)
-            message(activity.getString(R.string.dialog_register_event_manual_remove_confirmation) + shareNotice)
+            message(R.string.dialog_register_event_manual_remove_confirmation)
             positive(R.string.yes) {
-                removeEvent()
+                finishRemoving()
             }
             negative(R.string.no)
         }.show()
@@ -404,16 +330,6 @@ class EventManualDialog(
         val topic = b.topic.text?.toString()
         val subject = b.subjectDropdown.getSelected() as? Subject
         val teacher = b.teacherDropdown.getSelected()
-
-        val share = b.shareSwitch.isChecked
-
-        if (share && !profile.canShare) {
-            RegistrationConfigDialog(activity, profile, onChangeListener = { enabled ->
-                if (enabled)
-                    saveEvent()
-            }).showEventShareDialog()
-            return
-        }
 
         b.dateDropdown.error = null
         b.teamDropdown.error = null
@@ -431,12 +347,6 @@ class EventManualDialog(
         if (timeSelected !is Pair<*, *> && timeSelected != 0L) {
             b.timeDropdown.error = app.getString(R.string.dialog_event_manual_time_choose)
             if (!isError) b.timeDropdown.parent.requestChildFocus(b.timeDropdown, b.timeDropdown)
-            isError = true
-        }
-
-        if (share && team == null) {
-            b.teamDropdown.error = app.getString(R.string.dialog_event_manual_team_choose)
-            if (!isError) b.teamDropdown.parent.requestChildFocus(b.teamDropdown, b.teamDropdown)
             isError = true
         }
 
@@ -491,86 +401,7 @@ class EventManualDialog(
                 true
         )
 
-        launch {
-            val profile = app.db.profileDao().getByIdNow(profileId)
-
-            if (!share && !editingShared) {
-                //Toast.makeText(activity, R.string.event_manual_saving, Toast.LENGTH_SHORT).show()
-                finishAdding(eventObject, metadataObject)
-            }
-            else if (editingShared && !editingOwn) {
-                Toast.makeText(activity, "Opcja edycji wydarzeń innych uczniów nie została jeszcze zaimplementowana.", Toast.LENGTH_LONG).show()
-                // TODO
-            }
-            else if (!share && editingShared) {
-                showSharingProgressDialog()
-
-                eventObject.apply {
-                    sharedBy = null
-                    sharedByName = profile?.studentNameLong
-                }
-
-                api.runCatching(activity) {
-                    unshareEvent(eventObject)
-                } ?: run {
-                    progressDialog?.dismiss()
-                    return@launch
-                }
-
-                eventObject.sharedByName = null
-                finishAdding(eventObject, metadataObject)
-            }
-            else if (share) {
-                showSharingProgressDialog()
-
-                eventObject.apply {
-                    sharedBy = profile?.userCode
-                    sharedByName = profile?.studentNameLong
-                    addedDate = System.currentTimeMillis()
-                }
-
-                api.runCatching(activity) {
-                    shareEvent(eventObject.withMetadata(metadataObject))
-                } ?: run {
-                    progressDialog?.dismiss()
-                    return@launch
-                }
-
-                eventObject.sharedBy = "self"
-                finishAdding(eventObject, metadataObject)
-            }
-            else {
-                Toast.makeText(activity, "Unknown action :(", Toast.LENGTH_SHORT).show()
-            }
-            progressDialog?.dismiss()
-        }
-    }
-
-    private fun removeEvent() {
-        launch {
-            if (editingShared && editingOwn) {
-                // unshare + remove own event
-                showRemovingProgressDialog()
-
-                api.runCatching(activity) {
-                    unshareEvent(editingEvent!!)
-                } ?: run {
-                    progressDialog?.dismiss()
-                    return@launch
-                }
-
-                finishRemoving()
-            } else if (editingShared && !editingOwn) {
-                // remove + blacklist somebody's event
-                Toast.makeText(activity, "Nie zaimplementowana opcja :(", Toast.LENGTH_SHORT).show()
-                // TODO
-            } else {
-                // remove event
-                //Toast.makeText(activity, R.string.event_manual_remove, Toast.LENGTH_SHORT).show()
-                finishRemoving()
-            }
-            progressDialog?.dismiss()
-        }
+        finishAdding(eventObject, metadataObject)
     }
 
     private fun finishAdding(eventObject: Event, metadataObject: Metadata) {
@@ -598,7 +429,6 @@ class EventManualDialog(
             }
         }
 
-        removeEventDialog?.dismiss()
         onSaveListener?.invoke(null)
         dismiss()
         Toast.makeText(activity, R.string.removed, Toast.LENGTH_SHORT).show()

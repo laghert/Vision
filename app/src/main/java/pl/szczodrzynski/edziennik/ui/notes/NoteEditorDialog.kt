@@ -8,22 +8,17 @@ import android.content.DialogInterface.BUTTON_POSITIVE
 import android.view.LayoutInflater
 import androidx.appcompat.app.AppCompatActivity
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import pl.szczodrzynski.edziennik.R
 import pl.szczodrzynski.edziennik.core.manager.TextStylingManager.HtmlMode
 import pl.szczodrzynski.edziennik.core.manager.TextStylingManager.StylingConfigBase
 import pl.szczodrzynski.edziennik.data.db.entity.Note
 import pl.szczodrzynski.edziennik.data.db.entity.Noteable
-import pl.szczodrzynski.edziennik.data.db.entity.Profile
 import pl.szczodrzynski.edziennik.databinding.NoteEditorDialogBinding
 import pl.szczodrzynski.edziennik.ext.isNotNullNorBlank
 import pl.szczodrzynski.edziennik.ext.resolveString
 import pl.szczodrzynski.edziennik.ext.toDrawable
-import pl.szczodrzynski.edziennik.ui.base.dialog.BaseDialog
 import pl.szczodrzynski.edziennik.ui.base.dialog.BindingDialog
 import pl.szczodrzynski.edziennik.ui.base.dialog.SimpleDialog
-import pl.szczodrzynski.edziennik.ui.dialogs.settings.RegistrationConfigDialog
 import pl.szczodrzynski.edziennik.utils.TextInputDropDown
 
 class NoteEditorDialog(
@@ -52,49 +47,17 @@ class NoteEditorDialog(
     private val textStylingManager
         get() = app.textStylingManager
 
-    private var progressDialog: BaseDialog<*>? = null
-
     override suspend fun onPositiveClick(): Boolean {
-        val profile = withContext(Dispatchers.IO) {
-            app.db.profileDao().getByIdNow(profileId)
-        } ?: return NO_DISMISS
-
-        val note = buildNote(profile) ?: return NO_DISMISS
-
-        if (note.isShared && !profile.canShare) {
-            RegistrationConfigDialog(activity, profile, onChangeListener = { enabled ->
-                if (enabled)
-                    onPositiveClick()
-            }).showNoteShareDialog()
-            return NO_DISMISS
-        }
-
-        if (note.isShared || editingNote?.isShared == true) {
-            progressDialog = SimpleDialog<Unit>(activity) {
-                title(R.string.please_wait)
-                message(
-                    when (note.isShared) {
-                        true -> R.string.notes_editor_progress_sharing
-                        false -> R.string.notes_editor_progress_unsharing
-                    }
-                )
-                cancelable(false)
-            }.show()
-        }
-
-        val success = manager.saveNote(
+        val note = buildNote() ?: return NO_DISMISS
+        return manager.saveNote(
             activity = activity,
             note = note,
-            teamId = owner?.getNoteShareTeamId(),
+            teamId = null,
             wasShared = editingNote?.isShared ?: false,
         )
-        progressDialog?.dismiss()
-        return success
     }
 
     override suspend fun onNeutralClick(): Boolean {
-        // editingNote cannot be null, as the button is visible
-
         val confirmation = SimpleDialog<Unit>(activity) {
             title(R.string.are_you_sure)
             message(R.string.notes_editor_confirmation_text)
@@ -104,17 +67,7 @@ class NoteEditorDialog(
         if (confirmation != BUTTON_POSITIVE)
             return NO_DISMISS
 
-        if (editingNote?.isShared == true) {
-            progressDialog = SimpleDialog<Unit>(activity) {
-                title(R.string.please_wait)
-                message(R.string.notes_editor_progress_unsharing)
-                cancelable(false)
-            }.show()
-        }
-
-        val success = manager.deleteNote(activity, editingNote ?: return NO_DISMISS)
-        progressDialog?.dismiss()
-        return success
+        return manager.deleteNote(activity, editingNote ?: return NO_DISMISS)
     }
 
     override suspend fun onShow() {
@@ -123,13 +76,8 @@ class NoteEditorDialog(
         topicStylingConfig = StylingConfigBase(editText = b.topic, htmlMode = HtmlMode.SIMPLE)
         bodyStylingConfig = StylingConfigBase(editText = b.body, htmlMode = HtmlMode.SIMPLE)
 
-        val profile = withContext(Dispatchers.IO) {
-            app.db.profileDao().getByIdNow(profileId)
-        }
-
         b.ownerType = owner?.getNoteType() ?: Note.OwnerType.NONE
         b.editingNote = editingNote
-        b.shareByDefault = app.profile.config.shareByDefault && profile?.canShare == true
 
         b.color.clear().append(Note.Color.values().map { color ->
             TextInputDropDown.Item(
@@ -155,13 +103,11 @@ class NoteEditorDialog(
         )
     }
 
-    private fun buildNote(profile: Profile): Note? {
+    private fun buildNote(): Note? {
         val ownerType = owner?.getNoteType() ?: Note.OwnerType.NONE
         val topic = b.topic.text?.toString()
         val body = b.body.text?.toString()
         val color = b.color.selected?.tag as? Note.Color
-
-        val share = b.shareSwitch.isChecked && ownerType.isShareable
         val replace = b.replaceSwitch.isChecked && ownerType.canReplace
 
         if (body.isNullOrBlank()) {
@@ -176,7 +122,7 @@ class NoteEditorDialog(
         val bodyHtml = textStylingManager.getHtmlText(bodyStylingConfig)
 
         return Note(
-            profileId = profile.id,
+            profileId = profileId,
             id = editingNote?.id ?: System.currentTimeMillis(),
             ownerType = owner?.getNoteType(),
             ownerId = owner?.getNoteOwnerId(),
@@ -184,8 +130,8 @@ class NoteEditorDialog(
             topic = topicHtml,
             body = bodyHtml,
             color = color?.value,
-            sharedBy = if (share) "self" else null,
-            sharedByName = if (share) profile.studentNameLong else null,
+            sharedBy = null,
+            sharedByName = null,
         )
     }
 }

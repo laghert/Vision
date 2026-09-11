@@ -5,7 +5,6 @@
 package pl.szczodrzynski.edziennik.data.api.edziennik
 
 import com.google.gson.JsonObject
-import org.greenrobot.eventbus.EventBus
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.R
 import pl.szczodrzynski.edziennik.data.api.ERROR_PROFILE_ARCHIVED
@@ -16,7 +15,6 @@ import pl.szczodrzynski.edziennik.data.api.edziennik.podlasie.Podlasie
 import pl.szczodrzynski.edziennik.data.api.edziennik.template.Template
 import pl.szczodrzynski.edziennik.data.api.edziennik.usos.Usos
 import pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.Vulcan
-import pl.szczodrzynski.edziennik.data.api.events.RegisterAvailabilityEvent
 import pl.szczodrzynski.edziennik.data.api.interfaces.EdziennikCallback
 import pl.szczodrzynski.edziennik.data.api.interfaces.EdziennikInterface
 import pl.szczodrzynski.edziennik.data.api.models.ApiError
@@ -31,7 +29,6 @@ import pl.szczodrzynski.edziennik.data.db.full.EventFull
 import pl.szczodrzynski.edziennik.data.db.full.MessageFull
 import pl.szczodrzynski.edziennik.ext.isBeforeYear
 import pl.szczodrzynski.edziennik.ext.shouldArchive
-import pl.szczodrzynski.edziennik.core.manager.AvailabilityManager.Error.Type
 import timber.log.Timber
 
 open class EdziennikTask(override val profileId: Int, val request: Any) : IApiTask(profileId) {
@@ -95,28 +92,6 @@ open class EdziennikTask(override val profileId: Int, val request: Any) : IApiTa
                 taskCallback.onCompleted()
                 return
             }
-
-            val error = app.availabilityManager.check(profile)
-            when (error?.type) {
-                Type.NOT_AVAILABLE -> {
-                    if (EventBus.getDefault().hasSubscriberForEvent(RegisterAvailabilityEvent::class.java)) {
-                        EventBus.getDefault().postSticky(RegisterAvailabilityEvent())
-                    }
-                    cancel()
-                    taskCallback.onCompleted()
-                    return
-                }
-                Type.API_ERROR -> {
-                    taskCallback.onError(error.apiError!!)
-                    return
-                }
-                else -> return@let
-            }
-        }
-
-        if (profile?.empty == true) {
-            // force app sync on first login
-            app.config.sync.lastAppSync = 0L
         }
 
         edziennikInterface = when (loginStore.type) {

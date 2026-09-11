@@ -25,7 +25,6 @@ import pl.szczodrzynski.edziennik.MainActivity
 import pl.szczodrzynski.edziennik.R
 import pl.szczodrzynski.edziennik.data.api.edziennik.EdziennikTask
 import pl.szczodrzynski.edziennik.data.api.events.EventGetEvent
-import pl.szczodrzynski.edziennik.data.api.szkolny.SzkolnyApi
 import pl.szczodrzynski.edziennik.data.db.full.EventFull
 import pl.szczodrzynski.edziennik.data.enums.NavTarget
 import pl.szczodrzynski.edziennik.databinding.DialogEventDetailsBinding
@@ -40,7 +39,6 @@ import pl.szczodrzynski.edziennik.ext.putExtras
 import pl.szczodrzynski.edziennik.ext.resolveAttr
 import pl.szczodrzynski.edziennik.ext.setText
 import pl.szczodrzynski.edziennik.ext.setTintColor
-import pl.szczodrzynski.edziennik.ui.base.dialog.BaseDialog
 import pl.szczodrzynski.edziennik.ui.base.dialog.BindingDialog
 import pl.szczodrzynski.edziennik.ui.base.dialog.SimpleDialog
 import pl.szczodrzynski.edziennik.ui.notes.setupNotesButton
@@ -68,12 +66,6 @@ class EventDetailsDialog(
     private val manager
         get() = app.eventManager
 
-    private val api by lazy {
-        SzkolnyApi(app)
-    }
-
-    private var progressDialog: BaseDialog<*>? = null
-
     override suspend fun onNeutralClick(): Boolean {
         showRemoveEventDialog()
         return NO_DISMISS
@@ -85,10 +77,6 @@ class EventDetailsDialog(
             event = it ?: return@observe
             update()
         }
-    }
-
-    override suspend fun onDismiss() {
-        progressDialog?.dismiss()
     }
 
     private fun update() {
@@ -293,59 +281,15 @@ class EventDetailsDialog(
         update()
     }
 
-    private fun showRemovingProgressDialog() {
-        if (progressDialog != null) {
-            return
-        }
-
-        progressDialog = SimpleDialog<Unit>(activity) {
-            title(R.string.please_wait)
-            message(R.string.event_removing_text)
-            cancelable(false)
-        }.show()
-    }
-
     private fun showRemoveEventDialog() {
-        val shareNotice = when {
-            eventShared && eventOwn -> "\n\n"+activity.getString(R.string.dialog_event_manual_remove_shared_self)
-            eventShared && !eventOwn -> "\n\n"+activity.getString(R.string.dialog_event_manual_remove_shared)
-            else -> ""
-        }
         SimpleDialog<Unit>(activity) {
             title(R.string.are_you_sure)
-            message(activity.getString(R.string.dialog_register_event_manual_remove_confirmation) + shareNotice)
+            message(R.string.dialog_register_event_manual_remove_confirmation)
             positive(R.string.yes) {
-                removeEvent()
+                finishRemoving()
             }
             negative(R.string.no)
         }.show()
-    }
-
-    private fun removeEvent() {
-        launch {
-            if (eventShared && eventOwn) {
-                // unshare + remove own event
-                showRemovingProgressDialog()
-
-                api.runCatching(activity) {
-                    unshareEvent(event)
-                } ?: run {
-                    progressDialog?.dismiss()
-                    return@launch
-                }
-
-                finishRemoving()
-            } else if (eventShared && !eventOwn) {
-                // remove + blacklist somebody's event
-                Toast.makeText(activity, "Nie zaimplementowana opcja :(", Toast.LENGTH_SHORT).show()
-                // TODO
-            } else {
-                // remove event
-                Toast.makeText(activity, R.string.event_manual_remove, Toast.LENGTH_SHORT).show()
-                finishRemoving()
-            }
-            progressDialog?.dismiss()
-        }
     }
 
     private fun finishRemoving() {

@@ -78,13 +78,6 @@
                     tools:src="@android:drawable/ic_menu_help" />
             </LinearLayout>
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/fakeLogin"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Fake login"
-                android:visibility="gone" />
-
             <LinearLayout
                 android:id="@+id/errorLayout"
                 android:layout_width="match_parent"

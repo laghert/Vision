@@ -345,29 +345,6 @@
             android:layout_height="wrap_content"
             tools:text="9:05 informatyka\n10:00 urządzenia techniki komputerowej\n11:00 projektowanie lokalnych sieci komputerowych\n11:55 zajęcia z wychowawcą\n13:00 język polski\n14:05 język niemiecki" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/agenda_config_event_sharing"
-            android:textAppearance="?textAppearanceTitleMedium" />
-
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/eventSharingEnabled"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:minHeight="32dp"
-            android:text="@string/agenda_config_event_sharing_enabled" />
-
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/shareByDefault"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:minHeight="32dp"
-            android:text="@string/settings_register_share_by_default_text" />
-
         <com.google.android.material.checkbox.MaterialCheckBox
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

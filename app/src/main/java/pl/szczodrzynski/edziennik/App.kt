@@ -23,7 +23,6 @@ import me.leolin.shortcutbadger.ShortcutBadger
 import okhttp3.OkHttpClient
 import org.greenrobot.eventbus.EventBus
 import pl.szczodrzynski.edziennik.core.manager.AttendanceManager
-import pl.szczodrzynski.edziennik.core.manager.AvailabilityManager
 import pl.szczodrzynski.edziennik.core.manager.BuildManager
 import pl.szczodrzynski.edziennik.core.manager.EventManager
 import pl.szczodrzynski.edziennik.core.manager.FirebaseManager
@@ -37,14 +36,10 @@ import pl.szczodrzynski.edziennik.core.manager.ShortcutManager
 import pl.szczodrzynski.edziennik.core.manager.TextStylingManager
 import pl.szczodrzynski.edziennik.core.manager.TimetableManager
 import pl.szczodrzynski.edziennik.core.manager.UiManager
-import pl.szczodrzynski.edziennik.core.manager.UpdateManager
 import pl.szczodrzynski.edziennik.core.manager.UserActionManager
 import pl.szczodrzynski.edziennik.core.network.DumbCookieJar
 import pl.szczodrzynski.edziennik.core.work.SyncWorker
-import pl.szczodrzynski.edziennik.core.work.UpdateWorker
 import pl.szczodrzynski.edziennik.data.api.events.ProfileListEmptyEvent
-import pl.szczodrzynski.edziennik.data.api.szkolny.SzkolnyApi
-import pl.szczodrzynski.edziennik.data.api.szkolny.interceptor.Signing
 import pl.szczodrzynski.edziennik.data.config.AppData
 import pl.szczodrzynski.edziennik.data.config.Config
 import pl.szczodrzynski.edziennik.data.db.AppDb
@@ -78,9 +73,7 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
         var devMode = false
     }
 
-    val api by lazy { SzkolnyApi(this) }
     val attendanceManager by lazy { AttendanceManager(this) }
-    val availabilityManager by lazy { AvailabilityManager(this) }
     val buildManager by lazy { BuildManager(this) }
     val eventManager by lazy { EventManager(this) }
     val firebaseManager by lazy { FirebaseManager(this) }
@@ -94,7 +87,6 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
     val textStylingManager by lazy { TextStylingManager(this) }
     val timetableManager by lazy { TimetableManager(this) }
     val uiManager by lazy { UiManager(this) }
-    val updateManager by lazy { UpdateManager(this) }
     val userActionManager by lazy { UserActionManager(this) }
 
     val db
@@ -189,7 +181,7 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
 
         // initialize Timber to enable basic logging
         Timber.plant(loggingManager.logcatTree)
-        Timber.i("Initializing Vision app v${BuildConfig.VERSION_NAME}")
+        Timber.i("Initializing Calm Focus app v${BuildConfig.VERSION_NAME}")
         // initialize core objects
         AppData.read(this)
         App.db = AppDb(this)
@@ -198,7 +190,7 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
         App.config.migrate()
         // add database logging to Timber
         Timber.plant(loggingManager.databaseTree)
-        Timber.i("Initialized Vision app v${BuildConfig.VERSION_NAME}")
+        Timber.i("Initialized Calm Focus app v${BuildConfig.VERSION_NAME}")
 
         devMode = config.devMode ?: BuildConfig.DEBUG
         if (config.devModePassword != null)
@@ -220,7 +212,6 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
             .apply()
         Iconics.init(applicationContext)
         Iconics.respectFontBoundsDefault = true
-        Signing.getCert(this)
         Utils.initializeStorageDir(this)
         buildHttp()
 
@@ -242,10 +233,8 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
             shortcutManager.createShortcuts()
             
             if (config.appVersionCore < BuildConfig.VERSION_CODE) {
-                // force syncing all endpoints on update
+                // force syncing all e-journal endpoints on update
                 db.endpointTimerDao().clear()
-                config.sync.lastAppSync = 0L
-                config.hash = "invalid"
                 config.appVersionCore = BuildConfig.VERSION_CODE
             }
 
@@ -255,11 +244,6 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
                 SyncWorker.scheduleNext(this@App, false)
             else
                 SyncWorker.cancelNext(this@App)
-
-            if (config.sync.notifyAboutUpdates)
-                UpdateWorker.scheduleNext(this@App, false)
-            else
-                UpdateWorker.cancelNext(this@App)
         }
 
         db.metadataDao().countUnseen().observeForever { count: Int ->

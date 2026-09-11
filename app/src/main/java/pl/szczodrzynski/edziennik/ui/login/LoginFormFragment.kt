@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import pl.szczodrzynski.edziennik.App
-import pl.szczodrzynski.edziennik.BuildConfig
 import pl.szczodrzynski.edziennik.R
 import pl.szczodrzynski.edziennik.data.enums.LoginMode
 import pl.szczodrzynski.edziennik.data.enums.LoginType
@@ -261,10 +260,6 @@ class LoginFormFragment : Fragment(), CoroutineScope {
             "loginType" to loginType,
             "loginMode" to loginMode
         )
-
-        if (BuildConfig.DEBUG && b.fakeLogin.isChecked) {
-            payload.putBoolean("fakeLogin", true)
-        }
 
         if (platformStoreKey == null)
             payload.putAll(platformData?.toBundle() ?: Bundle())

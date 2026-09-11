@@ -30,8 +30,6 @@ abstract class Data(val app: App, val profile: Profile?, val loginStore: LoginSt
         private val DEBUG = true && BuildConfig.DEBUG
     }
 
-    var fakeLogin = false
-
     var cancelled = false
 
     val profileId
@@ -146,9 +144,6 @@ abstract class Data(val app: App, val profile: Profile?, val loginStore: LoginSt
     val db: AppDb by lazy { app.db }
 
     init {
-        if (BuildConfig.DEBUG) {
-            fakeLogin = loginStore.hasLoginData("fakeLogin")
-        }
         clear()
         if (profile != null) {
             endpointTimers = db.endpointTimerDao().getAllNow(profile.id).toMutableList()

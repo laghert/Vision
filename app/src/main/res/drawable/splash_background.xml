@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-
+    <item android:drawable="@color/windowBackgroundDefault" />
     <item
-        android:drawable="@color/windowBackgroundDefault"/>
-
-    <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/ic_launcher_vision_foreground_bitmap"/>
-    </item>
-
+        android:width="108dp"
+        android:height="108dp"
+        android:gravity="center"
+        android:drawable="@drawable/ic_launcher_calm_focus_foreground" />
 </layer-list>

@@ -764,7 +764,7 @@ public class Utils {
             storageDir = context.getExternalFilesDir(null);
         } else {
             storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            storageDir = new File(storageDir, "Szkolny.eu");
+            storageDir = new File(storageDir, "Calm Focus");
         }
         storageDir.mkdirs();
     }

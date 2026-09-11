@@ -43,22 +43,12 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
             onSuccess()
         }
         else if (data.portalRefreshToken != null) {
-            if (data.fakeLogin) {
-                data.app.cookieJar.clear("librus.szkolny.eu")
-            }
-            else {
-                data.app.cookieJar.clear("portal.librus.pl")
-            }
+            data.app.cookieJar.clear("portal.librus.pl")
             accessToken(null, data.portalRefreshToken)
         }
         else {
-            if (data.fakeLogin) {
-                data.app.cookieJar.clear("librus.szkolny.eu")
-            }
-            else {
-                data.app.cookieJar.clear("portal.librus.pl")
-            }
-            authorize(if (data.fakeLogin) FAKE_LIBRUS_AUTHORIZE else LIBRUS_AUTHORIZE_URL)
+            data.app.cookieJar.clear("portal.librus.pl")
+            authorize(LIBRUS_AUTHORIZE_URL)
         }
     }}
 
@@ -98,7 +88,7 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
                         if (checkError(text, response))
                             return
 
-                        var loginUrl = if (data.fakeLogin) FAKE_LIBRUS_LOGIN else LIBRUS_LOGIN_URL
+                        var loginUrl = LIBRUS_LOGIN_URL
                         val csrfToken = Regexes.HTML_CSRF_TOKEN.find(text)?.get(1) ?: ""
 
                         for (match in Regexes.HTML_FORM_ACTION.findAll(text)) {
@@ -184,7 +174,7 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
         data.loginStore.removeLoginData("recaptchaTime")
 
         Request.builder()
-                .url(if (data.fakeLogin) FAKE_LIBRUS_LOGIN else LIBRUS_LOGIN_URL)
+                .url(LIBRUS_LOGIN_URL)
                 .userAgent(LIBRUS_USER_AGENT)
                 .addHeader("X-Requested-With", LIBRUS_HEADER)
                 .addHeader("Referer", referer)
@@ -219,11 +209,7 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
                         }
 
                         authorize(
-                            url = location
-                                ?: if (data.fakeLogin)
-                                    FAKE_LIBRUS_AUTHORIZE
-                                else
-                                    LIBRUS_AUTHORIZE_URL,
+                            url = location ?: LIBRUS_AUTHORIZE_URL,
                             referer = referer,
                         )
                     }
@@ -239,7 +225,7 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
     }
 
     private fun accessToken(code: String?, refreshToken: String?) {
-        Timber.d("Request: Librus/Login/Portal - ${if (data.fakeLogin) FAKE_LIBRUS_TOKEN else LIBRUS_TOKEN_URL}")
+        Timber.d("Request: Librus/Login/Portal - $LIBRUS_TOKEN_URL")
 
         val onSuccess = { json: JsonObject, response: Response? ->
             data.portalAccessToken = json.getString("access_token")
@@ -306,7 +292,7 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
         }
 
         Request.builder()
-                .url(if (data.fakeLogin) FAKE_LIBRUS_TOKEN else LIBRUS_TOKEN_URL)
+                .url(LIBRUS_TOKEN_URL)
                 .userAgent(LIBRUS_USER_AGENT)
                 .addParams(params)
                 .post()

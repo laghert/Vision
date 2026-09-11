@@ -12,7 +12,6 @@ import pl.szczodrzynski.edziennik.data.api.VULCAN_HEBE_ENDPOINT_REGISTER_NEW
 import pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.DataVulcan
 import pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.data.VulcanHebe
 import pl.szczodrzynski.edziennik.data.api.models.ApiError
-import pl.szczodrzynski.edziennik.data.api.szkolny.SzkolnyApi
 import pl.szczodrzynski.edziennik.ext.JsonObject
 import pl.szczodrzynski.edziennik.ext.getString
 import pl.szczodrzynski.edziennik.ext.isNotNullNorEmpty
@@ -22,9 +21,7 @@ class VulcanLoginHebe(val data: DataVulcan, val onSuccess: () -> Unit) {
         private const val TAG = "VulcanLoginHebe"
     }
 
-    init { run {
-        // i'm sure this does something useful
-        // not quite sure what, though
+    init {
         if (data.studentSemesterNumber == 1 && data.semester1Id == 0)
             data.semester1Id = data.studentSemesterNumber
         if (data.studentSemesterNumber == 2 && data.semester2Id == 0)
@@ -34,20 +31,19 @@ class VulcanLoginHebe(val data: DataVulcan, val onSuccess: () -> Unit) {
 
         if (data.profile != null && data.isHebeLoginValid()) {
             onSuccess()
+        } else if (
+            data.symbol.isNotNullNorEmpty() &&
+            data.apiToken[data.symbol].isNotNullNorEmpty() &&
+            data.apiPin[data.symbol].isNotNullNorEmpty()
+        ) {
+            loginWithToken()
+        } else {
+            data.error(ApiError(TAG, ERROR_LOGIN_DATA_MISSING))
         }
-        else {
-            if (data.symbol.isNotNullNorEmpty() && data.apiToken[data.symbol].isNotNullNorEmpty() && data.apiPin[data.symbol].isNotNullNorEmpty()) {
-                loginWithToken()
-            }
-            else {
-                data.error(ApiError(TAG, ERROR_LOGIN_DATA_MISSING))
-            }
-        }
-    }}
+    }
 
     private fun copyFromLoginStore() {
         data.loginStore.data.apply {
-            // map form inputs to the symbol
             if (has("symbol")) {
                 data.symbol = getString("symbol")
                 remove("symbol")
@@ -68,7 +64,6 @@ class VulcanLoginHebe(val data: DataVulcan, val onSuccess: () -> Unit) {
     }
 
     private fun loginWithToken() {
-        val szkolnyApi = SzkolnyApi(data.app)
         val hebe = VulcanHebe(data, null)
 
         if (data.hebePublicKey == null || data.hebePrivateKey == null || data.hebePublicHash == null) {
@@ -77,12 +72,6 @@ class VulcanLoginHebe(val data: DataVulcan, val onSuccess: () -> Unit) {
             data.hebePrivateKey = privatePem
             data.hebePublicHash = publicHash
         }
-
-        val firebaseToken = szkolnyApi.runCatching({
-            getFirebaseToken("vulcan")
-        }, onError = {
-            // screw errors
-        }) ?: data.app.config.sync.tokenVulcan
 
         hebe.apiPost(
             TAG,
@@ -98,7 +87,7 @@ class VulcanLoginHebe(val data: DataVulcan, val onSuccess: () -> Unit) {
                 "CertificateThumbprint" to data.hebePublicHash
             ),
             baseUrl = true,
-            firebaseToken = firebaseToken
+            firebaseToken = data.app.config.sync.tokenVulcan
         ) { _: JsonObject, _ ->
             data.apiToken = data.apiToken.toMutableMap().also {
                 it[data.symbol] = it[data.symbol]?.substring(0, 3)

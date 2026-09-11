@@ -17,7 +17,6 @@ import pl.szczodrzynski.edziennik.ui.grades.models.ExpandableItemModel
 import pl.szczodrzynski.edziennik.ui.login.qr.LoginLibrusQrDecoder
 import pl.szczodrzynski.edziennik.ui.login.qr.LoginQrDecoder
 import pl.szczodrzynski.edziennik.ui.login.qr.LoginVulcanQrDecoder
-import pl.szczodrzynski.fslogin.realm.RealmData
 
 object LoginInfo {
 
@@ -198,6 +197,7 @@ object LoginInfo {
                         hintText = R.string.login_mode_vulcan_web_hint,
                         guideText = R.string.login_mode_vulcan_web_guide,
                         isTesting = true,
+                        isDevOnly = true,
                         isPlatformSelection = true,
                         credentials = listOf(
                             getEmailCredential("email"),
@@ -322,6 +322,7 @@ object LoginInfo {
                         name = R.string.login_mode_usos_oauth,
                         icon = R.drawable.login_mode_usos_api,
                         guideText = R.string.login_mode_usos_oauth_guide,
+                        isDevOnly = true,
                         isPlatformSelection = true,
                         credentials = listOf(),
                         errorCodes = mapOf(),

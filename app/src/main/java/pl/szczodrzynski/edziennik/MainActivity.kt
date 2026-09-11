@@ -22,8 +22,6 @@ import androidx.core.view.isVisible
 import androidx.navigation.NavOptions
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.danimahardhika.cafebar.CafeBar
-import com.danimahardhika.cafebar.CafeBarTheme
 import com.jetradarmobile.snowfall.SnowfallView
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.materialdrawer.model.DividerDrawerItem
@@ -44,12 +42,9 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import pl.droidsonroids.gif.GifDrawable
-import pl.szczodrzynski.edziennik.core.manager.AvailabilityManager.Error.Type
 import pl.szczodrzynski.edziennik.core.manager.UserActionManager
 import pl.szczodrzynski.edziennik.core.work.AppManagerDetectedEvent
 import pl.szczodrzynski.edziennik.core.work.SyncWorker
-import pl.szczodrzynski.edziennik.core.work.UpdateStateEvent
-import pl.szczodrzynski.edziennik.core.work.UpdateWorker
 import pl.szczodrzynski.edziennik.data.api.ERROR_VULCAN_API_DEPRECATED
 import pl.szczodrzynski.edziennik.data.api.edziennik.EdziennikTask
 import pl.szczodrzynski.edziennik.data.api.events.ApiTaskAllFinishedEvent
@@ -58,10 +53,8 @@ import pl.szczodrzynski.edziennik.data.api.events.ApiTaskFinishedEvent
 import pl.szczodrzynski.edziennik.data.api.events.ApiTaskProgressEvent
 import pl.szczodrzynski.edziennik.data.api.events.ApiTaskStartedEvent
 import pl.szczodrzynski.edziennik.data.api.events.ProfileListEmptyEvent
-import pl.szczodrzynski.edziennik.data.api.events.RegisterAvailabilityEvent
 import pl.szczodrzynski.edziennik.data.api.events.UserActionRequiredEvent
 import pl.szczodrzynski.edziennik.data.api.models.ApiError
-import pl.szczodrzynski.edziennik.data.api.szkolny.response.Update
 import pl.szczodrzynski.edziennik.data.db.entity.Message
 import pl.szczodrzynski.edziennik.data.db.entity.Profile
 import pl.szczodrzynski.edziennik.data.enums.FeatureType
@@ -88,11 +81,7 @@ import pl.szczodrzynski.edziennik.ui.base.dialog.SimpleDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.ChangelogDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.ErrorDetailsDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.settings.ProfileConfigDialog
-import pl.szczodrzynski.edziennik.ui.dialogs.sync.RegisterUnavailableDialog
-import pl.szczodrzynski.edziennik.ui.dialogs.sync.ServerMessageDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.sync.SyncViewListDialog
-import pl.szczodrzynski.edziennik.ui.dialogs.sync.UpdateAvailableDialog
-import pl.szczodrzynski.edziennik.ui.dialogs.sync.UpdateProgressDialog
 import pl.szczodrzynski.edziennik.ui.event.EventManualDialog
 import pl.szczodrzynski.edziennik.ui.login.LoginActivity
 import pl.szczodrzynski.edziennik.ui.main.ErrorSnackbar
@@ -336,7 +325,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         )
 
         SyncWorker.scheduleNext(app)
-        UpdateWorker.scheduleNext(app)
 
         // if loaded profile is archived, switch to the up-to-date version of it
         if (app.profile.archived) {
@@ -381,8 +369,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
         // WHAT'S NEW DIALOG
         if (app.config.appVersion < BuildConfig.VERSION_CODE) {
-            // force an AppSync after update
-            app.config.sync.lastAppSync = 0L
             ChangelogDialog(this).show()
             if (app.config.appVersion < 170) {
                 //Intent intent = new Intent(this, ChangelogIntroActivity.class);
@@ -390,44 +376,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             } else {
                 app.config.appVersion = BuildConfig.VERSION_CODE
             }
-        }
-
-        // RATE SNACKBAR
-        if (app.config.appRateSnackbarTime != 0L && app.config.appRateSnackbarTime <= System.currentTimeMillis()) {
-            navView.coordinator.postDelayed({
-                CafeBar.builder(this)
-                    .theme(CafeBarTheme.Custom(R.attr.colorSurfaceInverse.resolveAttr(this)))
-                    .content(R.string.rate_snackbar_text)
-                    .icon(CommunityMaterial.Icon3.cmd_star_outline.toDrawable())
-                    .positiveText(R.string.rate_snackbar_positive)
-                    .positiveColor(-0xb350b0)
-                    .negativeText(R.string.rate_snackbar_negative)
-                    .negativeColor(0xff666666.toInt())
-                    .neutralText(R.string.rate_snackbar_neutral)
-                    .neutralColor(0xff666666.toInt())
-                    .onPositive { cafeBar ->
-                        Utils.openGooglePlay(this)
-                        cafeBar.dismiss()
-                        app.config.appRateSnackbarTime = 0
-                    }
-                    .onNegative { cafeBar ->
-                        Toast.makeText(this,
-                            R.string.rate_snackbar_negative_message,
-                            Toast.LENGTH_LONG).show()
-                        cafeBar.dismiss()
-                        app.config.appRateSnackbarTime = 0
-                    }
-                    .onNeutral { cafeBar ->
-                        Toast.makeText(this, R.string.ok, Toast.LENGTH_LONG).show()
-                        cafeBar.dismiss()
-                        app.config.appRateSnackbarTime =
-                            System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000
-                    }
-                    .autoDismiss(false)
-                    .swipeToDismiss(true)
-                    .floating(true)
-                    .show()
-            }, 10000)
         }
 
         // CONTEXT MENU ITEMS
@@ -527,26 +475,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             return
         }
 
-        val error = withContext(Dispatchers.IO) {
-            app.availabilityManager.check(app.profile)
-        }
-        when (error?.type) {
-            Type.NOT_AVAILABLE -> {
-                swipeRefreshLayout.isRefreshing = false
-                navigate(navTarget = NavTarget.HOME)
-                RegisterUnavailableDialog(this, error.status!!).show()
-                return
-            }
-            Type.API_ERROR -> {
-                errorSnackbar.addError(error.apiError!!).show()
-                return
-            }
-            Type.NO_API_ACCESS -> {
-                Toast.makeText(this, R.string.error_no_api_access, Toast.LENGTH_SHORT).show()
-            }
-            else -> {}
-        }
-
         swipeRefreshLayout.isRefreshing = true
         Toast.makeText(this, fragmentToSyncName(navTarget), Toast.LENGTH_SHORT).show()
         val featureType = when (navTarget) {
@@ -565,29 +493,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             featureType?.let { setOf(it) },
             arguments = arguments
         ).enqueue(this)
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
-    fun onUpdateEvent(event: Update) {
-        EventBus.getDefault().removeStickyEvent(event)
-        UpdateAvailableDialog(this, event).show()
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
-    fun onUpdateStateEvent(event: UpdateStateEvent) {
-        if (!event.running)
-            return
-        EventBus.getDefault().removeStickyEvent(event)
-        UpdateProgressDialog(this, event.update ?: return, event.downloadId).show()
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
-    fun onRegisterAvailabilityEvent(event: RegisterAvailabilityEvent) {
-        EventBus.getDefault().removeStickyEvent(event)
-        val error = app.availabilityManager.check(app.profile, cacheOnly = true)
-        if (error != null) {
-            RegisterUnavailableDialog(this, error.status!!).show()
-        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -731,22 +636,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
         if (extras?.containsKey("action") == true) {
             val handled = when (extras.getString("action")) {
-                "updateRequest" -> {
-                    UpdateAvailableDialog(this, app.config.update).show()
-                    true
-                }
-                "serverMessage" -> {
-                    ServerMessageDialog(
-                        this,
-                        extras.getString("serverMessageTitle") ?: getString(R.string.app_name),
-                        extras.getString("serverMessageText") ?: ""
-                    ).show()
-                    true
-                }
-                "feedbackMessage" -> {
-                    intentNavTarget = NavTarget.FEEDBACK
-                    false
-                }
                 "userActionRequired" -> {
                     val event = UserActionRequiredEvent(
                         profileId = extras.getInt("profileId"),
@@ -878,9 +767,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         outState.putExtras("fragmentId" to navTarget)
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleIntent(intent?.extras)
+        handleIntent(intent.extras)
     }
 
     @Suppress("deprecation")

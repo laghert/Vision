@@ -93,52 +93,27 @@ class NoteManager(private val app: App) {
         return getOwner(note) != null
     }
 
+    @Suppress("UNUSED_PARAMETER")
     suspend fun saveNote(
         activity: AppCompatActivity,
         note: Note,
         teamId: Long?,
         wasShared: Boolean,
     ): Boolean {
-        val success = when {
-            !note.isShared && wasShared -> unshareNote(activity, note)
-            note.isShared -> shareNote(activity, note, teamId)
-            else -> true
-        }
-
-        if (!success)
-            return false
-
+        // Notes are local-only. Clear legacy sharing metadata when an old note is edited.
+        note.sharedBy = null
         withContext(Dispatchers.IO) {
             app.db.noteDao().add(note)
         }
         return true
     }
 
+    @Suppress("UNUSED_PARAMETER")
     suspend fun deleteNote(activity: AppCompatActivity, note: Note): Boolean {
-        val success = when {
-            note.isShared -> unshareNote(activity, note)
-            else -> true
-        }
-
-        if (!success)
-            return false
-
         withContext(Dispatchers.IO) {
             app.db.noteDao().delete(note)
         }
         return true
-    }
-
-    private suspend fun shareNote(activity: AppCompatActivity, note: Note, teamId: Long?): Boolean {
-        return app.api.runCatching(activity) {
-            shareNote(note, teamId)
-        } != null
-    }
-
-    private suspend fun unshareNote(activity: AppCompatActivity, note: Note): Boolean {
-        return app.api.runCatching(activity) {
-            unshareNote(note)
-        } != null
     }
 
     private fun getAdapterForItem(

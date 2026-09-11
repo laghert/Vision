@@ -7,7 +7,6 @@ package pl.szczodrzynski.edziennik.ui.debug
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import androidx.core.widget.doAfterTextChanged
 import androidx.sqlite.db.SimpleSQLiteQuery
 import com.chuckerteam.chucker.api.Chucker
 import com.chuckerteam.chucker.api.Chucker.SCREEN_HTTP
@@ -15,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.MainActivity
-import pl.szczodrzynski.edziennik.data.api.szkolny.interceptor.SignatureInterceptor
 import pl.szczodrzynski.edziennik.data.config.Config
 import pl.szczodrzynski.edziennik.data.db.entity.EventType.Companion.SOURCE_DEFAULT
 import pl.szczodrzynski.edziennik.databinding.LabFragmentBinding
@@ -28,7 +26,6 @@ import pl.szczodrzynski.edziennik.ext.onChange
 import pl.szczodrzynski.edziennik.ext.onClick
 import pl.szczodrzynski.edziennik.ext.resolveAttr
 import pl.szczodrzynski.edziennik.ext.startCoroutineTimer
-import pl.szczodrzynski.edziennik.ext.takeValue
 import pl.szczodrzynski.edziennik.ui.base.fragment.BaseFragment
 import pl.szczodrzynski.edziennik.ui.dialogs.ProfileRemoveDialog
 import pl.szczodrzynski.edziennik.ui.dialogs.RestartDialog
@@ -117,20 +114,6 @@ class LabPageFragment : BaseFragment<LabFragmentBinding, AppCompatActivity>(
             app.profile.archived = false
             app.profile.archiveId = null
             app.profileSave()
-        }
-
-        b.resetCert.onClick {
-            app.config.apiInvalidCert = null
-        }
-
-        b.apiKey.setText(app.config.apiKeyCustom ?: SignatureInterceptor.API_KEY)
-        b.apiKey.doAfterTextChanged {
-            it?.toString()?.let { key ->
-                if (key == SignatureInterceptor.API_KEY)
-                    app.config.apiKeyCustom = null
-                else
-                    app.config.apiKeyCustom = key.takeValue()?.trim()
-            }
         }
 
         b.clearConfigProfile.onClick {

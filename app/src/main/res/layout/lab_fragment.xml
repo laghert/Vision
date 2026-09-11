@@ -139,31 +139,6 @@
                 android:checked="@={app.config.archiverEnabled}"
                 android:text="Archiver enabled" />
 
-            <com.google.android.material.checkbox.MaterialCheckBox
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:checked="@={app.config.apiAvailabilityCheck}"
-                android:text="Availability check enabled" />
-
-            <Button
-                android:id="@+id/resetCert"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Reset API signature"
-                android:textAllCaps="false" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
-
-                <pl.szczodrzynski.edziennik.utils.TextInputKeyboardEdit
-                    android:id="@+id/apiKey"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="API Key" />
-            </com.google.android.material.textfield.TextInputLayout>
-
             <Button
                 android:id="@+id/disableDebug"
                 android:layout_width="match_parent"

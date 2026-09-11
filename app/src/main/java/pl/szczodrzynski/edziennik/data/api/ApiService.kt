@@ -18,9 +18,8 @@ import pl.szczodrzynski.edziennik.data.api.events.requests.ServiceCloseRequest
 import pl.szczodrzynski.edziennik.data.api.events.requests.TaskCancelRequest
 import pl.szczodrzynski.edziennik.data.api.interfaces.EdziennikCallback
 import pl.szczodrzynski.edziennik.data.api.models.ApiError
-import pl.szczodrzynski.edziennik.data.api.task.ErrorReportTask
 import pl.szczodrzynski.edziennik.data.api.task.IApiTask
-import pl.szczodrzynski.edziennik.data.api.task.SzkolnyTask
+import pl.szczodrzynski.edziennik.data.api.task.LocalPostSyncTask
 import pl.szczodrzynski.edziennik.data.db.entity.Profile
 import pl.szczodrzynski.edziennik.ext.toApiError
 import timber.log.Timber
@@ -47,10 +46,9 @@ class ApiService : Service() {
 
     private val syncingProfiles = mutableListOf<Profile>()
 
-    private var szkolnyTaskFinished = false
+    private var postSyncFinished = false
     private val allTaskRequestList = mutableListOf<Any>()
     private val taskQueue = mutableListOf<IApiTask>()
-    private val errorList = mutableListOf<ApiError>()
 
     private var serviceClosed = false
         set(value) { field = value; notification.serviceClosed = value }
@@ -97,7 +95,6 @@ class ApiService : Service() {
             apiError.profileId = taskProfileId
 
             EventBus.getDefault().postSticky(ApiTaskErrorEvent(apiError))
-            errorList.add(apiError)
             Timber.e(apiError.throwable)
 
             if (apiError.isCritical) {
@@ -143,7 +140,7 @@ class ApiService : Service() {
         checkIfTaskFrozen()
         if (taskIsRunning)
             return
-        if (taskCancelled || serviceClosed || (taskQueue.isEmpty() && szkolnyTaskFinished)) {
+        if (taskCancelled || serviceClosed || (taskQueue.isEmpty() && postSyncFinished)) {
             allCompleted()
             return
         }
@@ -153,8 +150,8 @@ class ApiService : Service() {
         val task = if (taskQueue.isNotEmpty()) {
             taskQueue.removeAt(0)
         } else {
-            szkolnyTaskFinished = true
-            SzkolnyTask(app, syncingProfiles)
+            postSyncFinished = true
+            LocalPostSyncTask(app, syncingProfiles)
         }
 
         task.taskId = ++taskMaximumId
@@ -180,8 +177,7 @@ class ApiService : Service() {
         try {
             when (task) {
                 is EdziennikTask -> task.run(app, taskCallback)
-                is ErrorReportTask -> task.run(app, taskCallback, notification, errorList)
-                is SzkolnyTask -> task.run(taskCallback)
+                is LocalPostSyncTask -> task.run(taskCallback)
             }
         } catch (e: Exception) {
             taskCallback.onError(e.toApiError(TAG))

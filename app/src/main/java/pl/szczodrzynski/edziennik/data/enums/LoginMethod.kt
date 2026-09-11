@@ -47,13 +47,13 @@ enum class LoginMethod(
     LIBRUS_SYNERGIA(
         loginType = LoginType.LIBRUS,
         id = 2300,
-        isPossible = { _, loginStore -> !loginStore.hasLoginData("fakeLogin") },
+        isPossible = { _, _ -> true },
         requiredLoginMethod = { _, _ -> LIBRUS_API },
     ),
     LIBRUS_MESSAGES(
         loginType = LoginType.LIBRUS,
         id = 2400,
-        isPossible = { _, loginStore -> !loginStore.hasLoginData("fakeLogin") },
+        isPossible = { _, _ -> true },
         requiredLoginMethod = { _, _ -> LIBRUS_SYNERGIA },
     ),
     VULCAN_WEB_MAIN(

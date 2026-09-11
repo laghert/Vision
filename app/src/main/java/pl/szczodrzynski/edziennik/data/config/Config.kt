@@ -7,14 +7,12 @@ package pl.szczodrzynski.edziennik.data.config
 import com.google.gson.JsonObject
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.BuildConfig
+import pl.szczodrzynski.edziennik.core.manager.GradesManager.Companion.ORDER_BY_DATE_DESC
 import pl.szczodrzynski.edziennik.data.config.migration.ConfigMigration11
-import pl.szczodrzynski.edziennik.data.api.szkolny.response.RegisterAvailabilityStatus
-import pl.szczodrzynski.edziennik.data.api.szkolny.response.Update
 import pl.szczodrzynski.edziennik.data.config.migration.ConfigMigration14
 import pl.szczodrzynski.edziennik.data.enums.NavTarget
 import pl.szczodrzynski.edziennik.data.enums.Theme
 import pl.szczodrzynski.edziennik.ext.HOUR
-import pl.szczodrzynski.edziennik.core.manager.GradesManager.Companion.ORDER_BY_DATE_DESC
 import pl.szczodrzynski.edziennik.utils.models.Time
 
 class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
@@ -45,23 +43,16 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
 
     var lastProfileId: Int by config<Int>(0)
     var loginFinished: Boolean by config<Boolean>(false)
-    var privacyPolicyAccepted: Boolean by config<Boolean>(false)
-    var update: Update? by config<Update?>(null)
-    var updatesChannel: String by config<String>("release")
 
     var devMode: Boolean? by config<Boolean?>("debugMode", null)
     var devModePassword: String? by config<String?>(null)
     var enableChucker: Boolean? by config<Boolean?>(null)
 
-    var apiAvailabilityCheck: Boolean by config<Boolean>(true)
-    var apiInvalidCert: String? by config<String?>(null)
-    var apiKeyCustom: String? by config<String?>(null)
     var appInstalledTime: Long by config<Long>(0L)
     var appRateSnackbarTime: Long by config<Long>(0L)
     var lastLogCleanupTime: Long by config<Long>(0L)
     var appVersion: Int by config<Int>(BuildConfig.VERSION_CODE)
     var appVersionCore: Int by config<Int>(0)
-    var validation: String? by config<String?>(null, "buildValidation")
 
     var archiverEnabled: Boolean by config<Boolean>(true)
     var runSync: Boolean by config<Boolean>(false)
@@ -94,9 +85,6 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
         var onlyWifi: Boolean by config<Boolean>("syncOnlyWifi", false)
 
         var dontShowAppManagerDialog: Boolean by config<Boolean>(false)
-        var lastAppSync: Long by config<Long>(0L)
-        var notifyAboutUpdates: Boolean by config<Boolean>(true)
-        var webPushEnabled: Boolean by config<Boolean>(true)
 
         // Quiet Hours
         var quietHoursEnabled: Boolean by config<Boolean>(false)
@@ -104,8 +92,7 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
         var quietHoursEnd: Time? by config<Time?>(null)
         var quietDuringLessons: Boolean by config<Boolean>(false)
 
-        // FCM Tokens
-        var tokenApp: String? by config<String?>(null)
+        // Provider FCM tokens
         var tokenMobidziennik: String? by config<String?>(null)
         var tokenLibrus: String? by config<String?>(null)
         var tokenVulcan: String? by config<String?>(null)
@@ -115,21 +102,6 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
         var tokenLibrusList: List<Int> by config<List<Int>> { listOf() }
         var tokenVulcanList: List<Int> by config<List<Int>> { listOf() }
         var tokenVulcanHebeList: List<Int> by config<List<Int>> { listOf() }
-
-        // Register Availability
-        private var registerAvailabilityMap: Map<String, RegisterAvailabilityStatus> by config<Map<String, RegisterAvailabilityStatus>>("registerAvailability") { mapOf() }
-        private var registerAvailabilityFlavor: String? by config<String?>(null)
-
-        var registerAvailability: Map<String, RegisterAvailabilityStatus>
-            get() {
-                if (BuildConfig.FLAVOR != registerAvailabilityFlavor)
-                    return mapOf()
-                return registerAvailabilityMap
-            }
-            set(value) {
-                registerAvailabilityMap = value
-                registerAvailabilityFlavor = BuildConfig.FLAVOR
-            }
     }
 
     inner class Timetable {

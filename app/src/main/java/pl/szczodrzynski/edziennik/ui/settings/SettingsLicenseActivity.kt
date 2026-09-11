@@ -119,14 +119,6 @@ class SettingsLicenseActivity : MaterialAboutActivity() {
         ),
 
         license(
-            "CafeBar",
-            "2017",
-            "Dani Mahardhika",
-            OpenSourceLicense.APACHE_2,
-            "https://github.com/szkolny-eu/cafebar"
-        ),
-
-        license(
             "FSLogin",
             "2021",
             "kuba2k2",
@@ -207,27 +199,11 @@ class SettingsLicenseActivity : MaterialAboutActivity() {
         ),
 
         license(
-            "Android Swipe Layout",
-            "2014",
-            "代码家",
-            OpenSourceLicense.MIT,
-            "https://github.com/daimajia/AndroidSwipeLayout"
-        ),
-
-        license(
             "CircularProgressIndicator",
             "2018",
             "Anton Kozyriatskyi",
             OpenSourceLicense.APACHE_2,
             "https://github.com/antonKozyriatskyi/CircularProgressIndicator"
-        ),
-
-        license(
-            "ChatMessageView",
-            "2019",
-            "Tsubasa Nakayama",
-            OpenSourceLicense.APACHE_2,
-            "https://github.com/bassaer/ChatMessageView"
         ),
 
         license(
@@ -262,13 +238,6 @@ class SettingsLicenseActivity : MaterialAboutActivity() {
             "https://github.com/wulkanowy/uonet-request-signer"
         ),
 
-        license(
-            "material-intro",
-            "2017",
-            "Jan Heinrich Reimer",
-            OpenSourceLicense.MIT,
-            "https://github.com/heinrichreimer/material-intro"
-        ),
 
         license(
             "Color Picker",

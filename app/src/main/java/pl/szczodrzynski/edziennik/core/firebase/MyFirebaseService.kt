@@ -25,17 +25,11 @@ class MyFirebaseService : FirebaseService(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
-    override fun onNewToken(token: String?) {
-        Timber.d("Got new token: $token")
-        app.config.sync.tokenApp = token
-    }
-
     override fun onMessageReceived(message: Message) {
         launch(Dispatchers.Default) {
             Timber.d("Message received from ${message.from}: $message")
             val profiles = app.db.profileDao().profilesForFirebaseNow
             when (message.from) {
-                "640759989760" -> SzkolnyAppFirebase(app, profiles, message)
                 "747285019373" -> SzkolnyMobidziennikFirebase(app, profiles, message)
                 "513056078587" -> SzkolnyLibrusFirebase(app, profiles, message)
                 "987828170337" -> SzkolnyVulcanFirebase(app, profiles, message)

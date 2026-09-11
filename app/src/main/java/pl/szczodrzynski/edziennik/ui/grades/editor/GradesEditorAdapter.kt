@@ -10,7 +10,6 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.RecyclerView
-import com.daimajia.swipe.SwipeLayout
 import com.mikepenz.iconics.view.IconicsImageView
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.R
@@ -42,7 +41,11 @@ class GradesEditorAdapter(
 
         val editorGrade = gradeList[position]
 
-        holder.gradesListRoot.setOnClickListener { holder.swipeLayout.toggle() }
+        holder.gradesListRoot.setOnClickListener { view ->
+            fragment.modifyGradeChooser(view, editorGrade) {
+                listener.onClickEdit(editorGrade.id)
+            }
+        }
 
         val gradeColor = gradeNameToColor(editorGrade.name)
 
@@ -64,34 +67,6 @@ class GradesEditorAdapter(
         holder.gradesListValue.text = mContext.getString(R.string.grades_value_format, DecimalFormat("0.00").format(editorGrade.value.toDouble()))
 
 
-        holder.swipeLayout.showMode = SwipeLayout.ShowMode.LayDown
-        holder.swipeLayout.addDrag(SwipeLayout.DragEdge.Right, holder.bottomWrapper)
-        holder.swipeLayout.addSwipeListener(object : SwipeLayout.SwipeListener {
-            override fun onClose(layout: SwipeLayout) {
-                //when the SurfaceView totally cover the BottomView.
-            }
-
-            override fun onUpdate(layout: SwipeLayout, leftOffset: Int, topOffset: Int) {
-                //you are swiping.
-            }
-
-            override fun onStartOpen(layout: SwipeLayout) {
-
-            }
-
-            override fun onOpen(layout: SwipeLayout) {
-                //when the BottomView totally show.
-            }
-
-            override fun onStartClose(layout: SwipeLayout) {
-
-            }
-
-            override fun onHandRelease(layout: SwipeLayout, xvel: Float, yvel: Float) {
-                //when user's hand released.
-            }
-        })
-
         holder.buttonRemove.setOnClickListener { listener.onClickRemove(editorGrade.id) }
 
         holder.buttonEdit.setOnClickListener { v -> fragment.modifyGradeChooser(v, editorGrade) { listener.onClickEdit(editorGrade.id) } }
@@ -107,8 +82,6 @@ class GradesEditorAdapter(
         var gradesListWeight: TextView = itemView.findViewById(R.id.gradesListWeight)
         var gradesListValue: TextView = itemView.findViewById(R.id.gradesListValue)
         var gradesListCategory: TextView = itemView.findViewById(R.id.gradesListCategory)
-        var swipeLayout: SwipeLayout = itemView.findViewById(R.id.swipeLayout)
-        var bottomWrapper: View = itemView.findViewById(R.id.bottom_wrapper)
         var buttonRemove: IconicsImageView = itemView.findViewById(R.id.buttonRemove)
         var buttonEdit: IconicsImageView = itemView.findViewById(R.id.buttonEdit)
     }

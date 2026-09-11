@@ -101,7 +101,7 @@ class LoginEggsFragment : Fragment(), CoroutineScope {
                     }
                 }
             }, "EggInterface")
-            loadUrl("https://szkolny.eu/game/runner.html")
+            loadUrl("about:blank")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
