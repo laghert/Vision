@@ -169,6 +169,22 @@ class Librus(val app: App, val profile: Profile?, val loginStore: LoginStore, va
             override fun onProgress(step: Float) { callback.onProgress(step) }
             override fun onStartProgress(stringRes: Int) { callback.onStartProgress(stringRes) }
             override fun onError(apiError: ApiError) {
+                // Missing or unavailable collections are valid for some account roles.
+                // During a regular sync, skip only the current endpoint without invoking
+                // its parser, so existing local data is never interpreted as stale/removed.
+                if (apiError.errorCode in setOf(
+                        ERROR_LIBRUS_API_DATA_NOT_FOUND,
+                        ERROR_LIBRUS_API_RESOURCE_ACCESS_DENIED,
+                    ) &&
+                    data.profile != null &&
+                    afterLogin == null
+                ) {
+                    Timber.tag(apiError.tag).i(
+                        "Librus resource unavailable for ${apiError.request?.url()}; continuing sync",
+                    )
+                    data()
+                    return
+                }
                 if (apiError.errorCode in internalErrorList) {
                     // finish immediately if the same error occurs twice during the same sync
                     callback.onError(apiError)

@@ -70,10 +70,16 @@ abstract class EventDao : BaseDao<Event, EventFull> {
             getRaw("$QUERY WHERE $NOT_BLACKLISTED AND events.profileId = $profileId AND eventType = $type AND $filter $ORDER_BY")
     fun getAllByDate(profileId: Int, date: Date) =
             getRaw("$QUERY WHERE $NOT_BLACKLISTED AND events.profileId = $profileId AND eventDate = '${date.stringY_m_d}' $ORDER_BY")
+    fun getAllByDateRange(profileId: Int, dateFrom: Date, dateTo: Date) =
+            getRaw("$QUERY WHERE $NOT_BLACKLISTED AND events.profileId = $profileId AND eventDate >= '${dateFrom.stringY_m_d}' AND eventDate <= '${dateTo.stringY_m_d}' $ORDER_BY")
     fun getAllByDateTime(profileId: Int, date: Date, time: Time) =
             getRaw("$QUERY WHERE $NOT_BLACKLISTED AND events.profileId = $profileId AND eventDate = '${date.stringY_m_d}' AND eventTime = '${time.stringValue}' $ORDER_BY")
     fun getNearestNotDone(profileId: Int, today: Date, limit: Int) =
             getRaw("$QUERY WHERE $NOT_BLACKLISTED AND $NOT_DONE AND events.profileId = $profileId AND eventDate >= '${today.stringY_m_d}' $ORDER_BY LIMIT $limit")
+    fun getUpcomingNotDone(profileId: Int, today: Date, limit: Int) =
+            getRaw("$QUERY WHERE $NOT_BLACKLISTED AND $NOT_DONE AND events.profileId = $profileId AND eventType != ${Event.TYPE_HOMEWORK} AND eventDate >= '${today.stringY_m_d}' $ORDER_BY LIMIT $limit")
+    fun getHomeworkNotDoneByDate(profileId: Int, date: Date) =
+            getRaw("$QUERY WHERE $NOT_BLACKLISTED AND $NOT_DONE AND events.profileId = $profileId AND eventType = ${Event.TYPE_HOMEWORK} AND eventDate = '${date.stringY_m_d}' $ORDER_BY")
 
     // GET ALL - NOW
     fun getAllNow(profileId: Int) =

@@ -132,7 +132,11 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             ?.get<Bundle>(CalmFocusRoute.SCREEN_ARGUMENTS_KEY)
             ?.let { navArguments = it }
         if (destination.route == CalmFocusRoute.SCREEN_PATTERN) {
-            arguments?.getInt(CalmFocusRoute.TARGET_ID_ARGUMENT)?.let(NavTarget::getById)?.let {
+            arguments
+                ?.takeIf { it.containsKey(CalmFocusRoute.TARGET_ID_ARGUMENT) }
+                ?.getInt(CalmFocusRoute.TARGET_ID_ARGUMENT)
+                ?.let(NavTarget::getByIdOrNull)
+                ?.let {
                 navTarget = it
                 shellState.target = it
                 updateTaskDescription(it)
@@ -207,6 +211,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         app.db.profileDao().all.observe(this) { profiles ->
             val allArchived = profiles.all { it.archived }
             shellState.profiles = profiles.filter { it.id >= 0 && (!it.archived || allArchived) }
+            profiles.firstOrNull { it.id == App.profileId }?.let { currentProfile ->
+                shellState.profile = currentProfile
+            }
         }
         app.db.metadataDao().unreadCounts.observe(this) {
             shellState.unreadCounters = it
@@ -224,6 +231,12 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                     withContext(Dispatchers.IO) { app.db.profileDao().getNotArchivedOf(archiveId) }
                 }
                 if (profile != null) selectProfile(profile) else navigate(profileId = 0)
+            }
+        }
+
+        if (app.profile.loginStoreType == pl.szczodrzynski.edziennik.data.enums.LoginType.DEMO) {
+            launch(Dispatchers.IO) {
+                pl.szczodrzynski.edziennik.data.api.edziennik.demo.DemoDataSeeder.seed(app, app.profileId)
             }
         }
 
@@ -390,6 +403,15 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     internal fun refreshCurrentFeature() {
         launch { syncCurrentFeature() }
+    }
+
+    internal fun retryProfileSync() {
+        if (app.profile.loginStoreType == pl.szczodrzynski.edziennik.data.enums.LoginType.DEMO) {
+            launch(Dispatchers.IO) {
+                pl.szczodrzynski.edziennik.data.api.edziennik.demo.DemoDataSeeder.seed(app, app.profileId)
+            }
+        }
+        launch { syncCurrentFeature(forceFullSync = true) }
     }
 
     private fun canNavigate(): Boolean = onBeforeNavigate?.invoke() != false
@@ -586,7 +608,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
     }
 
-    private suspend fun syncCurrentFeature() {
+    private suspend fun syncCurrentFeature(forceFullSync: Boolean = false) {
         if (app.profile.archived) {
             SimpleDialog<Unit>(this) {
                 title(R.string.profile_archived_title)
@@ -618,26 +640,43 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
 
         swipeRefreshLayout.isRefreshing = true
-        Toast.makeText(this, fragmentToSyncName(navTarget), Toast.LENGTH_SHORT).show()
-        val featureType = when (navTarget) {
-            NavTarget.MESSAGES -> if (MessagesFragment.pageSelection == Message.TYPE_SENT) {
-                FeatureType.MESSAGES_SENT
-            } else {
-                FeatureType.MESSAGES_INBOX
+        Toast.makeText(
+            this,
+            if (forceFullSync) R.string.sync_feature_syncing_all else fragmentToSyncName(navTarget),
+            Toast.LENGTH_SHORT,
+        ).show()
+        val featureType = if (forceFullSync) {
+            null
+        } else {
+            when (navTarget) {
+                NavTarget.MESSAGES -> if (MessagesFragment.pageSelection == Message.TYPE_SENT) {
+                    FeatureType.MESSAGES_SENT
+                } else {
+                    FeatureType.MESSAGES_INBOX
+                }
+                else -> navTarget.featureType
             }
-            else -> navTarget.featureType
         }
-        val arguments = when (navTarget) {
-            NavTarget.TIMETABLE -> JsonObject(
-                "weekStart" to TimetableFragment.pageSelection?.weekStart?.stringY_m_d,
+        val arguments = if (forceFullSync) {
+            null
+        } else {
+            when (navTarget) {
+                NavTarget.TIMETABLE -> JsonObject(
+                    "weekStart" to TimetableFragment.pageSelection?.weekStart?.stringY_m_d,
+                )
+                else -> null
+            }
+        }
+        val syncTask = if (forceFullSync) {
+            EdziennikTask.forceSyncProfile(App.profileId)
+        } else {
+            EdziennikTask.syncProfile(
+                App.profileId,
+                featureType?.let(::setOf),
+                arguments = arguments,
             )
-            else -> null
         }
-        EdziennikTask.syncProfile(
-            App.profileId,
-            featureType?.let(::setOf),
-            arguments = arguments,
-        ).enqueue(this)
+        syncTask.enqueue(this)
     }
 
     private fun fragmentToSyncName(target: NavTarget): Int = when (target) {
@@ -877,7 +916,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     private fun updateTaskDescription(target: NavTarget) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return
-        val bitmap = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher_v5)
+        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_launcher_vision_foreground)
         @Suppress("deprecation")
         setTaskDescription(
             ActivityManager.TaskDescription(

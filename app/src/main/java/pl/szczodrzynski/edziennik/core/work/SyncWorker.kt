@@ -35,10 +35,10 @@ class SyncWorker(val context: Context, val params: WorkerParameters) : Worker(co
                 return
             }
             val onlyWifi = app.config.sync.onlyWifi
-            val syncInterval = app.config.sync.interval.toLong()
+            val syncInterval = calculateSmartSyncInterval(app)
 
-            val syncAt = System.currentTimeMillis() + syncInterval*1000
-            Timber.d("Scheduling work at ${syncAt.formatDate()}")
+            val syncAt = System.currentTimeMillis() + syncInterval * 1000
+            Timber.d("Scheduling work in ${syncInterval / 60} min at ${syncAt.formatDate()}")
 
             val constraints = Constraints.Builder()
                     .setRequiredNetworkType(
@@ -56,6 +56,40 @@ class SyncWorker(val context: Context, val params: WorkerParameters) : Worker(co
 
             WorkManager.getInstance(app).enqueue(syncWorkRequest)
         }
+
+        /**
+         * Computes smart sync interval in seconds based on school windows:
+         * - 06:00 - 10:00: 15 minutes (morning changes & substitutions)
+         * - 18:00 - 23:00: 15 minutes (evening grades & homework)
+         * - 10:00 - 18:00: 60 minutes (daytime school)
+         * - 23:00 - 06:00: sleep until 06:00 (night quiet)
+         * - Weekends: 2 hours (120 minutes)
+         */
+        fun calculateSmartSyncInterval(app: App): Long {
+            val cal = java.util.Calendar.getInstance()
+            val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+            val dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK)
+            val isWeekend = dayOfWeek == java.util.Calendar.SATURDAY || dayOfWeek == java.util.Calendar.SUNDAY
+
+            return when {
+                isWeekend -> 2 * 3600L
+                hour in 6..9 -> 15 * 60L // 6:00 - 10:00 morning window
+                hour in 18..22 -> 15 * 60L // 18:00 - 23:00 evening window
+                hour in 10..17 -> 60 * 60L // 10:00 - 18:00 school daytime
+                else -> {
+                    // 23:00 - 06:00 night window: sleep until 6:00 AM!
+                    val target = java.util.Calendar.getInstance().apply {
+                        if (hour >= 23) add(java.util.Calendar.DAY_OF_MONTH, 1)
+                        set(java.util.Calendar.HOUR_OF_DAY, 6)
+                        set(java.util.Calendar.MINUTE, 0)
+                        set(java.util.Calendar.SECOND, 0)
+                    }
+                    val diff = (target.timeInMillis - System.currentTimeMillis()) / 1000
+                    diff.coerceIn(15 * 60L, 8 * 3600L)
+                }
+            }
+        }
+
 
         /**
          * Cancel any scheduled sync job.

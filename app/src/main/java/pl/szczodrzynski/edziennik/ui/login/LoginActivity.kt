@@ -43,6 +43,7 @@ class LoginActivity : AppCompatActivity(), CoroutineScope {
     var lastError: ApiError? = null
     val profiles = mutableListOf<LoginSummaryAdapter.Item>()
     val loginStores = mutableListOf<LoginStore>()
+    val emptyDuplicateProfileIds = linkedSetOf<Int>()
 
     fun getRootView() = b.root
 

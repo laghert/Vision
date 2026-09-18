@@ -34,7 +34,11 @@ class Demo(
         featureTypes: Set<FeatureType>?,
         onlyEndpoints: Set<Int>?,
         arguments: JsonObject?,
-    ) = completed()
+    ) {
+        val targetProfileId = profile?.id ?: loginStore.id
+        DemoDataSeeder.seed(app, targetProfileId)
+        completed()
+    }
 
     override fun getMessage(message: MessageFull) =
         completed()
@@ -63,19 +67,21 @@ class Demo(
             loginStoreId = loginStore.id,
             loginStoreType = LoginType.DEMO,
             name = "Jan Szkolny",
-            subname = "Calm Focus Demo",
+            subname = "Vision Demo",
             studentNameLong = "Jan Szkolny",
             studentNameShort = "Jan S.",
             accountName = null,
         )
         profile.apply {
             empty = false
-            syncEnabled = false
+            syncEnabled = true
             registration = Profile.REGISTRATION_DISABLED
-            studentClassName = "1A"
+            studentClassName = "3B"
+            studentNumber = 17
             userCode = "nologin:1234"
             dateYearEnd.month = 8
         }
+        DemoDataSeeder.seed(app, profile.id)
         EventBus.getDefault().postSticky(FirstLoginFinishedEvent(listOf(profile), loginStore))
         completed()
     }

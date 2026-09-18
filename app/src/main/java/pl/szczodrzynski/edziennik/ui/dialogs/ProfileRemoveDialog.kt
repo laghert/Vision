@@ -48,6 +48,7 @@ class ProfileRemoveDialog(
             app.db.luckyNumberDao().clear(profileId)
             app.db.messageDao().clear(profileId)
             app.db.messageRecipientDao().clear(profileId)
+            app.db.noteDao().clear(profileId)
             app.db.noticeDao().clear(profileId)
             app.db.noticeTypeDao().clear(profileId)
             app.db.notificationDao().clear(profileId)
@@ -57,6 +58,7 @@ class ProfileRemoveDialog(
             app.db.teacherDao().clear(profileId)
             app.db.teamDao().clear(profileId)
             app.db.timetableDao().clear(profileId)
+            app.db.timetableManualDao().clear(profileId)
 
             app.db.metadataDao().deleteAll(profileId)
 

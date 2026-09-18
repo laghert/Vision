@@ -58,7 +58,7 @@ val MOBIDZIENNIK_USER_AGENT = SYSTEM_USER_AGENT
 const val VULCAN_HEBE_USER_AGENT = "Dart/2.10 (dart:io)"
 const val VULCAN_HEBE_APP_NAME = "DzienniczekPlus 2.0"
 const val VULCAN_HEBE_APP_VERSION = "22.09.02 (G)"
-private const val VULCAN_API_DEVICE_NAME_PREFIX = "Calm Focus "
+private const val VULCAN_API_DEVICE_NAME_PREFIX = "Vision "
 private const val VULCAN_API_DEVICE_NAME_SUFFIX = " - nie usuwać"
 val VULCAN_API_DEVICE_NAME by lazy {
     val base = "$VULCAN_API_DEVICE_NAME_PREFIX${Build.MODEL}"

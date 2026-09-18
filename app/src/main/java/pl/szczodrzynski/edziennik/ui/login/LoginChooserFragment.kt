@@ -255,10 +255,11 @@ class LoginChooserFragment : Fragment(), CoroutineScope {
         }
 
         launch {
-            if (loginMode.isTesting || loginMode.isDevOnly) {
+            val isNonLibrusBeta = loginType.loginType != LoginType.LIBRUS
+            if (isNonLibrusBeta || loginMode.isTesting || loginMode.isDevOnly) {
                 SimpleDialog<Unit>(activity) {
                     title(R.string.login_chooser_testing_title)
-                    message(R.string.login_chooser_testing_text)
+                    message(if (isNonLibrusBeta) R.string.login_chooser_beta_warning else R.string.login_chooser_testing_text)
                     positive(R.string.ok) {
                         navigateToLoginMode(loginType, loginMode)
                     }

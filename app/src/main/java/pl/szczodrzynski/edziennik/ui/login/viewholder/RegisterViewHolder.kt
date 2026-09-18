@@ -28,5 +28,6 @@ class RegisterViewHolder(
         b.logo.setImageResource(item.registerLogo)
         b.name.setText(item.registerName)
         b.description.isVisible = false
+        b.betaBadge.isVisible = item.loginType != pl.szczodrzynski.edziennik.data.enums.LoginType.LIBRUS && item.loginType != pl.szczodrzynski.edziennik.data.enums.LoginType.TEMPLATE
     }
 }

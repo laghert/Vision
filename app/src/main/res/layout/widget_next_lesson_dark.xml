@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widgetNextLessonRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background_dark"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/widgetNextLessonLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/primaryTextDark"
+        android:textSize="11sp"
+        tools:text="Za 12 min" />
+
+    <TextView
+        android:id="@+id/widgetNextLessonSubject"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/primaryTextDark"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        tools:text="Matematyka" />
+
+    <TextView
+        android:id="@+id/widgetNextLessonMeta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/primaryTextDark"
+        android:textSize="12sp"
+        tools:text="Sala 14 • 8:00–8:45" />
+</LinearLayout>

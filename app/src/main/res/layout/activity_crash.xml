@@ -104,7 +104,7 @@
             <ImageView
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                app:srcCompat="@mipmap/ic_splash_v5" />
+                app:srcCompat="@drawable/ic_launcher_vision_foreground" />
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

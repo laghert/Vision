@@ -41,6 +41,7 @@ open class EdziennikTask(override val profileId: Int, val request: Any) : IApiTa
         fun firstLogin(loginStore: LoginStore) = EdziennikTask(-1, FirstLoginRequest(loginStore))
         fun sync() = EdziennikTask(-1, SyncRequest())
         fun syncProfile(profileId: Int, featureTypes: Set<FeatureType>? = null, onlyEndpoints: Set<Int>? = null, arguments: JsonObject? = null) = EdziennikTask(profileId, SyncProfileRequest(featureTypes, onlyEndpoints, arguments))
+        fun forceSyncProfile(profileId: Int) = syncProfile(profileId, onlyEndpoints = emptySet())
         fun syncProfileList(profileList: Set<Int>) = EdziennikTask(-1, SyncProfileListRequest(profileList))
         fun messageGet(profileId: Int, message: MessageFull) = EdziennikTask(profileId, MessageGetRequest(message))
         fun messageSend(profileId: Int, recipients: Set<Teacher>, subject: String, text: String) = EdziennikTask(profileId, MessageSendRequest(recipients, subject, text))

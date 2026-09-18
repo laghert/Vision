@@ -11,7 +11,6 @@ import pl.szczodrzynski.edziennik.ui.debug.DebugFragment
 import pl.szczodrzynski.edziennik.ui.debug.LabFragment
 import pl.szczodrzynski.edziennik.ui.grades.GradesListFragment
 import pl.szczodrzynski.edziennik.ui.grades.editor.GradesEditorFragment
-import pl.szczodrzynski.edziennik.ui.home.HomeFragment
 import pl.szczodrzynski.edziennik.ui.homework.HomeworkFragment
 import pl.szczodrzynski.edziennik.ui.messages.compose.MessagesComposeFragment
 import pl.szczodrzynski.edziennik.ui.messages.list.MessagesFragment
@@ -27,7 +26,6 @@ import pl.szczodrzynski.edziennik.ui.timetable.TimetableFragment
 /** Keeps Fragment construction explicit and out of navigation metadata. */
 internal fun NavTarget.createFragment(arguments: Bundle?): Fragment? {
     val fragment = when (this) {
-        NavTarget.HOME -> HomeFragment()
         NavTarget.TIMETABLE -> TimetableFragment()
         NavTarget.AGENDA -> AgendaFragment()
         NavTarget.GRADES -> GradesListFragment()
@@ -47,6 +45,7 @@ internal fun NavTarget.createFragment(arguments: Bundle?): Fragment? {
         NavTarget.GRADES_EDITOR -> GradesEditorFragment()
         NavTarget.MESSAGE -> MessageFragment()
         NavTarget.MESSAGE_COMPOSE -> MessagesComposeFragment()
+        NavTarget.HOME,
         NavTarget.PROFILE_ADD,
         NavTarget.PROFILE_MARK_AS_READ,
         NavTarget.PROFILE_SYNC_ALL,

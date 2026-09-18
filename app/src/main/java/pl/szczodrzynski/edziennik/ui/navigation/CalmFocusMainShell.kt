@@ -6,18 +6,23 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -28,21 +33,46 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DoneAll
+import androidx.compose.material.icons.outlined.FactCheck
 import androidx.compose.material.icons.outlined.Grade
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.SentimentSatisfied
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Today
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -64,18 +94,28 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.doOnAttach
@@ -110,6 +150,14 @@ private val primaryDestinations = listOf(
     PrimaryDestination(R.string.menu_more, icon = Icons.Outlined.MoreHoriz),
 )
 
+private val moreExpandedDestinations = listOf(
+    PrimaryDestination(R.string.menu_notices, NavTarget.BEHAVIOUR, Icons.Outlined.SentimentSatisfied),
+    PrimaryDestination(R.string.menu_agenda, NavTarget.AGENDA, Icons.Outlined.ViewAgenda),
+    PrimaryDestination(R.string.menu_attendance, NavTarget.ATTENDANCE, Icons.Outlined.FactCheck),
+    PrimaryDestination(R.string.menu_settings, NavTarget.SETTINGS, Icons.Outlined.Settings),
+    PrimaryDestination(R.string.menu_all, null, Icons.Outlined.GridView),
+)
+
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalMaterial3WindowSizeClassApi::class,
@@ -126,7 +174,7 @@ fun CalmFocusMainShell(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentTarget = backStackEntry?.arguments
         ?.getInt(CalmFocusRoute.TARGET_ID_ARGUMENT)
-        ?.let(NavTarget::getById)
+        ?.let(NavTarget::getByIdOrNull)
         ?: state.target
     val moreSelected = backStackEntry?.destination?.route == CalmFocusRoute.More.value ||
         currentTarget !in primaryDestinations.mapNotNull { it.target }
@@ -145,6 +193,18 @@ fun CalmFocusMainShell(
     }
     val canNavigateUp = currentTarget !in primaryTargets &&
         (navController.previousBackStackEntry != null || currentTarget.popTo != null)
+
+    var isMoreExpanded by rememberSaveable { mutableStateOf(false) }
+    var showAllTargetsSheet by rememberSaveable { mutableStateOf(false) }
+
+    val moreExpandedTargets = remember { moreExpandedDestinations.mapNotNull { it.target } }
+    LaunchedEffect(currentTarget) {
+        if (currentTarget in moreExpandedTargets) {
+            isMoreExpanded = true
+        } else if (currentTarget in primaryTargets) {
+            isMoreExpanded = false
+        }
+    }
 
     DisposableEffect(navController) {
         activity.bindNavController(navController)
@@ -165,14 +225,25 @@ fun CalmFocusMainShell(
             )
         },
         bottomBar = {
-            if (!expanded) {
-                MainNavigationBar(
-                    currentTarget = currentTarget,
-                    moreSelected = moreSelected,
-                    unreadCount = unreadCount,
-                    onTargetSelected = activity::selectShellTarget,
-                    onMoreSelected = { activity.openMore() },
-                )
+            Column {
+                val nowLesson by NowLessonStore.current.collectAsStateWithLifecycle()
+                nowLesson?.let { lesson ->
+                    NowPlayingLessonBar(
+                        lesson = lesson,
+                        onClick = { activity.selectShellTarget(NavTarget.TIMETABLE) },
+                    )
+                }
+                if (!expanded) {
+                    MainNavigationBar(
+                        currentTarget = currentTarget,
+                        moreSelected = moreSelected,
+                        isExpandedMore = isMoreExpanded,
+                        onToggleExpandedMore = { isMoreExpanded = it },
+                        unreadCount = unreadCount,
+                        onTargetSelected = activity::selectShellTarget,
+                        onAllSelected = { showAllTargetsSheet = true },
+                    )
+                }
             }
         },
         floatingActionButton = {
@@ -197,7 +268,7 @@ fun CalmFocusMainShell(
                     moreSelected = moreSelected,
                     unreadCount = unreadCount,
                     onTargetSelected = activity::selectShellTarget,
-                    onMoreSelected = { activity.openMore() },
+                    onMoreSelected = { showAllTargetsSheet = true },
                 )
             }
             NavHost(
@@ -226,27 +297,59 @@ fun CalmFocusMainShell(
                         entry.arguments?.getInt(CalmFocusRoute.TARGET_ID_ARGUMENT)
                             ?: NavTarget.HOME.id,
                     )
-                    val entryId = entry.arguments?.getLong(CalmFocusRoute.ENTRY_ID_ARGUMENT) ?: 0L
-                    val fragmentArguments = remember(entry) {
-                        entry.savedStateHandle.get<Bundle>(CalmFocusRoute.SCREEN_ARGUMENTS_KEY)
-                            ?: initialArguments.takeIf { entryId == initialRoute.entryId }?.also {
-                                entry.savedStateHandle[CalmFocusRoute.SCREEN_ARGUMENTS_KEY] = it
-                            }
+                    if (target == NavTarget.HOME) {
+                        pl.szczodrzynski.edziennik.ui.today.TodayRoute(
+                            activity = activity,
+                            profileId = state.profile.id,
+                        )
+                    } else if (target == NavTarget.TIMETABLE) {
+                        pl.szczodrzynski.edziennik.ui.timetable.TimetableRoute(
+                            activity = activity,
+                            profileId = state.profile.id,
+                        )
+                    } else if (target == NavTarget.GRADES) {
+                        pl.szczodrzynski.edziennik.ui.grades.compose.GradesRoute(
+                            activity = activity,
+                            profileId = state.profile.id,
+                        )
+                    } else if (target == NavTarget.MESSAGES) {
+                        pl.szczodrzynski.edziennik.ui.messages.compose_screen.MessagesRoute(
+                            activity = activity,
+                            profileId = state.profile.id,
+                        )
+                    } else if (target == NavTarget.AGENDA) {
+                        pl.szczodrzynski.edziennik.ui.agenda.compose.AgendaRoute(
+                            activity = activity,
+                            profileId = state.profile.id,
+                        )
+                    } else if (target == NavTarget.ATTENDANCE) {
+                        pl.szczodrzynski.edziennik.ui.attendance.compose.AttendanceRoute(
+                            activity = activity,
+                            profileId = state.profile.id,
+                        )
+                    } else {
+                        val entryId = entry.arguments?.getLong(CalmFocusRoute.ENTRY_ID_ARGUMENT) ?: 0L
+                        val fragmentArguments = remember(entry) {
+                            entry.savedStateHandle.get<Bundle>(CalmFocusRoute.SCREEN_ARGUMENTS_KEY)
+                                ?: initialArguments.takeIf { entryId == initialRoute.entryId }?.also {
+                                    entry.savedStateHandle[CalmFocusRoute.SCREEN_ARGUMENTS_KEY] = it
+                                }
+                        }
+                        val containerId = remember(entry) {
+                            entry.savedStateHandle.get<Int>(CalmFocusRoute.FRAGMENT_CONTAINER_ID_KEY)
+                                ?: View.generateViewId().also {
+                                    entry.savedStateHandle[CalmFocusRoute.FRAGMENT_CONTAINER_ID_KEY] = it
+                                }
+                        }
+                        LegacyFragmentHost(
+                            activity = activity,
+                            target = target,
+                            entryId = entryId,
+                            arguments = fragmentArguments,
+                            containerId = containerId,
+                            state = state,
+                        )
                     }
-                    val containerId = remember(entry) {
-                        entry.savedStateHandle.get<Int>(CalmFocusRoute.FRAGMENT_CONTAINER_ID_KEY)
-                            ?: View.generateViewId().also {
-                                entry.savedStateHandle[CalmFocusRoute.FRAGMENT_CONTAINER_ID_KEY] = it
-                            }
-                    }
-                    LegacyFragmentHost(
-                        activity = activity,
-                        target = target,
-                        entryId = entryId,
-                        arguments = fragmentArguments,
-                        containerId = containerId,
-                        state = state,
-                    )
                 }
                 composable(CalmFocusRoute.More.value) {
                     MoreScreen(
@@ -257,6 +360,19 @@ fun CalmFocusMainShell(
                 }
             }
         }
+    }
+
+    if (showAllTargetsSheet) {
+        AllTargetsBottomSheet(
+            targets = activity.availableMoreTargets(),
+            state = state,
+            onTargetSelected = { target ->
+                showAllTargetsSheet = false
+                isMoreExpanded = false
+                activity.selectMoreTarget(target)
+            },
+            onDismiss = { showAllTargetsSheet = false },
+        )
     }
 
     if (state.contextActions.isOpen) {
@@ -278,6 +394,9 @@ private fun MainTopBar(
     var profileMenuExpanded by remember { mutableStateOf(false) }
     CenterAlignedTopAppBar(
         windowInsets = WindowInsets.statusBars,
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+        ),
         navigationIcon = {
             if (canNavigateUp) {
                 IconButton(onClick = onNavigateUp) {
@@ -384,28 +503,197 @@ private fun ProfileAvatar(profile: Profile) {
 private fun MainNavigationBar(
     currentTarget: NavTarget,
     moreSelected: Boolean,
+    isExpandedMore: Boolean,
+    onToggleExpandedMore: (Boolean) -> Unit,
     unreadCount: (NavTarget?) -> Int,
     onTargetSelected: (NavTarget) -> Unit,
-    onMoreSelected: () -> Unit,
+    onAllSelected: () -> Unit,
 ) {
-    NavigationBar(windowInsets = WindowInsets.navigationBars) {
-        primaryDestinations.forEach { destination ->
-            val selected = destination.target?.let { it == currentTarget } ?: moreSelected
-            NavigationBarItem(
-                selected = selected,
-                onClick = { destination.target?.let(onTargetSelected) ?: onMoreSelected() },
-                icon = {
-                    DestinationIconWithBadge(
-                        icon = destination.icon,
-                        selected = selected,
-                        count = unreadCount(destination.target),
-                    )
-                },
-                label = { Text(stringResource(destination.labelRes)) },
-            )
+    val haptic = LocalHapticFeedback.current
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(32.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+        tonalElevation = 6.dp,
+        shadowElevation = 10.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+    ) {
+        AnimatedContent(
+            targetState = isExpandedMore,
+            transitionSpec = {
+                if (targetState) {
+                    (slideInHorizontally { width -> width / 2 } + fadeIn()) togetherWith
+                        (slideOutHorizontally { width -> -width / 2 } + fadeOut())
+                } else {
+                    (slideInHorizontally { width -> -width / 2 } + fadeIn()) togetherWith
+                        (slideOutHorizontally { width -> width / 2 } + fadeOut())
+                }
+            },
+            label = "DockExpansionAnim",
+        ) { expanded ->
+            if (!expanded) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    primaryDestinations.forEach { destination ->
+                        val selected = destination.target?.let { it == currentTarget } ?: moreSelected
+                        val count = unreadCount(destination.target)
+
+                        DockItem(
+                            destination = destination,
+                            selected = selected,
+                            count = count,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                if (destination.target != null) {
+                                    onTargetSelected(destination.target)
+                                } else {
+                                    onToggleExpandedMore(true)
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onToggleExpandedMore(false)
+                        },
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Zwiń",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+
+                    moreExpandedDestinations.forEach { destination ->
+                        val selected = destination.target?.let { it == currentTarget } ?: false
+                        val count = unreadCount(destination.target)
+
+                        DockItem(
+                            destination = destination,
+                            selected = selected,
+                            count = count,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                if (destination.target != null) {
+                                    onTargetSelected(destination.target)
+                                } else {
+                                    onAllSelected()
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
         }
     }
 }
+
+@Composable
+private fun DockItem(
+    destination: PrimaryDestination,
+    selected: Boolean,
+    count: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.05f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "dockScale",
+    )
+    val indicatorColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "dockIndicator",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "dockContentColor",
+    )
+
+    Column(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(indicatorColor)
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            BadgedBox(
+                badge = {
+                    if (count > 0) {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        ) {
+                            Text(
+                                text = if (count > 99) "99+" else count.toString(),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            )
+                        }
+                    }
+                },
+            ) {
+                AnimatedDestinationIcon(
+                    icon = destination.icon,
+                    selected = selected,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        Text(
+            text = stringResource(destination.labelRes),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.5.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            ),
+            color = contentColor,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
 
 @Composable
 private fun MainNavigationRail(
@@ -479,30 +767,208 @@ private fun MoreScreen(
     state: MainShellState,
     onTargetSelected: (NavTarget) -> Unit,
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    val haptic = LocalHapticFeedback.current
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         items(targets, key = NavTarget::id) { target ->
             val count = target.badgeType?.let { badgeType ->
                 state.unreadCounters
                     .filter { it.profileId == state.profile.id && it.thingType == badgeType }
                     .sumOf { it.count }
             } ?: 0
-            ListItem(
-                headlineContent = { Text(stringResource(target.nameRes)) },
-                supportingContent = target.descriptionRes?.let { description ->
-                    { Text(stringResource(description)) }
-                },
-                leadingContent = target.icon?.let { icon ->
-                    { Icon(icon, contentDescription = null) }
-                },
-                trailingContent = if (count > 0) {
-                    { Badge { Text(if (count > 99) "99+" else count.toString()) } }
-                } else {
-                    null
-                },
+
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onTargetSelected(target) },
-            )
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onTargetSelected(target)
+                    },
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        modifier = Modifier.size(42.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            target.icon?.let { icon ->
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(target.nameRes),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        target.descriptionRes?.let { descRes ->
+                            Text(
+                                text = stringResource(descRes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+
+                    if (count > 0) {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        ) {
+                            Text(if (count > 99) "99+" else count.toString())
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AllTargetsBottomSheet(
+    targets: List<NavTarget>,
+    state: MainShellState,
+    onTargetSelected: (NavTarget) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    Text(
+                        text = "Wszystkie moduły",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "Wybierz sekcję, do której chcesz przejść",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Outlined.Close, contentDescription = "Zamknij")
+                }
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(targets, key = NavTarget::id) { target ->
+                    val count = target.badgeType?.let { badgeType ->
+                        state.unreadCounters
+                            .filter { it.profileId == state.profile.id && it.thingType == badgeType }
+                            .sumOf { it.count }
+                    } ?: 0
+
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onTargetSelected(target)
+                            },
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                modifier = Modifier.size(42.dp),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    target.icon?.let { icon ->
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(22.dp),
+                                        )
+                                    }
+                                }
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(target.nameRes),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                target.descriptionRes?.let { descRes ->
+                                    Text(
+                                        text = stringResource(descRes),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+
+                            if (count > 0) {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError,
+                                ) {
+                                    Text(if (count > 99) "99+" else count.toString())
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -619,6 +1085,59 @@ private fun LegacyContextAction(
                 item.onClickListener?.onClick(View(context))
             },
     )
+}
+
+@Composable
+private fun NowPlayingLessonBar(
+    lesson: NowLessonUi,
+    onClick: () -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 2.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Trwa • ${lesson.subject}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = buildString {
+                            append("do ${lesson.endsAt}")
+                            append(" • ${lesson.minutesRemaining} min")
+                            lesson.room?.let { append(" • sala $it") }
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            LinearProgressIndicator(
+                progress = { lesson.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(100.dp)),
+            )
+        }
+    }
 }
 
 @Composable

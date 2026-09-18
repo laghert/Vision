@@ -168,6 +168,12 @@ public abstract class MetadataDao {
     @Query("SELECT count() FROM metadata WHERE profileId = :profileId AND thingType = :thingType AND seen = 0")
     public abstract LiveData<Integer> countUnseen(int profileId, MetadataType thingType);
 
+    @Query("SELECT count(*) FROM metadata INNER JOIN grades ON grades.profileId = metadata.profileId AND grades.gradeId = metadata.thingId WHERE metadata.profileId = :profileId AND metadata.thingType = 1 AND metadata.seen = 0 AND grades.gradeType != 100")
+    public abstract LiveData<Integer> countUnseenGrades(int profileId);
+
+    @Query("SELECT count(*) FROM metadata INNER JOIN messages ON messages.profileId = metadata.profileId AND messages.messageId = metadata.thingId WHERE metadata.profileId = :profileId AND metadata.thingType = 8 AND metadata.seen = 0 AND messages.messageType = 0")
+    public abstract LiveData<Integer> countUnseenReceivedMessages(int profileId);
+
     @Query("SELECT count() FROM metadata WHERE profileId = :profileId AND thingType = :thingType AND seen = 0")
     public abstract Integer countUnseenNow(int profileId, MetadataType thingType);
 

@@ -44,12 +44,16 @@ class SettingsFragment : MaterialAboutFragment() {
         SettingsViewTypeManager()
 
     override fun getMaterialAboutList(activityContext: Context?): MaterialAboutList {
-        return MaterialAboutList(
+        val cards = mutableListOf(
             SettingsProfileCard(util).card,
             SettingsThemeCard(util).card,
             SettingsSyncCard(util).card,
             SettingsRegisterCard(util).card,
-            SettingsAboutCard(util).card,
         )
+        if (app.profile.loginStoreType == pl.szczodrzynski.edziennik.data.enums.LoginType.DEMO) {
+            cards.add(SettingsDemoCard(util).card)
+        }
+        cards.add(SettingsAboutCard(util).card)
+        return MaterialAboutList(*cards.toTypedArray())
     }
 }

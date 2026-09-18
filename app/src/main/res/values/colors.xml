@@ -17,4 +17,9 @@
     <color name="ic_launcher_v1_background">#2196f3</color>
     <color name="ic_launcher_v5_background">#77B2FD</color>
     <color name="calm_focus_seed">#63A002</color>
+    <color name="vision_black">#000000</color>
+    <color name="login_warning_bg">#FFF3CD</color>
+    <color name="login_warning_text">#856404</color>
+    <color name="login_beta_badge_bg">#FFC107</color>
+    <color name="login_beta_badge_text">#212529</color>
 </resources>

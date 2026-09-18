@@ -47,6 +47,8 @@ class LoginPlatformListFragment : Fragment() {
         val loginMode = arguments?.getEnum<LoginMode>("loginMode") ?: return
         val mode = register.loginModes.firstOrNull { it.loginMode == loginMode } ?: return
 
+        b.betaWarningBanner.isVisible = loginType != LoginType.LIBRUS
+
         adapter = LoginPlatformAdapter(activity) { platform ->
             nav.navigate(
                 R.id.loginFormFragment,

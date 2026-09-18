@@ -51,11 +51,11 @@
     <string name="agenda_lesson_changes">Zmiany planu lekcji</string>
     <string name="agenda_teacher_absence">Nieobecni nauczyciele</string>
     <string name="ago_format">%s temu</string>
-    <string name="app_manager_dialog_text">Na urządzeniu prawdopodobnie zainstalowany jest menedżer aplikacji, który może powodować problemy z synchronizacją automatyczną.\n\nNależy wyłączyć w ustawieniach telefonu optymalizację baterii dla aplikacji Calm Focus.\n\nKliknij OK, aby przejść do ustawień telefonu.</string>
+    <string name="app_manager_dialog_text">Na urządzeniu prawdopodobnie zainstalowany jest menedżer aplikacji, który może powodować problemy z synchronizacją automatyczną.\n\nNależy wyłączyć w ustawieniach telefonu optymalizację baterii dla aplikacji Vision.\n\nKliknij OK, aby przejść do ustawień telefonu.</string>
     <string name="app_manager_dialog_title">Wykryto problem z synchronizacją</string>
     <string name="app_manager_open_failed">Nie udało się otworzyć ustawień</string>
-    <string name="app_name" translatable="false">Calm Focus</string>
-    <string name="app_task_format" translatable="false">Calm Focus | %s</string>
+    <string name="app_name" translatable="false">Vision</string>
+    <string name="app_task_format" translatable="false">Vision | %s</string>
     <string name="are_you_sure">Czy na pewno?</string>
     <string name="attendance_absent" translatable="false">nb</string>
     <string name="attendance_absent_excused" translatable="false">u</string>
@@ -299,7 +299,7 @@
     <string name="edziennik_notification_api_first_login_title">Pierwsze logowanie</string>
     <string name="edziennik_notification_api_notify_title">Tworzenie powiadomień</string>
     <string name="edziennik_notification_api_sync_title_format">Trwa synchronizacja profilu %s…</string>
-    <string name="edziennik_notification_api_text">Dzięki niej, aplikacja Calm Focus może synchronizować dane z e-dziennikiem. Możesz ją zamknąć, ponieważ w tej chwili nic nie robi.</string>
+    <string name="edziennik_notification_api_text">Dzięki niej, aplikacja Vision może synchronizować dane z e-dziennikiem. Możesz ją zamknąć, ponieważ w tej chwili nic nie robi.</string>
     <string name="edziennik_notification_api_title">Usługa synchronizacji</string>
     <string name="edziennik_progress_endpoint_account_details">Pobieranie szczegółów konta…</string>
     <string name="edziennik_progress_endpoint_addressbook">Pobieranie listy odbiorców…</string>
@@ -628,7 +628,7 @@
     <string name="login_librus_title">Zaloguj się do LIBRUS® Synergia</string>
     <string name="login_migration_error_format">Wystąpił błąd w migracji danych. Został on już zgłoszony, co oznacza, że postaram się go naprawić.\n\nMożesz zacząć korzystać z aplikacji, jednak w przypadku jakichś błędów spróbuj usunąć profil i zalogować się ponownie.</string>
     <string name="login_migration_subtitle">Aplikacja otrzymała dużą aktualizację. Jeżeli będą występować jakieś problemy w działaniu, możesz się ze mną skontaktować używając pozycji Pomoc i opinie w menu.</string>
-    <string name="login_migration_title">Calm Focus został zaktualizowany</string>
+    <string name="login_migration_title">Vision został zaktualizowany</string>
     <string name="login_migration_toast">Migracja…</string>
     <string name="login_mobidziennik_help_address">Adres:</string>
     <string name="login_mobidziennik_help_login">Login i hasło:</string>
@@ -712,6 +712,7 @@
     <string name="nav_today">Dzisiaj</string>
     <string name="nav_plan">Plan</string>
     <string name="menu_more">Więcej</string>
+    <string name="menu_all">Wszystko</string>
     <string name="menu_notices">Zachowanie</string>
     <string name="menu_remarks">Uwagi</string>
     <string name="menu_notifications">Powiadomienia</string>
@@ -813,10 +814,10 @@
     <string name="notification_event_no_subject_format">%1$s dnia %2$s</string>
     <string name="notification_filter_warning">Czy na pewno chcesz zastosować te ustawienia?\n\nNie będziesz widział informacji o niektórych danych, przez co możesz przeoczyć ważne komunikaty, wiadomości lub oceny.\n\nUstawienia zostaną zastosowane dla aktualnie otwartego profilu.</string>
     <string name="notification_get_data_cancel">Przerwij</string>
-    <string name="notification_get_data_error_summary">Calm Focus: błąd</string>
+    <string name="notification_get_data_error_summary">Vision: błąd</string>
     <string name="notification_get_data_error_title">Błąd podczas pobierania danych dla profilu %s</string>
     <string name="notification_get_data_once_again">Jeszcze raz</string>
-    <string name="notification_get_data_summary">Calm Focus: pobieram</string>
+    <string name="notification_get_data_summary">Vision: pobieram</string>
     <string name="notification_get_data_text">Pobieranie danych</string>
     <string name="notification_get_data_title">Synchronizacja</string>
     <string name="notification_grade_format">Nowa ocena (%s) z %s</string>
@@ -841,7 +842,7 @@
     <string name="notification_shared_event_modified_format">%s zmienił %s na %s: %s</string>
     <string name="notification_shared_event_removed_format">%s usunął %s na %s: %s</string>
     <string name="notification_teacher_absence_new_format">Nowa nieobecność nauczyciela dla %s</string>
-    <string name="notification_ticker_format" translatable="false">Calm Focus: %s</string>
+    <string name="notification_ticker_format" translatable="false">Vision: %s</string>
     <string name="notification_type_attendance">Wpis frekwencji</string>
     <string name="notification_type_auto_archiving">Archiwizacja profilu</string>
     <string name="notification_type_error">Błąd</string>
@@ -862,7 +863,7 @@
     <string name="notification_type_timetable_change">Zmiana planu zajęć</string>
     <string name="notification_type_timetable_lesson_change">Zmiana lekcji</string>
     <string name="notification_type_update">Aktualizacja</string>
-    <string name="notification_updates_summary">Calm Focus: aktualizacja</string>
+    <string name="notification_updates_summary">Vision: aktualizacja</string>
     <string name="notification_updates_text">Kliknij, aby pobrać wersję %s</string>
     <string name="notification_updates_title">Dostępna aktualizacja</string>
     <string name="notification_user_action_required_captcha_librus">Logowanie do LIBRUS® Rodzina: wymagane rozwiązanie zadania Captcha. Kliknij, aby kontynuować logowanie do dziennika.</string>
@@ -875,7 +876,7 @@
     <string name="opening_file_no_app">Brak aplikacji otwierającej ten typ pliku</string>
     <string name="other">Inne</string>
     <string name="permissions_attachment">Musisz przyznać uprawnienia do zapisu plików w pamięci telefonu, aby móc pobrać załącznik.\n\nKliknij OK, aby przyznać uprawnienia.</string>
-    <string name="permissions_denied">Odmówiłeś aplikacji wymaganych uprawnień do wykonania tej czynności.\n\nAby przynać uprawnienia, otwórz sekcję Uprawnienia dla aplikacji Calm Focus w ustawieniach telefonu.\n\nKliknij OK, aby przejść do ustawień aplikacji.</string>
+    <string name="permissions_denied">Odmówiłeś aplikacji wymaganych uprawnień do wykonania tej czynności.\n\nAby przynać uprawnienia, otwórz sekcję Uprawnienia dla aplikacji Vision w ustawieniach telefonu.\n\nKliknij OK, aby przejść do ustawień aplikacji.</string>
     <string name="permissions_required">Wymagane uprawnienia</string>
     <string name="please_wait">Proszę czekać</string>
     <string name="preference_file" translatable="false">pl.szczodrzynski.edziennik_preferences</string>
@@ -897,7 +898,7 @@
     <string name="rate_snackbar_negative">Nigdy</string>
     <string name="rate_snackbar_neutral">Później</string>
     <string name="rate_snackbar_positive">Oceń teraz</string>
-    <string name="rate_snackbar_text">Pokaż, że podoba ci się Calm Focus - oceń aplikację i spraw, by była jeszcze lepsza!</string>
+    <string name="rate_snackbar_text">Pokaż, że podoba ci się Vision - oceń aplikację i spraw, by była jeszcze lepsza!</string>
     <string name="refresh">Odśwież</string>
     <string name="registration_config_disable_progress_text">Trwa wyrejestrowywanie użytkownika…</string>
     <string name="registration_config_disable_text">Stracisz możliwość korzystania z niektórych funkcji, takich jak Udostępnianie wydarzeń czy Przekazywanie powiadomień.\n\nFunkcja może być włączona/wyłączona w zależności od wybranego profilu.</string>
@@ -907,7 +908,7 @@
     <string name="registration_config_note_sharing_text">Aby móc udostępnić notatkę, należy włączyć opcję rejestracji na serwerze. Pozwala to na tworzenie i odbieranie notatek udostępnionych w Twojej klasie.\n\nPo kliknięciu OK zostanie ona automatycznie włączona.\n\nKontynuując, oświadczasz przeczytanie i akceptację postanowień <a href="about:blank">Polityki prywatności</a>.</string>
     <string name="registration_config_event_sharing_title">Udostępnianie wydarzeń</string>
     <string name="registration_config_note_sharing_title">Udostępnianie notatek</string>
-    <string name="registration_config_title">Rejestracja aplikacji Calm Focus</string>
+    <string name="registration_config_title">Rejestracja aplikacji Vision</string>
     <string name="remove">Usuń</string>
     <string name="removed">Usunięto</string>
     <string name="report">Zgłoś</string>
@@ -1046,6 +1047,7 @@
     <string name="settings_theme_theme_system">Systemowy</string>
     <string name="settings_theme_theme_text">Motyw</string>
     <string name="settings_card_theme_title">Wygląd</string>
+    <string name="settings_card_demo_title">Tryb demonstracyjny</string>
     <string name="share">Udostępnij</string>
     <string name="share_intent">Udostępnij przez…</string>
     <string name="sharing_event">Udostępnianie danych…</string>
@@ -1178,7 +1180,7 @@
     <string name="teacher_parents_council">Rada rodziców</string>
     <string name="teacher_pedagogue">Pedagog / Psycholog</string>
     <string name="teacher_principal">Dyrektor</string>
-    <string name="teacher_school_admin">Calm Focus Administrator</string>
+    <string name="teacher_school_admin">Vision Administrator</string>
     <string name="teacher_school_parents_council">Szkolna rada rodziców</string>
     <string name="teacher_secretariat">Sekretariat</string>
     <string name="teacher_specialist">Specjaliści</string>
@@ -1222,7 +1224,7 @@
     <string name="timetable_generate_selected_week">Na wybrany tydzień</string>
     <string name="timetable_generate_show_profile_name">Pokaż nazwę profilu</string>
     <string name="timetable_generate_show_teachers_names">Pokaż imiona i nazwiska nauczycieli</string>
-    <string name="timetable_generate_success_text">Plan lekcji w formie obrazka został zapisany w katalogu Calm Focus.\n\nMożesz go od razu otworzyć albo udostępnić.</string>
+    <string name="timetable_generate_success_text">Plan lekcji w formie obrazka został zapisany w katalogu Vision.\n\nMożesz go od razu otworzyć albo udostępnić.</string>
     <string name="timetable_generate_success_title">Gotowe</string>
     <string name="timetable_lesson_cancelled">Lekcja odwołana</string>
     <string name="timetable_lesson_change">Zastępstwo</string>
@@ -1297,6 +1299,7 @@
     <string name="widget_loading">Ładowanie…</string>
     <string name="widget_lucky_number_no_profile">Brak profilu</string>
     <string name="widget_lucky_number_title">Szczęśliwy numerek</string>
+    <string name="widget_next_lesson_title">Następna lekcja</string>
     <string name="widget_notifications_no_data">Brak powiadomień</string>
     <string name="widget_notifications_title">Powiadomienia</string>
     <string name="widget_notifications_title_format" translatable="false">%s - %s</string>
@@ -1328,6 +1331,8 @@
     <string name="attendance_details_type_id">ID rodzaju podstawowego</string>
     <string name="login_chooser_title">Jaki masz e-dziennik w szkole?</string>
     <string name="login_chooser_subtitle">Wybierz z jakiego e-dziennika korzysta Twoja szkoła. Jeśli masz kilka kont w różnych dziennikach, będziesz mógł je dodać później.</string>
+    <string name="login_chooser_beta_warning">Wszystkie formy logowania poza LIBRUS® są w wersji BETA i mogą nie działać poprawnie.</string>
+    <string name="login_chooser_beta_badge">BETA</string>
     <string name="login_register_librus" translatable="false">LIBRUS® Rodzina / Synergia</string>
     <string name="login_mode_librus_email">Zaloguj używając e-maila</string>
     <string name="login_mode_librus_email_hint">Musisz posiadać konto LIBRUS® Rodzina</string>
@@ -1372,8 +1377,8 @@
     <string name="home_archive_close_no_target_text">Uczeń %s nie posiada profilu na tym koncie w aktualnym roku szkolnym. Prawdopodobnie ten profil został usunięty lub uczeń nie uczęszcza już do tej klasy.\n\nAby przejść do aktualnego profilu, wybierz ucznia z listy lub zaloguj się na jego konto przyciskiem Dodaj ucznia.</string>
     <string name="login_copyright_notice">Znaki towarowe zamieszczone w tej aplikacji należą do ich prawowitych właścicieli i są używane wyłącznie w celach informacyjnych.</string>
     <string name="update_available_title">Dostępna aktualizacja aplikacji</string>
-    <string name="update_available_format">Używasz starej wersji aplikacji Calm Focus (%s). Aby móc korzystać z aplikacji oraz zapewnić najlepsze działanie, zaktualizuj aplikację do wersji %s.\n\nDziennik zmian:\n%s</string>
-    <string name="update_available_fallback">Posiadasz nieaktualną wersję aplikacji Calm Focus. Aby móc dalej synchronizować dane, musisz zaktualizować aplikację.</string>
+    <string name="update_available_format">Używasz starej wersji aplikacji Vision (%s). Aby móc korzystać z aplikacji oraz zapewnić najlepsze działanie, zaktualizuj aplikację do wersji %s.\n\nDziennik zmian:\n%s</string>
+    <string name="update_available_fallback">Posiadasz nieaktualną wersję aplikacji Vision. Aby móc dalej synchronizować dane, musisz zaktualizować aplikację.</string>
     <string name="update_available_button">Aktualizuj</string>
     <string name="update_available_later">Nie teraz</string>
     <string name="home_availability_title">Dostępna aktualizacja</string>
@@ -1395,7 +1400,7 @@
     <string name="settings_about_homepage_text">Wejdź na stronę aplikacji</string>
     <string name="settings_about_homepage_subtext">Uzyskaj pomoc lub wesprzyj autorów</string>
     <string name="settings_about_contributors_text">Twórcy aplikacji</string>
-    <string name="settings_about_contributors_subtext">Lista twórców Calm Focus</string>
+    <string name="settings_about_contributors_subtext">Lista twórców Vision</string>
     <string name="contributors">Współtwórcy</string>
     <string name="translators">Tłumacze</string>
     <string name="settings_about_github_text">Kod źródłowy</string>
@@ -1421,18 +1426,18 @@
     <string name="build_invalid_no_remote_repo">Nie znaleziono odniesienia do repozytorium zdalnego. Upewnij się, że korzystasz z fork\'a oficjalnego repozytorium oraz zweryfikuj konfigurację Gradle.</string>
     <string name="build_invalid_no_commit_hash">Nie znaleziono wartości skrótu aktualnej rewizji. Sprawdź konfigurację Gradle.</string>
     <string name="build_invalid_remote_no_commit">Posiadasz kompilację aplikacji zawierającą nieopublikowane zmiany. Kompilacja znajduje się w repozytorium:\n%1$s (%2$s)\nktóre jest prywatne lub nie zawiera najnowszych zmian.\n\nDla bezpieczeństwa oraz ze względów zgodności z licencją, korzystanie z aplikacji zostało zablokowane.</string>
-    <string name="build_invalid_official_unsigned">Nie możesz modyfikować tego rodzaju kompilacji aplikacji Calm Focus.\n\nAby wprowadzić własne zmiany, skorzystaj z kodu źródłowego dostępnego na GitHubie oraz zapoznaj się z README i informacją o licencji.\n\nabout:blank</string>
+    <string name="build_invalid_official_unsigned">Nie możesz modyfikować tego rodzaju kompilacji aplikacji Vision.\n\nAby wprowadzić własne zmiany, skorzystaj z kodu źródłowego dostępnego na GitHubie oraz zapoznaj się z README i informacją o licencji.\n\nabout:blank</string>
     <string name="build_invalid_unstaged_changes">Ta kompilacja zawiera zmiany niezatwierdzone do żadnej rewizji. Zapisz oraz opublikuj wszystkie zmiany przed wydaniem wersji \"release\".\n\nDla bezpieczeństwa oraz ze względów zgodności z licencją, korzystanie z aplikacji zostało zablokowane.</string>
     <string name="build_invalid_debug">Korzystasz z kompilacji typu \"debug\". Ta informacja zostanie wyświetlona tylko jeden raz dla aktualnego urządzenia.</string>
-    <string name="build_valid_unofficial">Korzystasz z nieoficjalnej kompilacji aplikacji Calm Focus. Zalecamy używanie wyłącznie oficjalnych wersji aplikacji.\n\nOstatnie zmiany w tej wersji zostały wprowadzone przez:\n%3$s\nw repozytorium:\n%1$s (%2$s).\n\nTo okno nie wyświetli się ponownie.</string>
+    <string name="build_valid_unofficial">Korzystasz z nieoficjalnej kompilacji aplikacji Vision. Zalecamy używanie wyłącznie oficjalnych wersji aplikacji.\n\nOstatnie zmiany w tej wersji zostały wprowadzone przez:\n%3$s\nw repozytorium:\n%1$s (%2$s).\n\nTo okno nie wyświetli się ponownie.</string>
     <string name="build_invalid_title">Informacja dotycząca wersji aplikacji</string>
     <string name="settings_about_version_details_text">Szczegóły wersji</string>
     <string name="settings_about_version_details_subtext">Informacje o kompilacji</string>
     <string name="build_dialog_open_repo">Sprawdź kod</string>
     <string name="error_no_api_access">Brak dostępu do API</string>
     <string name="build_date">Data kompilacji</string>
-    <string name="privacy_policy_dialog_html"><![CDATA[Korzystając z aplikacji potwierdzasz <a href="about:blank">przeczytanie Polityki prywatności</a> i akceptujesz jej postanowienia.<br /><br />Autorzy aplikacji nie biorą odpowiedzialności za korzystanie z aplikacji Calm Focus.]]></string>
-    <string name="login_chooser_version_format">Calm Focus v%s\n%s</string>
+    <string name="privacy_policy_dialog_html"><![CDATA[Korzystając z aplikacji potwierdzasz <a href="about:blank">przeczytanie Polityki prywatności</a> i akceptujesz jej postanowienia.<br /><br />Autorzy aplikacji nie biorą odpowiedzialności za korzystanie z aplikacji Vision.]]></string>
+    <string name="login_chooser_version_format">Vision v%s\n%s</string>
     <string name="menu_agenda_config">Ustawienia terminarza</string>
     <string name="config_appearance">Wygląd</string>
     <string name="agenda_config_lesson_changes">Pokazuj zmiany planu lekcji</string>
@@ -1575,4 +1580,43 @@
     <string name="theme_green">Zielony</string>
     <string name="settings_about_maintainer_text">Autor i opiekun</string>
     <string name="settings_about_maintainer_subtext" translatable="false">Laghert</string>
+    <string name="today_attention">Wymaga uwagi</string>
+    <string name="today_break_ends_in">Następna lekcja za %1$d min</string>
+    <string name="today_classes_finished">Zajęcia zakończone</string>
+    <string name="today_classes_finished_support">Masz już dzisiejsze lekcje za sobą.</string>
+    <string name="today_first_lesson_in">Pierwsza lekcja za %1$d min</string>
+    <string name="today_free_day">Dzisiaj masz wolne</string>
+    <string name="today_free_day_support">Odpocznij — plan tygodnia jest zawsze pod ręką.</string>
+    <string name="today_homework_tomorrow">Zadania domowe na jutro</string>
+    <string name="today_lesson_ends_in">Do końca %1$d min</string>
+    <string name="today_new_grades">Nowe oceny</string>
+    <string name="today_next">Następnie</string>
+    <string name="today_now">Teraz</string>
+    <string name="today_refresh">Odśwież</string>
+    <string name="today_room">Sala %1$s</string>
+    <string name="today_show_week">Pokaż plan tygodnia</string>
+    <string name="today_status_cancelled">Lekcja odwołana</string>
+    <string name="today_status_changed">Zastępstwo / zmiana</string>
+    <string name="today_status_shifted">Lekcja przeniesiona</string>
+    <string name="today_sync_just_now">Zsynchronizowano przed chwilą</string>
+    <string name="today_sync_minutes">Zsynchronizowano %1$d min temu</string>
+    <string name="today_sync_never">Brak informacji o synchronizacji</string>
+    <string name="today_unread_messages">Nieprzeczytane wiadomości</string>
+    <string name="today_upcoming">Nadchodzące</string>
+    <string name="today_data_error_support">Nie udało się odczytać lokalnych danych. Spróbuj ponownie; aplikacja pozostanie bezpiecznie otwarta.</string>
+    <string name="today_data_error_title">Nie udało się wczytać danych</string>
+    <string name="today_sync_incomplete_support">Pierwsza synchronizacja nie została ukończona. Spróbuj ponownie, aby pobrać dane profilu.</string>
+    <string name="today_sync_incomplete_title">Dokończ synchronizację</string>
+    <string name="today_try_sync_again">Spróbuj ponownie</string>
+    <string name="today_next_classes">Najbliższe zajęcia</string>
+    <string name="today_classes_from_day">Zajęcia z %1$s</string>
+    <string name="today_next_classes_support">Plan przełącza się automatycznie po dwóch godzinach od ostatniej lekcji.</string>
+    <string name="today_show_day">Pokaż cały plan</string>
+    <string name="today_day_hours">%1$s–%2$s</string>
+    <plurals name="today_lessons_count">
+        <item quantity="one">%1$d lekcja</item>
+        <item quantity="few">%1$d lekcje</item>
+        <item quantity="many">%1$d lekcji</item>
+        <item quantity="other">%1$d lekcji</item>
+    </plurals>
 </resources>

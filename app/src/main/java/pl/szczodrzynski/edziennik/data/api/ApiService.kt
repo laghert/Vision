@@ -74,6 +74,23 @@ class ApiService : Service() {
     private val taskCallback = object : EdziennikCallback {
         override fun onCompleted() {
             lastEventTime = System.currentTimeMillis()
+            val completedTask = taskRunning as? EdziennikTask
+            val syncRequest = completedTask?.request as? EdziennikTask.SyncProfileRequest
+            completedTask?.profile
+                ?.takeIf { syncRequest != null }
+                ?.let(syncingProfiles::add)
+            if (syncRequest != null &&
+                syncRequest.featureTypes == null &&
+                (syncRequest.onlyEndpoints == null || syncRequest.onlyEndpoints.isEmpty())
+            ) {
+                completedTask.profile?.let { profile ->
+                    app.db.profileDao().setNotEmpty(listOf(profile.id))
+                    profile.empty = false
+                    if (profile.id == app.profileId) {
+                        app.profile.empty = false
+                    }
+                }
+            }
             Timber.d("Task $taskRunningId (profile $taskProfileId) finished in ${System.currentTimeMillis()-taskStartTime}")
             EventBus.getDefault().postSticky(ApiTaskFinishedEvent(taskProfileId))
             clearTask()
@@ -170,8 +187,6 @@ class ApiService : Service() {
 
         // post an event
         EventBus.getDefault().post(ApiTaskStartedEvent(taskProfileId, task.profile))
-
-        task.profile?.let { syncingProfiles.add(it) }
 
         taskStartTime = System.currentTimeMillis()
         try {

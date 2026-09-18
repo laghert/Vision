@@ -10,14 +10,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import pl.szczodrzynski.edziennik.*
+import pl.szczodrzynski.edziennik.data.enums.NavTarget
 import pl.szczodrzynski.edziennik.databinding.LoginFinishFragmentBinding
 import pl.szczodrzynski.edziennik.ext.Intent
 import pl.szczodrzynski.edziennik.ext.onClick
-import pl.szczodrzynski.edziennik.data.enums.NavTarget
+import pl.szczodrzynski.edziennik.ui.dialogs.ProfileRemoveDialog
 import kotlin.coroutines.CoroutineContext
 
 class LoginFinishFragment : Fragment(), CoroutineScope {
@@ -52,6 +56,8 @@ class LoginFinishFragment : Fragment(), CoroutineScope {
             b.subTitle.setText(R.string.login_finish_subtitle_not_first_run)
         }
 
+        offerEmptyDuplicateRemoval()
+
         b.finishButton.onClick {
             val firstProfileId = arguments?.getInt("firstProfileId") ?: 0
             if (firstProfileId == 0) {
@@ -77,6 +83,27 @@ class LoginFinishFragment : Fragment(), CoroutineScope {
                 }
                 activity.finish()
             }
+        }
+    }
+
+    private fun offerEmptyDuplicateRemoval() {
+        val duplicateProfileId = activity.emptyDuplicateProfileIds.firstOrNull() ?: return
+        activity.emptyDuplicateProfileIds.remove(duplicateProfileId)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val duplicateProfile = withContext(Dispatchers.IO) {
+                app.db.profileDao().getByIdNow(duplicateProfileId)?.takeIf { it.empty }
+            }
+            if (duplicateProfile == null) {
+                offerEmptyDuplicateRemoval()
+                return@launch
+            }
+
+            ProfileRemoveDialog(
+                activity = activity,
+                profileId = duplicateProfile.id,
+                profileName = duplicateProfile.name,
+                onRemove = ::offerEmptyDuplicateRemoval,
+            ).show()
         }
     }
 }

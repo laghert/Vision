@@ -22,6 +22,12 @@ public class UserPresentReceiver extends BroadcastReceiver {
                         .getAppWidgetIds(new ComponentName(context, WidgetTimetableProvider.class));
                 widgetIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
                 context.sendBroadcast(widgetIntent);
+                Intent nextLessonIntent = new Intent(context, pl.szczodrzynski.edziennik.ui.widgets.nextlesson.WidgetNextLessonProvider.class);
+                nextLessonIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                int[] nextIds = AppWidgetManager.getInstance(context)
+                        .getAppWidgetIds(new ComponentName(context, pl.szczodrzynski.edziennik.ui.widgets.nextlesson.WidgetNextLessonProvider.class));
+                nextLessonIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, nextIds);
+                context.sendBroadcast(nextLessonIntent);
             }
         }
     }

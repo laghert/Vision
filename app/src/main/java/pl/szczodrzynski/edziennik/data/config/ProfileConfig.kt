@@ -65,6 +65,10 @@ class ProfileConfig(
         var agendaElearningGroup: Boolean by config<Boolean>(true)
 
         var homeCards: List<HomeCardModel> by config<List<HomeCardModel>> { listOf() }
+        var todayCardOrder: List<String> by config<List<String>> {
+            listOf("homework", "upcoming", "grades")
+        }
+        var pinnedGradeIds: Set<Long> by config<Set<Long>> { setOf() }
 
         var messagesGreetingOnCompose: Boolean by config<Boolean>(true)
         var messagesGreetingOnReply: Boolean by config<Boolean>(true)
@@ -75,6 +79,12 @@ class ProfileConfig(
         var timetableShowEvents: Boolean by config<Boolean>(true)
         var timetableTrimHourRange: Boolean by config<Boolean>(false)
         var timetableColorSubjectName: Boolean by config<Boolean>(false)
+
+        var checkGrades: Boolean by config<Boolean>(true)
+        var checkMessages: Boolean by config<Boolean>(true)
+        var checkAnnouncements: Boolean by config<Boolean>(true)
+        var checkNotices: Boolean by config<Boolean>(true)
+        var checkHomework: Boolean by config<Boolean>(true)
     }
 
     inner class Sync {

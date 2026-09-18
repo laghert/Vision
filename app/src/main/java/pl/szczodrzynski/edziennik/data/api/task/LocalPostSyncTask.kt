@@ -16,9 +16,10 @@ import timber.log.Timber
  */
 class LocalPostSyncTask(
     private val app: App,
-    @Suppress("UNUSED_PARAMETER") syncingProfiles: List<Profile>,
+    syncingProfiles: List<Profile>,
 ) : IApiTask(-1) {
-    private val profiles by lazy { app.db.profileDao().allNow }
+    private val syncedProfiles = syncingProfiles.distinctBy(Profile::id)
+    private val profiles = syncedProfiles
     private val notificationList = mutableListOf<Notification>()
 
     override fun prepare(app: App) {
@@ -31,6 +32,8 @@ class LocalPostSyncTask(
         val startTime = System.currentTimeMillis()
 
         Notifications(app, notificationList, profiles).run()
+        val syncedProfileIds = syncedProfiles.map(Profile::id).toSet()
+        notificationList.removeAll { it.profileId !in syncedProfileIds }
         Timber.d("Created ${notificationList.count()} local notifications.")
 
         notificationList
@@ -43,11 +46,12 @@ class LocalPostSyncTask(
                 }
             }
 
-        app.db.metadataDao().setAllNotified(true)
+        syncedProfileIds.forEach { profileId ->
+            app.db.metadataDao().setAllNotified(profileId, true)
+        }
         if (notificationList.isNotEmpty()) {
             app.db.notificationDao().addAll(notificationList)
         }
-        app.db.profileDao().setAllNotEmpty()
 
         PostNotifications(app, notificationList)
         Timber.d("LocalPostSyncTask finished in ${System.currentTimeMillis() - startTime} ms.")

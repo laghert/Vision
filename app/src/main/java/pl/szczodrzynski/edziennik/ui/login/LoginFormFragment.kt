@@ -116,6 +116,7 @@ class LoginFormFragment : Fragment(), CoroutineScope {
         b.title.setText(R.string.login_form_title_format, app.getString(register.registerName))
         b.subTitle.text = platformName ?: app.getString(mode.name)
         b.text.text = platformGuideText ?: app.getString(mode.guideText)
+        b.betaWarningBanner.isVisible = register.loginType != LoginType.LIBRUS
 
         // eggs
         isEggs = register.loginType == LoginType.PODLASIE

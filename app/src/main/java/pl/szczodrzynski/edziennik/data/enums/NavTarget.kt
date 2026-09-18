@@ -231,6 +231,8 @@ enum class NavTarget(
             SETTINGS,
         )
 
-        fun getById(id: Int) = entries.first { it.id == id }
+        fun getByIdOrNull(id: Int) = entries.firstOrNull { it.id == id }
+
+        fun getById(id: Int) = getByIdOrNull(id) ?: HOME
     }
 }

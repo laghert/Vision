@@ -6,7 +6,7 @@ import android.content.Intent
 val appManagerIntentList = listOf(
         Intent().setClassName("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
                 .putExtra("packageName", "pl.laghert.vision")
-                .putExtra("package_label", "Calm Focus"),
+                .putExtra("package_label", "Vision"),
         Intent().setComponent(ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
         Intent().setComponent(ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")),
         Intent().setComponent(ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")),

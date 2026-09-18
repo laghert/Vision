@@ -33,6 +33,7 @@ import pl.szczodrzynski.edziennik.data.enums.LoginType;
 import pl.szczodrzynski.edziennik.databinding.DialogWidgetConfigBinding;
 import pl.szczodrzynski.edziennik.databinding.WidgetProfileDialogItemBinding;
 import pl.szczodrzynski.edziennik.ui.widgets.luckynumber.WidgetLuckyNumberProvider;
+import pl.szczodrzynski.edziennik.ui.widgets.nextlesson.WidgetNextLessonProvider;
 import pl.szczodrzynski.edziennik.ui.widgets.notifications.WidgetNotificationsProvider;
 import pl.szczodrzynski.edziennik.ui.widgets.timetable.WidgetTimetableProvider;
 import timber.log.Timber;
@@ -47,6 +48,7 @@ public class WidgetConfigActivity extends Activity {
     public static final int WIDGET_TIMETABLE = 0;
     public static final int WIDGET_NOTIFICATIONS = 1;
     public static final int WIDGET_LUCKY_NUMBER = 2;
+    public static final int WIDGET_NEXT_LESSON = 3;
     private int widgetType = -1;
     private int profileId = -1;
     private String profileName = null;
@@ -76,6 +78,8 @@ public class WidgetConfigActivity extends Activity {
                 widgetType = WIDGET_NOTIFICATIONS;
             else if (className.contains("WidgetLuckyNumber"))
                 widgetType = WIDGET_LUCKY_NUMBER;
+            else if (className.contains("WidgetNextLesson"))
+                widgetType = WIDGET_NEXT_LESSON;
 
             if (widgetType == -1)
                 finish();
@@ -195,6 +199,9 @@ public class WidgetConfigActivity extends Activity {
                         case WIDGET_LUCKY_NUMBER:
                             refreshIntent = new Intent(app, WidgetLuckyNumberProvider.class);
                             break;
+                        case WIDGET_NEXT_LESSON:
+                            refreshIntent = new Intent(app, WidgetNextLessonProvider.class);
+                            break;
                     }
                     refreshIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
                     // TODO: 2019-05-11 updating only one widget does not seem to work
@@ -289,6 +296,9 @@ public class WidgetConfigActivity extends Activity {
                     if (bigStyle) resource = R.drawable.widget_lucky_number_big_preview;
                     else resource = R.drawable.widget_lucky_number_preview;
                 }
+                break;
+            case WIDGET_NEXT_LESSON:
+                resource = darkTheme ? R.drawable.widget_lucky_number_dark_preview : R.drawable.widget_lucky_number_preview;
                 break;
         }
         b.widgetPreview.setImageResource(resource);

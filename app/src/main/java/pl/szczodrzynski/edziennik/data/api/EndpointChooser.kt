@@ -51,15 +51,19 @@ fun Data.prepare(
         .distinctBy { it.featureType }
         .toMutableList()
 
+    val forceAllEndpoints = onlyEndpoints?.isEmpty() == true
+
     for (feature in possibleFeatures) {
-        // add all endpoint IDs and required login methods, filtering using timers
+        // An explicitly empty set is the force-all sentinel used by manual recovery sync.
+        // It bypasses endpoint timers while still respecting feature/login availability.
         feature.endpoints.forEach { endpoint ->
-            if (onlyEndpoints?.contains(endpoint.first) == false)
+            if (!forceAllEndpoints && onlyEndpoints?.contains(endpoint.first) == false)
                 return@forEach
             val timer = this.endpointTimers
                 .singleOrNull { it.endpointId == endpoint.first }
                 ?: EndpointTimer(this.profileId, endpoint.first)
             if (
+                forceAllEndpoints ||
                 onlyEndpoints?.contains(endpoint.first) == true ||
                 timer.nextSync == SYNC_ALWAYS ||
                 forceFeatureType != null && timer.featureType == forceFeatureType ||

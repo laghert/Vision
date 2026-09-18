@@ -4,6 +4,7 @@
 
 package pl.szczodrzynski.edziennik.data.db.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -18,6 +19,9 @@ interface EndpointTimerDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addAll(endpointTimerList: List<EndpointTimer>)
+
+    @Query("SELECT * FROM endpointTimers WHERE profileId = :profileId")
+    fun getAll(profileId: Int): LiveData<List<EndpointTimer>>
 
     @Query("SELECT * FROM endpointTimers WHERE profileId = :profileId")
     fun getAllNow(profileId: Int): List<EndpointTimer>

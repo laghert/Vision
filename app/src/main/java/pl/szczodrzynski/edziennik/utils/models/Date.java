@@ -75,9 +75,8 @@ public class Date implements Comparable<Date>, Noteable {
     }
 
     public static Date fromMillisUtc(long millis) {
-        Calendar c = Calendar.getInstance();
+        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         c.setTimeInMillis(millis);
-        c.setTimeZone(TimeZone.getTimeZone("UTC"));
         return new Date(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH));
     }
 
@@ -85,7 +84,17 @@ public class Date implements Comparable<Date>, Noteable {
         return new Date(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH));
     }
 
+    public static Date mockToday = null;
+
     public static long getNowInMillis() {
+        if (mockToday != null) {
+            Calendar cal = mockToday.getAsCalendar();
+            Calendar now = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, now.get(Calendar.HOUR_OF_DAY));
+            cal.set(Calendar.MINUTE, now.get(Calendar.MINUTE));
+            cal.set(Calendar.SECOND, now.get(Calendar.SECOND));
+            return cal.getTimeInMillis();
+        }
         return Calendar.getInstance().getTimeInMillis();
     }
 
@@ -120,8 +129,10 @@ public class Date implements Comparable<Date>, Noteable {
     }
 
     public long getInMillisUtc() {
-        Calendar c = getAsCalendar();
-        c.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        c.clear();
+        c.set(year, month - 1, day, 0, 0, 0);
+        c.set(Calendar.MILLISECOND, 0);
         return c.getTimeInMillis();
     }
 
@@ -170,6 +181,9 @@ public class Date implements Comparable<Date>, Noteable {
     }
 
     public static Date getToday() {
+        if (mockToday != null) {
+            return mockToday.clone();
+        }
         Calendar cal = Calendar.getInstance();
         return new Date(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH));
     }
@@ -204,40 +218,13 @@ public class Date implements Comparable<Date>, Noteable {
 
     @NonNull
     public Date stepForward(int years, int months, int days) {
-        this.day += days;
-        if (day <= 0) {
-            month--;
-            if(month <= 0) {
-                month += 12;
-                year--;
-            }
-            day += daysInMonth();
-        }
-        if (day > daysInMonth()) {
-            day -= daysInMonth();
-            month++;
-        }
-        this.month += months;
-        if(month <= 0) {
-            month += 12;
-            year--;
-        }
-        if (month > 12) {
-            month -= 12;
-            year++;
-        }
-        this.year += years;
-        /*Calendar c = Calendar.getInstance();
-        int newMonth = month + months;
-        if (newMonth > 12) {
-            newMonth = 1;
-            years++;
-        }
-        c.set(year + years, newMonth - 1, day);
-        c.setTimeInMillis(c.getTimeInMillis() + days * 24 * 60 * 60 * 1000);
+        Calendar c = getAsCalendar();
+        c.add(Calendar.YEAR, years);
+        c.add(Calendar.MONTH, months);
+        c.add(Calendar.DAY_OF_MONTH, days);
         this.year = c.get(Calendar.YEAR);
         this.month = c.get(Calendar.MONTH) + 1;
-        this.day = c.get(Calendar.DAY_OF_MONTH);*/
+        this.day = c.get(Calendar.DAY_OF_MONTH);
         return this;
     }
 

@@ -64,6 +64,9 @@ interface ProfileDao {
     @Query("UPDATE profiles SET empty = 0")
     fun setAllNotEmpty()
 
+    @Query("UPDATE profiles SET empty = 0 WHERE profileId IN (:profileIds)")
+    fun setNotEmpty(profileIds: List<Int>)
+
     @Query("SELECT * FROM profiles WHERE archiveId = :archiveId AND archived = 1")
     fun getArchivesOf(archiveId: Int): List<Profile>
 

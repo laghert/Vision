@@ -37,6 +37,36 @@
         android:layout_marginTop="2dp"
         android:text="@string/login_chooser_subtitle" />
 
+    <LinearLayout
+        android:id="@+id/warningBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_login_warning"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="10dp">
+
+        <com.mikepenz.iconics.view.IconicsImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="10dp"
+            app:iiv_color="@color/login_warning_text"
+            app:iiv_icon="cmd-alert-outline"
+            app:iiv_size="22dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/login_chooser_beta_warning"
+            android:textColor="@color/login_warning_text"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
@@ -79,7 +109,7 @@
             android:background="?selectableItemBackgroundBorderless"
             android:gravity="center"
             android:textAppearance="?textAppearanceLabelMedium"
-            tools:text="Calm Focus v4.7-rc.2\n2021-04-06" />
+            tools:text="Vision v4.7-rc.2\n2021-04-06" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/helpButton"

@@ -332,12 +332,12 @@ object LoginInfo {
             Register(
                 loginType = LoginType.DEMO,
                 registerName = R.string.login_type_demo,
-                registerLogo = R.mipmap.ic_launcher_v5,
+                registerLogo = R.drawable.ic_launcher_vision_foreground,
                 loginModes = listOf(
                     Mode(
                         loginMode = LoginMode.DEMO,
                         name = R.string.login_mode_demo,
-                        icon = R.mipmap.ic_launcher_v5,
+                        icon = R.drawable.ic_launcher_vision_foreground,
                         guideText = R.string.login_mode_demo,
                         credentials = listOf(),
                         errorCodes = mapOf(),

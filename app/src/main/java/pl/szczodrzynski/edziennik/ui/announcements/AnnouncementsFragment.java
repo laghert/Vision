@@ -143,13 +143,10 @@ public class AnnouncementsFragment extends Fragment {
     }
 
     private void showAnnouncementDetailsDialog(AnnouncementFull announcement) {
-        DialogAnnouncementBinding b = DialogAnnouncementBinding.inflate(LayoutInflater.from(activity), null, false);
-        new MaterialAlertDialogBuilder(activity)
-                .setTitle(announcement.getSubject())
-                .setView(b.getRoot())
-                .setPositiveButton(R.string.ok, null)
-                .show();
-        b.text.setText(announcement.getTeacherName() +"\n\n"+ (announcement.getStartDate() != null ? announcement.getStartDate().getFormattedString() : "-") + (announcement.getEndDate() != null ? " do " + announcement.getEndDate().getFormattedString() : "")+"\n\n" +announcement.getText());
+        AnnouncementBottomSheet sheet = new AnnouncementBottomSheet(announcement, () -> {
+            return kotlin.Unit.INSTANCE;
+        });
+        sheet.show(getChildFragmentManager(), "announcement_details");
         if (!announcement.getSeen() && app.getProfile().getLoginStoreType() != LoginType.LIBRUS) {
             announcement.setSeen(true);
             AsyncTask.execute(() -> App.Companion.getDb().metadataDao().setSeen(App.Companion.getProfileId(), announcement, true));

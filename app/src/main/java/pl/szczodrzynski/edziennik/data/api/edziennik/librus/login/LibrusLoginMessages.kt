@@ -10,6 +10,8 @@ import im.wangchao.mhttp.body.MediaTypeUtils
 import im.wangchao.mhttp.callback.TextCallbackHandler
 import pl.szczodrzynski.edziennik.data.api.*
 import pl.szczodrzynski.edziennik.data.api.edziennik.librus.DataLibrus
+import pl.szczodrzynski.edziennik.data.api.edziennik.librus.ENDPOINT_LIBRUS_MESSAGES_RECEIVED
+import pl.szczodrzynski.edziennik.data.api.edziennik.librus.ENDPOINT_LIBRUS_MESSAGES_SENT
 import pl.szczodrzynski.edziennik.data.api.edziennik.librus.LibrusRecaptchaHelper
 import pl.szczodrzynski.edziennik.data.api.models.ApiError
 import pl.szczodrzynski.edziennik.data.enums.LoginMethod
@@ -99,7 +101,13 @@ class LibrusLoginMessages(val data: DataLibrus, val onSuccess: () -> Unit) {
                 loginWithCredentials()
             }
             else {
-                data.error(ApiError(TAG, ERROR_LOGIN_DATA_MISSING))
+                // Some portal-linked student profiles do not expose Synergia/messages credentials.
+                // Messages are optional; keep syncing all other Librus features instead of failing
+                // the whole profile with ERROR_LOGIN_DATA_MISSING.
+                data.messagesLoginSuccessful = false
+                data.targetEndpoints.remove(ENDPOINT_LIBRUS_MESSAGES_RECEIVED)
+                data.targetEndpoints.remove(ENDPOINT_LIBRUS_MESSAGES_SENT)
+                onSuccess()
             }
         }
     }}

@@ -60,7 +60,7 @@ class LoginStore(
                 "id=" + id +
                 ", type=" + type +
                 ", mode=" + mode +
-                ", data=" + data +
+                ", data=<redacted>" +
                 '}'
     }
 }
