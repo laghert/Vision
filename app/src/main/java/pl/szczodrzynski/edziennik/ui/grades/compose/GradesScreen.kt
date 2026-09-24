@@ -1,12 +1,15 @@
 package pl.szczodrzynski.edziennik.ui.grades.compose
 
+import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +18,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,13 +33,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Grade
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.TrendingUp
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -45,6 +49,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -99,6 +105,7 @@ fun GradesRoute(
     GradesScreen(
         state = state,
         onSelectSemester = viewModel::selectSemester,
+        onToggleFilterFromLastLogin = viewModel::toggleFilterFromLastLogin,
         onAddSimulatedGrade = viewModel::addSimulatedGrade,
         onClearSimulatedGrades = viewModel::clearSimulatedGrades,
         onRefresh = activity::retryProfileSync,
@@ -113,6 +120,7 @@ fun GradesRoute(
 fun GradesScreen(
     state: GradesUiState,
     onSelectSemester: (GradesSemesterTab) -> Unit,
+    onToggleFilterFromLastLogin: () -> Unit,
     onAddSimulatedGrade: (Long, Float, Float) -> Unit,
     onClearSimulatedGrades: (Long) -> Unit,
     onRefresh: () -> Unit,
@@ -122,6 +130,7 @@ fun GradesScreen(
 ) {
     val haptic = LocalHapticFeedback.current
     var selectedSubjectForDetails by remember { mutableStateOf<GradeSubjectUi?>(null) }
+    var selectedGradeForDetails by remember { mutableStateOf<Pair<GradeItemUi, String>?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
         // Top Header
@@ -132,11 +141,21 @@ fun GradesScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                text = "Oceny",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            Column {
+                Text(
+                    text = "Oceny",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (state.newSinceLastLoginCount > 0) {
+                    Text(
+                        text = "${state.newSinceLastLoginCount} nowych od ostatniego logowania",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
 
             IconButton(onClick = onRefresh, modifier = Modifier.size(36.dp)) {
                 Icon(Icons.Outlined.Refresh, contentDescription = "Odśwież oceny", modifier = Modifier.size(20.dp))
@@ -153,6 +172,39 @@ fun GradesScreen(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         )
 
+        // "Od ostatniego logowania" Filter Chip
+        if (state.newSinceLastLoginCount > 0) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.Start,
+            ) {
+                FilterChip(
+                    selected = state.filterFromLastLogin,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onToggleFilterFromLastLogin()
+                    },
+                    label = {
+                        Text("✨ Od ostatniego logowania (${state.newSinceLastLoginCount})")
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.AutoAwesome,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                    shape = RoundedCornerShape(PillRadius),
+                )
+            }
+        }
+
         if (state.isLoading) {
             GradesLoadingShimmer()
         } else {
@@ -161,14 +213,16 @@ fun GradesScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                // Hero GPA & Red Stripe Card
-                item(key = "hero-gpa") {
-                    GradesHeroCard(
-                        overallAverage = state.overallAverage,
-                        redStripeProgress = state.redStripeProgress,
-                        redStripeDiff = state.redStripeDiff,
-                        gradeDistribution = state.gradeDistribution,
-                    )
+                // Hero GPA & Red Stripe Card (only when not filtering)
+                if (!state.filterFromLastLogin) {
+                    item(key = "hero-gpa") {
+                        GradesHeroCard(
+                            overallAverage = state.overallAverage,
+                            redStripeProgress = state.redStripeProgress,
+                            redStripeDiff = state.redStripeDiff,
+                            gradeDistribution = state.gradeDistribution,
+                        )
+                    }
                 }
 
                 // Section Header
@@ -181,12 +235,13 @@ fun GradesScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
-                            text = "Przedmioty (${state.subjects.size})",
+                            text = if (state.filterFromLastLogin) "Nowe oceny (${state.subjects.sumOf { it.grades.size }})"
+                            else "Przedmioty (${state.subjects.size})",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "Kliknij, aby symulować",
+                            text = "Kliknij, aby otworzyć",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -203,6 +258,10 @@ fun GradesScreen(
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             selectedSubjectForDetails = subject
                         },
+                        onGradeClick = { grade ->
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selectedGradeForDetails = grade to subject.subjectName
+                        },
                         onTogglePinnedGrade = onTogglePinnedGrade,
                         onMarkGradeSeen = onMarkGradeSeen,
                     )
@@ -215,7 +274,7 @@ fun GradesScreen(
         }
     }
 
-    // Modal Bottom Sheet for Subject Details & What-If Simulator
+    // Modal Bottom Sheet for Subject Details & What-If Simulator (SIMULATOR AT THE BOTTOM)
     selectedSubjectForDetails?.let { subject ->
         val currentSubject = state.subjects.firstOrNull { it.subjectId == subject.subjectId } ?: subject
         val simulatedList = state.simulatedGrades[currentSubject.subjectId] ?: emptyList()
@@ -231,7 +290,21 @@ fun GradesScreen(
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onClearSimulatedGrades(currentSubject.subjectId)
             },
+            onGradeClick = { grade ->
+                selectedGradeForDetails = grade to currentSubject.subjectName
+            },
             onDismiss = { selectedSubjectForDetails = null },
+        )
+    }
+
+    // Modal Bottom Sheet for Single Grade Full Details
+    selectedGradeForDetails?.let { (grade, subjectName) ->
+        GradeDetailsModalSheet(
+            grade = grade,
+            subjectName = subjectName,
+            onTogglePinned = { onTogglePinnedGrade(grade.id) },
+            onMarkSeen = { onMarkGradeSeen(grade.id) },
+            onDismiss = { selectedGradeForDetails = null },
         )
     }
 }
@@ -447,6 +520,7 @@ private fun SubjectBentoCard(
     subject: GradeSubjectUi,
     hasSimulation: Boolean,
     onClick: () -> Unit,
+    onGradeClick: (GradeItemUi) -> Unit,
     onTogglePinnedGrade: (Long) -> Unit,
     onMarkGradeSeen: (Long) -> Unit,
 ) {
@@ -617,6 +691,7 @@ private fun SubjectBentoCard(
                         GradePill(
                             grade = grade,
                             subjectName = subject.subjectName,
+                            onClick = { onGradeClick(grade) },
                             onTogglePinned = { onTogglePinnedGrade(grade.id) },
                             onMarkSeen = { onMarkGradeSeen(grade.id) },
                         )
@@ -641,6 +716,7 @@ private fun SubjectBentoCard(
 private fun GradePill(
     grade: GradeItemUi,
     subjectName: String,
+    onClick: () -> Unit,
     onTogglePinned: () -> Unit,
     onMarkSeen: () -> Unit,
 ) {
@@ -659,9 +735,12 @@ private fun GradePill(
         Surface(
             shape = RoundedCornerShape(10.dp),
             color = gradeColor.copy(alpha = 0.14f),
-            border = BorderStroke(1.dp, gradeColor.copy(alpha = 0.3f)),
+            border = BorderStroke(
+                if (grade.isFromLastLogin) 1.5.dp else 1.dp,
+                if (grade.isFromLastLogin) MaterialTheme.colorScheme.primary else gradeColor.copy(alpha = 0.3f),
+            ),
             modifier = Modifier.combinedClickable(
-                onClick = {},
+                onClick = onClick,
                 onLongClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     menu = true
@@ -675,6 +754,15 @@ private fun GradePill(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (grade.isPinned) {
                         Icon(Icons.Outlined.PushPin, contentDescription = null, modifier = Modifier.size(10.dp), tint = gradeColor)
+                    }
+                    if (grade.isFromLastLogin) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .padding(end = 2.dp),
+                        )
                     }
                     Text(
                         text = grade.name,
@@ -698,16 +786,20 @@ private fun GradePill(
                 onClick = { menu = false; onTogglePinned() },
             )
             DropdownMenuItem(
+                text = { Text("Szczegóły") },
+                onClick = { menu = false; onClick() },
+            )
+            DropdownMenuItem(
                 text = { Text("Udostępnij") },
                 onClick = {
                     menu = false
                     val text = "$subjectName: ${grade.name}" +
                         grade.category.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
                     context.startActivity(
-                        android.content.Intent.createChooser(
-                            android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        Intent.createChooser(
+                            Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(android.content.Intent.EXTRA_TEXT, text)
+                                putExtra(Intent.EXTRA_TEXT, text)
                             },
                             "Udostępnij",
                         ),
@@ -724,6 +816,7 @@ private fun GradePill(
 
 /**
  * Modal Bottom Sheet for Subject Details & What-If Grade Simulator.
+ * Note: Simulator is now at the BOTTOM of the sheet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -732,6 +825,7 @@ private fun SubjectDetailsModalSheet(
     simulatedGrades: List<SimulatedGrade>,
     onAddSimulatedGrade: (Float, Float) -> Unit,
     onClearSimulated: () -> Unit,
+    onGradeClick: (GradeItemUi) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var selectedSimGradeValue by remember { mutableFloatStateOf(5f) }
@@ -780,11 +874,46 @@ private fun SubjectDetailsModalSheet(
                 }
 
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Outlined.Check, contentDescription = "Zamknij")
+                    Icon(Icons.Outlined.Close, contentDescription = "Zamknij")
                 }
             }
 
-            // WHAT-IF SIMULATOR CARD
+            // LIST OF GRADES IN THIS SUBJECT (at top)
+            Text(
+                text = "Wszystkie oceny (${subject.grades.size})",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+
+            if (subject.grades.isEmpty()) {
+                Text(
+                    text = "Brak wpisanych ocen w tym okresie",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(subject.grades) { grade ->
+                        DetailedGradeListItem(
+                            grade = grade,
+                            onClick = { onGradeClick(grade) },
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                thickness = 1.dp,
+            )
+
+            // WHAT-IF SIMULATOR CARD (PLACED AT THE BOTTOM)
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
@@ -889,30 +1018,18 @@ private fun SubjectDetailsModalSheet(
                     }
                 }
             }
-
-            // LIST OF GRADES IN THIS SUBJECT
-            Text(
-                text = "Wszystkie oceny (${subject.grades.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(subject.grades) { grade ->
-                    DetailedGradeListItem(grade = grade)
-                }
-            }
         }
     }
 }
 
+/**
+ * Detailed Grade List Item in Subject Sheet.
+ */
 @Composable
-private fun DetailedGradeListItem(grade: GradeItemUi) {
+private fun DetailedGradeListItem(
+    grade: GradeItemUi,
+    onClick: () -> Unit = {},
+) {
     val gradeColor = when (grade.name.firstOrNull()) {
         '6', '5' -> Color(0xFF2E7D32)
         '4' -> Color(0xFF00838F)
@@ -922,7 +1039,10 @@ private fun DetailedGradeListItem(grade: GradeItemUi) {
     }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
@@ -951,11 +1071,31 @@ private fun DetailedGradeListItem(grade: GradeItemUi) {
 
             // Grade Info
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = grade.category,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = grade.category,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (grade.isFromLastLogin) {
+                        Surface(
+                            shape = RoundedCornerShape(PillRadius),
+                            color = MaterialTheme.colorScheme.primary,
+                        ) {
+                            Text(
+                                text = "NOWA",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                            )
+                        }
+                    }
+                }
+
                 if (!grade.comment.isNullOrBlank()) {
                     Text(
                         text = grade.comment,
@@ -963,6 +1103,15 @@ private fun DetailedGradeListItem(grade: GradeItemUi) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+
+                if (!grade.description.isNullOrBlank()) {
+                    Text(
+                        text = grade.description,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    )
+                }
+
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -982,9 +1131,216 @@ private fun DetailedGradeListItem(grade: GradeItemUi) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         )
                     }
+                    if (!grade.teacher.isNullOrBlank()) {
+                        Text(
+                            text = "• ${grade.teacher}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+/**
+ * Full details bottom sheet for a single grade.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GradeDetailsModalSheet(
+    grade: GradeItemUi,
+    subjectName: String,
+    onTogglePinned: () -> Unit,
+    onMarkSeen: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val gradeColor = when (grade.name.firstOrNull()) {
+        '6', '5' -> Color(0xFF2E7D32)
+        '4' -> Color(0xFF00838F)
+        '3' -> Color(0xFFEF6C00)
+        '2', '1' -> Color(0xFFC62828)
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = {
+            Surface(
+                modifier = Modifier.padding(vertical = 10.dp),
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(100.dp),
+            ) {
+                Box(modifier = Modifier.size(width = 36.dp, height = 4.dp))
+            }
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 36.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            // Header: Grade badge + Subject
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = gradeColor.copy(alpha = 0.15f),
+                    border = BorderStroke(2.dp, gradeColor),
+                    modifier = Modifier.size(64.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = grade.name,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black,
+                            color = gradeColor,
+                        )
+                    }
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = subjectName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "Semestr ${grade.semester}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (grade.isFromLastLogin) {
+                        Surface(
+                            shape = RoundedCornerShape(PillRadius),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 4.dp),
+                        ) {
+                            Text(
+                                text = "✨ Nowa od ostatniego logowania",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                }
+
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Outlined.Close, contentDescription = "Zamknij")
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Details Grid
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                GradeDetailRow(label = "Kategoria", value = grade.category)
+                if (grade.weight > 0f) {
+                    GradeDetailRow(label = "Waga", value = "${if (grade.weight % 1f == 0f) grade.weight.toInt() else grade.weight}")
+                }
+                if (grade.value > 0f) {
+                    GradeDetailRow(label = "Wartość do średniej", value = "%.2f".format(grade.value))
+                }
+                if (grade.dateString.isNotBlank()) {
+                    GradeDetailRow(label = "Data wpisania", value = grade.dateString)
+                }
+                if (!grade.teacher.isNullOrBlank()) {
+                    GradeDetailRow(label = "Nauczyciel", value = grade.teacher)
+                }
+                if (!grade.comment.isNullOrBlank()) {
+                    GradeDetailRow(label = "Komentarz", value = grade.comment)
+                }
+                if (!grade.description.isNullOrBlank()) {
+                    GradeDetailRow(label = "Opis", value = grade.description)
+                }
+                grade.classAverage?.let {
+                    GradeDetailRow(label = "Średnia klasy", value = "%.2f".format(it))
+                }
+                GradeDetailRow(label = "Liczy się do średniej", value = if (grade.isCounted) "Tak" else "Nie")
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Button(
+                    onClick = {
+                        val text = "$subjectName: ${grade.name} (${grade.category})" +
+                            grade.comment.takeIf { !it.isNullOrBlank() }?.let { " - $it" }.orEmpty()
+                        context.startActivity(
+                            Intent.createChooser(
+                                Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, text)
+                                },
+                                "Udostępnij ocenę",
+                            ),
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(PillRadius),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                ) {
+                    Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Udostępnij", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                Button(
+                    onClick = {
+                        onTogglePinned()
+                        onDismiss()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(PillRadius),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                ) {
+                    Icon(Icons.Outlined.PushPin, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (grade.isPinned) "Odepnij" else "Przypnij")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GradeDetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(0.45f),
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(0.55f),
+        )
     }
 }
 
@@ -1007,9 +1363,9 @@ private fun GradesLoadingShimmer() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
-                    .clip(RoundedCornerShape(BentoRadius))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .calmFocusShimmer(),
+                .clip(RoundedCornerShape(BentoRadius))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .calmFocusShimmer(),
             )
         }
     }

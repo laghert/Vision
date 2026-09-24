@@ -68,7 +68,7 @@ class UiManager(val app: App) {
         }
         activity.setTheme(themeRes)
 
-        if (!noDisplay && blackMode && activity.isNightMode)
+        if (!noDisplay && blackMode)
             activity.theme?.applyStyle(R.style.ThemeOverlay_AppTheme_Black, true)
     }
 

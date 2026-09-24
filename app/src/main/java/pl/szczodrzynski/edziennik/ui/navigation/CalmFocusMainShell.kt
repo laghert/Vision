@@ -34,23 +34,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -150,14 +134,6 @@ private val primaryDestinations = listOf(
     PrimaryDestination(R.string.menu_more, icon = Icons.Outlined.MoreHoriz),
 )
 
-private val moreExpandedDestinations = listOf(
-    PrimaryDestination(R.string.menu_notices, NavTarget.BEHAVIOUR, Icons.Outlined.SentimentSatisfied),
-    PrimaryDestination(R.string.menu_agenda, NavTarget.AGENDA, Icons.Outlined.ViewAgenda),
-    PrimaryDestination(R.string.menu_attendance, NavTarget.ATTENDANCE, Icons.Outlined.FactCheck),
-    PrimaryDestination(R.string.menu_settings, NavTarget.SETTINGS, Icons.Outlined.Settings),
-    PrimaryDestination(R.string.menu_all, null, Icons.Outlined.GridView),
-)
-
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalMaterial3WindowSizeClassApi::class,
@@ -194,21 +170,15 @@ fun CalmFocusMainShell(
     val canNavigateUp = currentTarget !in primaryTargets &&
         (navController.previousBackStackEntry != null || currentTarget.popTo != null)
 
-    var isMoreExpanded by rememberSaveable { mutableStateOf(false) }
     var showAllTargetsSheet by rememberSaveable { mutableStateOf(false) }
-
-    val moreExpandedTargets = remember { moreExpandedDestinations.mapNotNull { it.target } }
-    LaunchedEffect(currentTarget) {
-        if (currentTarget in moreExpandedTargets) {
-            isMoreExpanded = true
-        } else if (currentTarget in primaryTargets) {
-            isMoreExpanded = false
-        }
-    }
 
     DisposableEffect(navController) {
         activity.bindNavController(navController)
         onDispose { activity.unbindNavController(navController) }
+    }
+
+    LaunchedEffect(currentTarget, state.profile.id) {
+        activity.markTargetSeen(currentTarget)
     }
 
     Scaffold(
@@ -237,11 +207,9 @@ fun CalmFocusMainShell(
                     MainNavigationBar(
                         currentTarget = currentTarget,
                         moreSelected = moreSelected,
-                        isExpandedMore = isMoreExpanded,
-                        onToggleExpandedMore = { isMoreExpanded = it },
                         unreadCount = unreadCount,
                         onTargetSelected = activity::selectShellTarget,
-                        onAllSelected = { showAllTargetsSheet = true },
+                        onMoreSelected = { showAllTargetsSheet = true },
                     )
                 }
             }
@@ -368,7 +336,6 @@ fun CalmFocusMainShell(
             state = state,
             onTargetSelected = { target ->
                 showAllTargetsSheet = false
-                isMoreExpanded = false
                 activity.selectMoreTarget(target)
             },
             onDismiss = { showAllTargetsSheet = false },
@@ -395,7 +362,7 @@ private fun MainTopBar(
     CenterAlignedTopAppBar(
         windowInsets = WindowInsets.statusBars,
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+            containerColor = if (MaterialTheme.colorScheme.surface == Color.Black) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
         ),
         navigationIcon = {
             if (canNavigateUp) {
@@ -503,13 +470,12 @@ private fun ProfileAvatar(profile: Profile) {
 private fun MainNavigationBar(
     currentTarget: NavTarget,
     moreSelected: Boolean,
-    isExpandedMore: Boolean,
-    onToggleExpandedMore: (Boolean) -> Unit,
     unreadCount: (NavTarget?) -> Int,
     onTargetSelected: (NavTarget) -> Unit,
-    onAllSelected: () -> Unit,
+    onMoreSelected: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    val isAmoled = MaterialTheme.colorScheme.surface == Color.Black
 
     Surface(
         modifier = Modifier
@@ -517,98 +483,40 @@ private fun MainNavigationBar(
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         shape = RoundedCornerShape(32.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-        tonalElevation = 6.dp,
-        shadowElevation = 10.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+        color = if (isAmoled) Color.Black else MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+        tonalElevation = if (isAmoled) 0.dp else 6.dp,
+        shadowElevation = if (isAmoled) 0.dp else 10.dp,
+        border = BorderStroke(
+            1.dp,
+            if (isAmoled) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+        ),
     ) {
-        AnimatedContent(
-            targetState = isExpandedMore,
-            transitionSpec = {
-                if (targetState) {
-                    (slideInHorizontally { width -> width / 2 } + fadeIn()) togetherWith
-                        (slideOutHorizontally { width -> -width / 2 } + fadeOut())
-                } else {
-                    (slideInHorizontally { width -> -width / 2 } + fadeIn()) togetherWith
-                        (slideOutHorizontally { width -> width / 2 } + fadeOut())
-                }
-            },
-            label = "DockExpansionAnim",
-        ) { expanded ->
-            if (!expanded) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    primaryDestinations.forEach { destination ->
-                        val selected = destination.target?.let { it == currentTarget } ?: moreSelected
-                        val count = unreadCount(destination.target)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            primaryDestinations.forEach { destination ->
+                val selected = destination.target?.let { it == currentTarget } ?: moreSelected
+                val count = unreadCount(destination.target)
 
-                        DockItem(
-                            destination = destination,
-                            selected = selected,
-                            count = count,
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                if (destination.target != null) {
-                                    onTargetSelected(destination.target)
-                                } else {
-                                    onToggleExpandedMore(true)
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onToggleExpandedMore(false)
-                        },
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Zwiń",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-
-                    moreExpandedDestinations.forEach { destination ->
-                        val selected = destination.target?.let { it == currentTarget } ?: false
-                        val count = unreadCount(destination.target)
-
-                        DockItem(
-                            destination = destination,
-                            selected = selected,
-                            count = count,
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                if (destination.target != null) {
-                                    onTargetSelected(destination.target)
-                                } else {
-                                    onAllSelected()
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
+                DockItem(
+                    destination = destination,
+                    selected = selected,
+                    count = count,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        if (destination.target != null) {
+                            onTargetSelected(destination.target)
+                        } else {
+                            onMoreSelected()
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }

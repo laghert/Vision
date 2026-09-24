@@ -53,6 +53,30 @@ class SettingsThemeCard(util: SettingsUtil) : SettingsCard(util) {
             ThemeChooserDialog(activity).show()
         },
         util.createActionItem(
+            text = R.string.settings_theme_night_mode_text,
+            subText = when (configGlobal.ui.themeNightMode) {
+                true -> R.string.theme_dark
+                false -> R.string.theme_light
+                null -> R.string.settings_theme_theme_system
+            },
+            icon = CommunityMaterial.Icon3.cmd_theme_light_dark,
+        ) {
+            pl.szczodrzynski.edziennik.ui.dialogs.settings.NightModeDialog(activity).show()
+        },
+        util.createPropertyItem(
+            text = R.string.settings_theme_amoled_text,
+            subText = R.string.settings_theme_amoled_subtext,
+            icon = CommunityMaterial.Icon.cmd_brightness_6,
+            value = configGlobal.ui.themeBlackMode,
+        ) { _, it ->
+            configGlobal.ui.themeBlackMode = it
+            if (it && configGlobal.ui.themeNightMode == false) {
+                configGlobal.ui.themeNightMode = true
+            }
+            app.uiManager.applyNightMode()
+            activity.recreate()
+        },
+        util.createActionItem(
             text = R.string.settings_about_language_text,
             subText = R.string.settings_about_language_subtext,
             icon = CommunityMaterial.Icon3.cmd_translate,

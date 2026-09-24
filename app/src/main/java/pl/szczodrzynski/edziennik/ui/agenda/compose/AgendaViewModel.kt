@@ -27,13 +27,17 @@ class AgendaViewModel(
 
     private val selectedFilter = MutableStateFlow(AgendaFilter.ALL)
     private val selectedDate = MutableStateFlow<String?>(null)
+    private val filterFromLastLogin = MutableStateFlow(false)
+    private val isCalendarStripExpanded = MutableStateFlow(false)
 
     val uiState: StateFlow<AgendaUiState> = combine(
         app.db.eventDao().getAll(profileId).asFlow(),
         selectedFilter,
         selectedDate,
-    ) { rawEvents, filter, chosenDate ->
-        buildState(rawEvents ?: emptyList(), filter, chosenDate)
+        filterFromLastLogin,
+        isCalendarStripExpanded,
+    ) { rawEvents, filter, chosenDate, fromLastLogin, calendarExpanded ->
+        buildState(rawEvents, filter, chosenDate, fromLastLogin, calendarExpanded)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -42,7 +46,6 @@ class AgendaViewModel(
 
     fun setFilter(filter: AgendaFilter) {
         selectedFilter.value = filter
-        // If a specific filter is chosen, clear selected day so the user sees all matching events
         if (filter != AgendaFilter.ALL) {
             selectedDate.value = null
         }
@@ -50,6 +53,17 @@ class AgendaViewModel(
 
     fun selectDate(dateString: String?) {
         selectedDate.value = if (selectedDate.value == dateString) null else dateString
+    }
+
+    fun toggleFilterFromLastLogin() {
+        filterFromLastLogin.value = !filterFromLastLogin.value
+        if (filterFromLastLogin.value) {
+            selectedDate.value = null
+        }
+    }
+
+    fun toggleCalendarStrip() {
+        isCalendarStripExpanded.value = !isCalendarStripExpanded.value
     }
 
     fun toggleEventDone(eventId: Long, isDone: Boolean) {
@@ -84,13 +98,20 @@ class AgendaViewModel(
         rawList: List<EventFull>,
         filter: AgendaFilter,
         chosenDate: String?,
+        fromLastLogin: Boolean,
+        calendarExpanded: Boolean,
     ): AgendaUiState {
         val today = Date.getToday()
+        val previousLoginTime = app.config[profileId].ui.previousLoginTime
         val dayOfWeekFormat = SimpleDateFormat("EE", Locale("pl"))
         val dayNumberFormat = SimpleDateFormat("d", Locale("pl"))
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT)
 
-        // Generate 14-day strip anchored around today (supports simulated dates)
+        val newSinceLastLoginCount = rawList.count {
+            !it.seen || (previousLoginTime > 0L && it.addedDate >= previousLoginTime)
+        }
+
+        // Generate 14-day strip anchored around today
         val cal = Calendar.getInstance().apply {
             timeInMillis = Date.getNowInMillis()
             set(today.year, today.month - 1, today.day, 0, 0, 0)
@@ -116,7 +137,13 @@ class AgendaViewModel(
         val quizzesCount = rawList.count { it.isQuiz() }
         val homeworkCount = rawList.count { it.isHomeworkEvent() }
 
-        val filteredList = rawList.filter { event ->
+        val baseList = if (fromLastLogin) {
+            rawList.filter { !it.seen || (previousLoginTime > 0L && it.addedDate >= previousLoginTime) }
+        } else {
+            rawList
+        }
+
+        val filteredList = baseList.filter { event ->
             val matchesType = when (filter) {
                 AgendaFilter.ALL -> true
                 AgendaFilter.EXAMS -> event.isExam()
@@ -131,52 +158,83 @@ class AgendaViewModel(
             matchesType && matchesDate
         }
 
-        val mappedEvents = filteredList.map { event ->
-            val eventDate = event.date
-            val daysDiff = Date.diffDays(eventDate, today)
-            val countdown = when {
-                daysDiff < 0 -> "Przeszłe"
-                daysDiff == 0 -> "Dzisiaj"
-                daysDiff == 1 -> "Jutro"
-                daysDiff == 2 -> "Pojutrze"
-                daysDiff in 3..7 -> "Za $daysDiff dni"
-                else -> eventDate.formattedString
-            }
-
-            val typeTitle = when {
-                event.isQuiz() -> "Kartkówka"
-                event.isExam() -> "Sprawdzian"
-                event.isHomeworkEvent() -> "Zadanie domowe"
-                event.type == Event.TYPE_ESSAY -> "Wypracowanie"
-                event.type == Event.TYPE_PROJECT -> "Projekt"
-                else -> event.typeName ?: "Wydarzenie"
-            }
-
-            AgendaEventItemUi(
-                id = event.id,
-                subjectName = event.subjectLongName ?: event.subjectShortName ?: "Inne",
-                topic = event.topic.ifBlank { typeTitle },
-                dateLabel = eventDate.formattedString,
-                timeLabel = event.time?.stringValue ?: "",
-                countdownLabel = countdown,
-                typeName = typeTitle,
-                typeColor = event.typeColor ?: event.color,
-                isHomework = event.isHomeworkEvent(),
-                isDone = event.isDone,
-                teacherName = event.teacherName,
+        // UPCOMING: date >= today, sorted ascending (nearest first!)
+        val upcomingEvents = filteredList
+            .filter { Date.diffDays(it.date, today) >= 0 }
+            .sortedWith(
+                compareBy<EventFull> { it.date.value }
+                    .thenBy { it.time?.stringValue ?: "" }
+                    .thenBy { it.id },
             )
-        }.toPersistentList()
+            .map { it.toUi(today, previousLoginTime) }
+            .toPersistentList()
+
+        // PAST: date < today, sorted descending (most recent past first, NOT September first!)
+        val pastEvents = filteredList
+            .filter { Date.diffDays(it.date, today) < 0 }
+            .sortedWith(
+                compareByDescending<EventFull> { it.date.value }
+                    .thenByDescending { it.time?.stringValue ?: "" }
+                    .thenByDescending { it.id },
+            )
+            .map { it.toUi(today, previousLoginTime) }
+            .toPersistentList()
 
         return AgendaUiState(
             isLoading = false,
             selectedFilter = filter,
             selectedDateString = chosenDate,
+            filterFromLastLogin = fromLastLogin,
+            newSinceLastLoginCount = newSinceLastLoginCount,
+            isCalendarStripExpanded = calendarExpanded || chosenDate != null,
             days = daysList,
-            events = mappedEvents,
+            upcomingEvents = upcomingEvents,
+            pastEvents = pastEvents,
             totalCount = rawList.size,
             examsCount = examsCount,
             quizzesCount = quizzesCount,
             homeworkCount = homeworkCount,
+        )
+    }
+
+    private fun EventFull.toUi(today: Date, previousLoginTime: Long): AgendaEventItemUi {
+        val eventDate = this.date
+        val daysDiff = Date.diffDays(eventDate, today)
+        val isPast = daysDiff < 0
+        val countdown = when {
+            daysDiff < 0 -> "Przeszłe"
+            daysDiff == 0 -> "Dzisiaj"
+            daysDiff == 1 -> "Jutro"
+            daysDiff == 2 -> "Pojutrze"
+            daysDiff in 3..7 -> "Za $daysDiff dni"
+            else -> eventDate.formattedString
+        }
+
+        val typeTitle = when {
+            isQuiz() -> "Kartkówka"
+            isExam() -> "Sprawdzian"
+            isHomeworkEvent() -> "Zadanie domowe"
+            type == Event.TYPE_ESSAY -> "Wypracowanie"
+            type == Event.TYPE_PROJECT -> "Projekt"
+            else -> typeName ?: "Wydarzenie"
+        }
+
+        val isFromLastLogin = !seen || (previousLoginTime > 0L && addedDate >= previousLoginTime)
+
+        return AgendaEventItemUi(
+            id = id,
+            subjectName = subjectLongName ?: subjectShortName ?: "Inne",
+            topic = topic.ifBlank { typeTitle },
+            dateLabel = eventDate.formattedString,
+            timeLabel = time?.stringValue ?: "",
+            countdownLabel = countdown,
+            typeName = typeTitle,
+            typeColor = typeColor ?: color,
+            isHomework = isHomeworkEvent(),
+            isDone = isDone,
+            teacherName = teacherName,
+            isFromLastLogin = isFromLastLogin,
+            isPast = isPast,
         )
     }
 

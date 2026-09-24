@@ -7,10 +7,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.data.db.entity.Grade
 import pl.szczodrzynski.edziennik.data.db.full.GradeFull
@@ -24,20 +24,28 @@ class GradesViewModel(
     private val selectedSemester = MutableStateFlow(GradesSemesterTab.SEMESTER_1)
     private val simulatedGrades = MutableStateFlow<Map<Long, List<SimulatedGrade>>>(emptyMap())
     private val pinTrigger = MutableStateFlow(0)
+    private val filterFromLastLogin = MutableStateFlow(false)
 
     val uiState = combine(
         app.db.gradeDao().getAll(profileId).asFlow(),
         selectedSemester,
         simulatedGrades,
         pinTrigger,
-    ) { allGrades, semesterTab, simulated, _ ->
+        filterFromLastLogin,
+    ) { allGrades, semesterTab, simulated, _, fromLastLogin ->
         val pinned = app.config[profileId].ui.pinnedGradeIds
+        val previousLoginTime = app.config[profileId].ui.previousLoginTime
+
         val gradesForSemester = allGrades.filter { grade ->
             when (semesterTab) {
                 GradesSemesterTab.SEMESTER_1 -> grade.semester == 1
                 GradesSemesterTab.SEMESTER_2 -> grade.semester == 2
                 GradesSemesterTab.YEAR -> true
             }
+        }
+
+        val newSinceLastLoginCount = gradesForSemester.count {
+            !it.seen || (previousLoginTime > 0L && it.addedDate >= previousLoginTime)
         }
 
         // Group by subject
@@ -92,6 +100,7 @@ class GradesViewModel(
                 .sortedWith(compareByDescending<GradeFull> { it.id in pinned }.thenByDescending { it.addedDate })
                 .map { g ->
                     val dateStr = if (g.addedDate > 0) Date.fromMillis(g.addedDate).formattedString else ""
+                    val isFromLastLogin = !g.seen || (previousLoginTime > 0L && g.addedDate >= previousLoginTime)
                     GradeItemUi(
                         id = g.id,
                         name = g.name.ifBlank { "•" },
@@ -104,6 +113,10 @@ class GradesViewModel(
                         color = g.color,
                         isCounted = g.type == Grade.TYPE_NORMAL && g.value > 0f,
                         isPinned = g.id in pinned,
+                        description = g.description,
+                        classAverage = if (g.classAverage != null && g.classAverage != -1f) g.classAverage else null,
+                        semester = g.semester,
+                        isFromLastLogin = isFromLastLogin,
                     )
                 }
                 .toPersistentList()
@@ -122,7 +135,17 @@ class GradesViewModel(
         }
 
         // Sort subjects by name
-        val sortedSubjects = subjectsList.sortedBy { it.subjectName }.toPersistentList()
+        val sortedSubjects = subjectsList.sortedBy { it.subjectName }
+
+        // Filter by last login if selected
+        val displaySubjects = if (fromLastLogin) {
+            sortedSubjects
+                .filter { it.grades.any { g -> g.isFromLastLogin } }
+                .map { sub -> sub.copy(grades = sub.grades.filter { it.isFromLastLogin }.toPersistentList()) }
+                .toPersistentList()
+        } else {
+            sortedSubjects.toPersistentList()
+        }
 
         // Overall GPA
         val subjectAverages = sortedSubjects.mapNotNull { it.average }
@@ -145,8 +168,10 @@ class GradesViewModel(
             redStripeProgress = redStripeProgress,
             redStripeDiff = redStripeDiff,
             gradeDistribution = distribution,
-            subjects = sortedSubjects,
+            subjects = displaySubjects,
             simulatedGrades = simulated,
+            filterFromLastLogin = fromLastLogin,
+            newSinceLastLoginCount = newSinceLastLoginCount,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -156,6 +181,10 @@ class GradesViewModel(
 
     fun selectSemester(tab: GradesSemesterTab) {
         selectedSemester.value = tab
+    }
+
+    fun toggleFilterFromLastLogin() {
+        filterFromLastLogin.value = !filterFromLastLogin.value
     }
 
     fun addSimulatedGrade(subjectId: Long, value: Float, weight: Float) {

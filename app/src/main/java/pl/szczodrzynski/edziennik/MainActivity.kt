@@ -50,6 +50,7 @@ import pl.szczodrzynski.edziennik.data.api.models.ApiError
 import pl.szczodrzynski.edziennik.data.db.entity.Message
 import pl.szczodrzynski.edziennik.data.db.entity.Profile
 import pl.szczodrzynski.edziennik.data.enums.FeatureType
+import pl.szczodrzynski.edziennik.data.enums.MetadataType
 import pl.szczodrzynski.edziennik.data.enums.NavTarget
 import pl.szczodrzynski.edziennik.ext.JsonObject
 import pl.szczodrzynski.edziennik.ext.getAppData
@@ -240,9 +241,51 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             }
         }
 
+        updateLoginTimestamps(App.profileId)
+
         if (app.config.appVersion < BuildConfig.VERSION_CODE) {
             ChangelogDialog(this).show()
             if (app.config.appVersion >= 170) app.config.appVersion = BuildConfig.VERSION_CODE
+        }
+    }
+
+    fun updateLoginTimestamps(profileId: Int) {
+        if (profileId < 0) return
+        val ui = app.config[profileId].ui
+        val now = System.currentTimeMillis()
+        if (ui.lastLoginTime > 0L) {
+            if (now - ui.lastLoginTime > 10 * 60 * 1000L) {
+                ui.previousLoginTime = ui.lastLoginTime
+                ui.lastLoginTime = now
+            }
+        } else {
+            ui.previousLoginTime = now - 7 * 24 * 3600 * 1000L
+            ui.lastLoginTime = now
+        }
+    }
+
+    fun markTargetSeen(target: NavTarget) {
+        val pid = App.profileId
+        launch(Dispatchers.IO) {
+            when (target) {
+                NavTarget.GRADES -> app.db.metadataDao().setAllSeen(pid, MetadataType.GRADE, true)
+                NavTarget.AGENDA -> {
+                    app.db.metadataDao().setAllSeen(pid, MetadataType.EVENT, true)
+                    app.db.metadataDao().setAllSeen(pid, MetadataType.HOMEWORK, true)
+                }
+                NavTarget.TIMETABLE -> app.db.metadataDao().setAllSeen(pid, MetadataType.LESSON_CHANGE, true)
+                NavTarget.ATTENDANCE -> app.db.metadataDao().setAllSeen(pid, MetadataType.ATTENDANCE, true)
+                NavTarget.BEHAVIOUR -> app.db.metadataDao().setAllSeen(pid, MetadataType.NOTICE, true)
+                NavTarget.ANNOUNCEMENTS -> app.db.metadataDao().setAllSeen(pid, MetadataType.ANNOUNCEMENT, true)
+                else -> {}
+            }
+        }
+    }
+
+    fun markAllSeen() {
+        val pid = App.profileId
+        launch(Dispatchers.IO) {
+            app.db.metadataDao().setAllSeenExceptMessages(pid, true)
         }
     }
 
@@ -294,6 +337,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     fun selectProfile(profile: Profile) {
+        updateLoginTimestamps(profile.id)
         navigate(profileId = profile.id, navTarget = navTarget)
     }
 
@@ -407,8 +451,10 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     internal fun retryProfileSync() {
         if (app.profile.loginStoreType == pl.szczodrzynski.edziennik.data.enums.LoginType.DEMO) {
+            val weekDate = TimetableFragment.pageSelection ?: Date.getToday()
             launch(Dispatchers.IO) {
                 pl.szczodrzynski.edziennik.data.api.edziennik.demo.DemoDataSeeder.seed(app, app.profileId)
+                pl.szczodrzynski.edziennik.data.api.edziennik.demo.DemoDataSeeder.seedWeek(app, app.profileId, weekDate.weekStart)
             }
         }
         launch { syncCurrentFeature(forceFullSync = true) }
@@ -657,18 +703,18 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 else -> navTarget.featureType
             }
         }
-        val arguments = if (forceFullSync) {
-            null
-        } else {
-            when (navTarget) {
-                NavTarget.TIMETABLE -> JsonObject(
-                    "weekStart" to TimetableFragment.pageSelection?.weekStart?.stringY_m_d,
-                )
-                else -> null
-            }
+        val arguments = when (navTarget) {
+            NavTarget.TIMETABLE -> JsonObject(
+                "weekStart" to (TimetableFragment.pageSelection ?: Date.getToday()).weekStart.stringY_m_d,
+            )
+            else -> null
         }
         val syncTask = if (forceFullSync) {
-            EdziennikTask.forceSyncProfile(App.profileId)
+            EdziennikTask.syncProfile(
+                App.profileId,
+                onlyEndpoints = emptySet(),
+                arguments = arguments,
+            )
         } else {
             EdziennikTask.syncProfile(
                 App.profileId,

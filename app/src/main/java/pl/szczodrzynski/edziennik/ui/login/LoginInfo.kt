@@ -189,32 +189,6 @@ object LoginInfo {
                             )
                         ),
                         errorCodes = mapOf()
-                    ),
-                    Mode(
-                        loginMode = LoginMode.VULCAN_WEB,
-                        name = R.string.login_mode_vulcan_web,
-                        icon = R.drawable.login_mode_vulcan_web,
-                        hintText = R.string.login_mode_vulcan_web_hint,
-                        guideText = R.string.login_mode_vulcan_web_guide,
-                        isTesting = true,
-                        isDevOnly = true,
-                        isPlatformSelection = true,
-                        credentials = listOf(
-                            getEmailCredential("email"),
-                            FormField(
-                                keyName = "username",
-                                name = R.string.login_hint_username,
-                                icon = CommunityMaterial.Icon.cmd_account_outline,
-                                emptyText = R.string.login_error_no_username,
-                                invalidText = R.string.login_error_incorrect_username,
-                                errorCodes = mapOf(),
-                                isRequired = true,
-                                validationRegex = "[A-Z]{7}[0-9]+",
-                                caseMode = FormField.CaseMode.UPPER_CASE
-                            ),
-                            getPasswordCredential("password")
-                        ),
-                        errorCodes = mapOf()
                     )
                 )
             ),

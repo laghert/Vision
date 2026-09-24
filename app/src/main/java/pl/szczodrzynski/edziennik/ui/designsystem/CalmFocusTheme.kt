@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import pl.szczodrzynski.edziennik.ext.isNightMode
 import com.google.android.material.R as MaterialR
 
 @Composable
@@ -22,10 +23,11 @@ fun CalmFocusTheme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val appliedColorScheme = remember(context, darkTheme) {
-        context.colorSchemeFromAppliedTheme(darkTheme)
+    val isDark = darkTheme || amoled || context.isNightMode
+    val appliedColorScheme = remember(context, isDark) {
+        context.colorSchemeFromAppliedTheme(isDark)
     }
-    val colorScheme = if (darkTheme && amoled) {
+    val colorScheme = if (isDark && amoled) {
         appliedColorScheme.withCalmFocusAmoledSurfaces()
     } else {
         appliedColorScheme

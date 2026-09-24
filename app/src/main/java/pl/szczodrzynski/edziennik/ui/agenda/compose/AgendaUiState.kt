@@ -34,6 +34,8 @@ data class AgendaEventItemUi(
     val isHomework: Boolean,
     val isDone: Boolean,
     val teacherName: String?,
+    val isFromLastLogin: Boolean = false,
+    val isPast: Boolean = false,
 )
 
 @Immutable
@@ -41,8 +43,12 @@ data class AgendaUiState(
     val isLoading: Boolean = true,
     val selectedFilter: AgendaFilter = AgendaFilter.ALL,
     val selectedDateString: String? = null,
+    val filterFromLastLogin: Boolean = false,
+    val newSinceLastLoginCount: Int = 0,
+    val isCalendarStripExpanded: Boolean = false,
     val days: PersistentList<AgendaDayChipUi> = persistentListOf(),
-    val events: PersistentList<AgendaEventItemUi> = persistentListOf(),
+    val upcomingEvents: PersistentList<AgendaEventItemUi> = persistentListOf(),
+    val pastEvents: PersistentList<AgendaEventItemUi> = persistentListOf(),
     val totalCount: Int = 0,
     val examsCount: Int = 0,
     val quizzesCount: Int = 0,

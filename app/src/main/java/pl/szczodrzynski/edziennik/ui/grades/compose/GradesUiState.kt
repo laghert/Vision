@@ -20,6 +20,8 @@ data class GradesUiState(
     val gradeDistribution: Map<Int, Int> = emptyMap(),
     val subjects: PersistentList<GradeSubjectUi> = persistentListOf(),
     val simulatedGrades: Map<Long, List<SimulatedGrade>> = emptyMap(),
+    val filterFromLastLogin: Boolean = false,
+    val newSinceLastLoginCount: Int = 0,
 )
 
 @Immutable
@@ -46,6 +48,10 @@ data class GradeItemUi(
     val color: Int?,
     val isCounted: Boolean = true,
     val isPinned: Boolean = false,
+    val description: String? = null,
+    val classAverage: Float? = null,
+    val semester: Int = 1,
+    val isFromLastLogin: Boolean = false,
 )
 
 @Immutable

@@ -85,6 +85,9 @@ class ProfileConfig(
         var checkAnnouncements: Boolean by config<Boolean>(true)
         var checkNotices: Boolean by config<Boolean>(true)
         var checkHomework: Boolean by config<Boolean>(true)
+
+        var lastLoginTime: Long by config<Long>(0L)
+        var previousLoginTime: Long by config<Long>(0L)
     }
 
     inner class Sync {

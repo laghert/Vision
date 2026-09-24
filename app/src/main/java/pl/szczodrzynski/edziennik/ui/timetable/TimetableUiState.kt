@@ -28,6 +28,8 @@ data class TimetableDayUi(
     val title: String = "",
     val summary: String = "",
     val isFreeDay: Boolean = false,
+    val isNotDownloaded: Boolean = false,
+    val isLoading: Boolean = false,
     val currentLessonIndex: Int = -1,
     val items: PersistentList<TimetableItemUi> = persistentListOf(),
     val preview: PersistentList<TimetableLessonPreviewUi> = persistentListOf(),

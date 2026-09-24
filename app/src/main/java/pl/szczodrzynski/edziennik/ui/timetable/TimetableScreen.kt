@@ -71,6 +71,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -142,7 +143,7 @@ fun TimetableRoute(
         onStepDay = viewModel::stepDay,
         onStepAdjacentWeek = viewModel::stepToAdjacentWeek,
         onSelectToday = viewModel::selectToday,
-        onRefresh = activity::retryProfileSync,
+        onRefresh = { viewModel.syncCurrentWeek(force = true) },
         onShareWeek = { TimetableShare.shareWeek(activity, it) },
         onLessonLongPress = { viewModel.openLessonNotes(activity, it) },
         modifier = modifier,
@@ -1292,6 +1293,80 @@ private fun LessonDetailsBottomSheet(
 }
 
 /**
+ * Not Downloaded Card: displayed when the timetable for the selected week has not been downloaded yet.
+ */
+@Composable
+private fun TimetableNotDownloadedCard(
+    isLoading: Boolean,
+    onDownload: () -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(BentoRadius),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(42.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 3.5.dp,
+                )
+                Text(
+                    text = "Pobieranie planu lekcji…",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = "Pobieramy plan z serwera dziennika.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.CalendarMonth,
+                    contentDescription = null,
+                    modifier = Modifier.size(44.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "Plan nie został pobrany",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = "Plan lekcji na ten tydzień nie znajduje się jeszcze w pamięci urządzenia.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Button(
+                    onClick = onDownload,
+                    shape = RoundedCornerShape(PillRadius),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                ) {
+                    Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Pobierz plan lekcji")
+                }
+            }
+        }
+    }
+}
+
+/**
  * Free Day Card: displayed when there are no lessons on the selected day.
  */
 @Composable
@@ -1423,7 +1498,12 @@ private fun TimetableDayPage(
             }
         }
 
-        if (day.isFreeDay || day.items.isEmpty()) {
+        if (day.isNotDownloaded) {
+            TimetableNotDownloadedCard(
+                isLoading = day.isLoading,
+                onDownload = onRefresh,
+            )
+        } else if (day.isFreeDay || day.items.isEmpty()) {
             TimetableFreeDayCard(
                 onNextDay = onNextDay,
                 onRefresh = onRefresh,

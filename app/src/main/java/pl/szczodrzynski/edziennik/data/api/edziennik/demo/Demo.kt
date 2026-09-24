@@ -18,6 +18,7 @@ import pl.szczodrzynski.edziennik.data.db.full.EventFull
 import pl.szczodrzynski.edziennik.data.db.full.MessageFull
 import pl.szczodrzynski.edziennik.data.enums.FeatureType
 import pl.szczodrzynski.edziennik.data.enums.LoginType
+import pl.szczodrzynski.edziennik.utils.models.Date
 
 class Demo(
     val app: App,
@@ -36,7 +37,13 @@ class Demo(
         arguments: JsonObject?,
     ) {
         val targetProfileId = profile?.id ?: loginStore.id
-        DemoDataSeeder.seed(app, targetProfileId)
+        val weekStartStr = arguments?.get("weekStart")?.asString
+        if (weekStartStr != null) {
+            val monday = Date.fromY_m_d(weekStartStr)
+            DemoDataSeeder.seedWeek(app, targetProfileId, monday)
+        } else {
+            DemoDataSeeder.seed(app, targetProfileId)
+        }
         completed()
     }
 

@@ -84,92 +84,22 @@ object DemoDataSeeder {
         )
         grades.forEach { db.gradeDao().add(it) }
 
-        // 4. FULL WEEK LESSONS (Mon - Fri)
+        // 4. FULL WEEK LESSONS (Mon - Fri) - Seed previous, current, and next week
         val today = Date.getToday()
         val monday = today.weekStart
         val nowCal = Calendar.getInstance()
         val currentHour = nowCal.get(Calendar.HOUR_OF_DAY)
         val baseHour = if (currentHour in 7..16) currentHour else 8
 
-        val weekLessons = mutableListOf<Lesson>()
-        var lessonId = 300L
+        val allLessons = mutableListOf<Lesson>()
+        val prevMonday = monday.clone().stepForward(0, 0, -7)
+        val nextMonday = monday.clone().stepForward(0, 0, 7)
 
-        for (dayIdx in 0..4) {
-            val dayDate = monday.clone().stepForward(0, 0, dayIdx)
-            val isDayToday = dayDate.value == today.value
+        allLessons.addAll(generateLessonsForWeek(profileId, prevMonday))
+        allLessons.addAll(generateLessonsForWeek(profileId, monday, isCurrentWeek = true, baseHour = baseHour))
+        allLessons.addAll(generateLessonsForWeek(profileId, nextMonday))
 
-            val daySchedule = when (dayIdx) {
-                0 -> listOf( // Poniedziałek
-                    Triple(2L, 102L, "204"), // Język polski
-                    Triple(1L, 101L, "105"), // Matematyka
-                    Triple(3L, 103L, "302"), // Język angielski
-                    Triple(7L, 102L, "108"), // Historia
-                    Triple(8L, 104L, "Hala"), // WF
-                )
-                1 -> listOf( // Wtorek
-                    Triple(1L, 101L, "105"), // Matematyka
-                    Triple(5L, 105L, "210"), // Fizyka
-                    Triple(6L, 106L, "BIO 2"), // Biologia
-                    Triple(2L, 102L, "204"), // Język polski
-                    Triple(8L, 104L, "Hala"), // WF
-                )
-                2 -> listOf( // Środa
-                    Triple(4L, 104L, "LAB 1"), // Informatyka
-                    Triple(4L, 104L, "LAB 1"), // Informatyka
-                    Triple(3L, 103L, "302"), // Język angielski
-                    Triple(1L, 101L, "105"), // Matematyka
-                    Triple(6L, 106L, "BIO 2"), // Biologia
-                )
-                3 -> listOf( // Czwartek
-                    Triple(2L, 102L, "204"), // Język polski
-                    Triple(2L, 102L, "204"), // Język polski
-                    Triple(5L, 105L, "210"), // Fizyka (Zastępstwo)
-                    Triple(7L, 102L, "108"), // Historia
-                    Triple(3L, 103L, "302"), // Język angielski
-                    Triple(8L, 104L, "Hala"), // WF
-                )
-                else -> listOf( // Piątek
-                    Triple(1L, 101L, "105"), // Matematyka
-                    Triple(3L, 103L, "302"), // Język angielski
-                    Triple(6L, 106L, "BIO 2"), // Biologia
-                    Triple(8L, 104L, "Hala"), // WF
-                    Triple(2L, 102L, "204"), // Godzina z wychowawcą
-                )
-            }
-
-            daySchedule.forEachIndexed { idx, (subjId, teachId, room) ->
-                lessonId++
-                val (startH, startM, endH, endM) = if (isDayToday) {
-                    val h = baseHour - 1 + idx
-                    listOf(h, 0, h, 45)
-                } else {
-                    when (idx) {
-                        0 -> listOf(8, 0, 8, 45)
-                        1 -> listOf(8, 55, 9, 40)
-                        2 -> listOf(9, 50, 10, 35)
-                        3 -> listOf(10, 45, 11, 30)
-                        4 -> listOf(11, 45, 12, 30)
-                        else -> listOf(12, 45, 13, 30)
-                    }
-                }
-
-                weekLessons.add(
-                    Lesson(profileId, lessonId).apply {
-                        date = dayDate
-                        lessonNumber = idx + 1
-                        startTime = Time(startH, startM, 0)
-                        endTime = Time(endH, endM, 0)
-                        subjectId = subjId
-                        teacherId = teachId
-                        classroom = room
-                        if (dayIdx == 3 && idx == 2) {
-                            type = Lesson.TYPE_CHANGE
-                        }
-                    },
-                )
-            }
-        }
-        db.timetableDao().replaceAll(weekLessons)
+        db.timetableDao().replaceAll(allLessons)
 
         // 5. EVENT TYPES & EVENTS (Homework, Quizzes, Exams)
         val eventTypes = listOf(
@@ -227,5 +157,97 @@ object DemoDataSeeder {
 
         // 9. LUCKY NUMBER (Set to 17, matching studentNumber = 17 for VIP Gold Card!)
         db.luckyNumberDao().add(LuckyNumber(profileId, today, 17))
+    }
+
+    fun generateLessonsForWeek(
+        profileId: Int,
+        monday: Date,
+        isCurrentWeek: Boolean = false,
+        baseHour: Int = 8,
+    ): List<Lesson> {
+        val weekLessons = mutableListOf<Lesson>()
+        val today = Date.getToday()
+
+        for (dayIdx in 0..4) {
+            val dayDate = monday.clone().stepForward(0, 0, dayIdx)
+            val isDayToday = isCurrentWeek && dayDate.value == today.value
+
+            val daySchedule = when (dayIdx) {
+                0 -> listOf(
+                    Triple(2L, 102L, "204"),
+                    Triple(1L, 101L, "105"),
+                    Triple(3L, 103L, "302"),
+                    Triple(7L, 102L, "108"),
+                    Triple(8L, 104L, "Hala"),
+                )
+                1 -> listOf(
+                    Triple(1L, 101L, "105"),
+                    Triple(5L, 105L, "210"),
+                    Triple(6L, 106L, "BIO 2"),
+                    Triple(2L, 102L, "204"),
+                    Triple(8L, 104L, "Hala"),
+                )
+                2 -> listOf(
+                    Triple(4L, 104L, "LAB 1"),
+                    Triple(4L, 104L, "LAB 1"),
+                    Triple(3L, 103L, "302"),
+                    Triple(1L, 101L, "105"),
+                    Triple(6L, 106L, "BIO 2"),
+                )
+                3 -> listOf(
+                    Triple(2L, 102L, "204"),
+                    Triple(2L, 102L, "204"),
+                    Triple(5L, 105L, "210"),
+                    Triple(7L, 102L, "108"),
+                    Triple(3L, 103L, "302"),
+                    Triple(8L, 104L, "Hala"),
+                )
+                else -> listOf(
+                    Triple(1L, 101L, "105"),
+                    Triple(3L, 103L, "302"),
+                    Triple(6L, 106L, "BIO 2"),
+                    Triple(8L, 104L, "Hala"),
+                    Triple(2L, 102L, "204"),
+                )
+            }
+
+            daySchedule.forEachIndexed { idx, (subjId, teachId, room) ->
+                val lessonId = (monday.value.toLong() * 100L) + (dayIdx * 10L) + idx
+                val (startH, startM, endH, endM) = if (isDayToday) {
+                    val h = baseHour - 1 + idx
+                    listOf(h, 0, h, 45)
+                } else {
+                    when (idx) {
+                        0 -> listOf(8, 0, 8, 45)
+                        1 -> listOf(8, 55, 9, 40)
+                        2 -> listOf(9, 50, 10, 35)
+                        3 -> listOf(10, 45, 11, 30)
+                        4 -> listOf(11, 45, 12, 30)
+                        else -> listOf(12, 45, 13, 30)
+                    }
+                }
+
+                weekLessons.add(
+                    Lesson(profileId, lessonId).apply {
+                        date = dayDate
+                        lessonNumber = idx + 1
+                        startTime = Time(startH, startM, 0)
+                        endTime = Time(endH, endM, 0)
+                        subjectId = subjId
+                        teacherId = teachId
+                        classroom = room
+                        if (dayIdx == 3 && idx == 2) {
+                            type = Lesson.TYPE_CHANGE
+                        }
+                    },
+                )
+            }
+        }
+        return weekLessons
+    }
+
+    fun seedWeek(app: App, profileId: Int, monday: Date) {
+        val lessons = generateLessonsForWeek(profileId, monday)
+        app.db.timetableDao().addAll(lessons)
     }
 }

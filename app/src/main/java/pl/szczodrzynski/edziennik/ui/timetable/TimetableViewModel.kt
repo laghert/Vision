@@ -43,6 +43,19 @@ import java.util.Calendar
 import java.util.Locale
 import kotlin.math.ceil
 
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
+import pl.szczodrzynski.edziennik.data.api.edziennik.EdziennikTask
+import pl.szczodrzynski.edziennik.data.api.edziennik.demo.DemoDataSeeder
+import pl.szczodrzynski.edziennik.data.api.events.ApiTaskAllFinishedEvent
+import pl.szczodrzynski.edziennik.data.api.events.ApiTaskErrorEvent
+import pl.szczodrzynski.edziennik.data.api.events.ApiTaskFinishedEvent
+import pl.szczodrzynski.edziennik.data.enums.FeatureType
+import pl.szczodrzynski.edziennik.data.enums.LoginType
+import pl.szczodrzynski.edziennik.ext.JsonObject
+import java.util.Collections
+
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class TimetableViewModel private constructor(
     private val app: App,
@@ -54,6 +67,8 @@ class TimetableViewModel private constructor(
     private val db: AppDb = app.db
 
     val selectedDate = MutableStateFlow(Date.getToday())
+    private val syncingWeeks = MutableStateFlow<Set<String>>(emptySet())
+    private val syncedWeeks = Collections.synchronizedSet(mutableSetOf<String>())
 
     private val clock = flow {
         while (currentCoroutineContext().isActive) {
@@ -90,14 +105,101 @@ class TimetableViewModel private constructor(
         db.eventDao().getAllByDateRange(profileId, monday, sunday).asFlow()
     }.withFallback("events", emptyList())
 
-    val uiState = combine(selectedDate, weekLessons, weekEvents, clock) { currentDate, lessons, events, now ->
-        buildTimetableState(currentDate, lessons, events, now)
+    val uiState = combine(selectedDate, weekLessons, weekEvents, clock, syncingWeeks) { currentDate, lessons, events, now, syncing ->
+        buildTimetableState(currentDate, lessons, events, now, syncing)
     }.withFallback("Timetable state", TimetableUiState(isLoading = false))
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
             initialValue = TimetableUiState(),
         )
+
+    init {
+        TimetableFragment.pageSelection = selectedDate.value
+        EventBus.getDefault().register(this)
+
+        viewModelScope.launch {
+            selectedDate.collect {
+                TimetableFragment.pageSelection = it
+            }
+        }
+
+        viewModelScope.launch {
+            combine(weekRange, weekLessons) { (monday, _), lessons ->
+                monday to lessons
+            }.collect { (monday, lessons) ->
+                val weekKey = monday.stringY_m_d
+                if (lessons.isEmpty() && !syncedWeeks.contains(weekKey) && !syncingWeeks.value.contains(weekKey)) {
+                    Timber.d("Timetable week %s has no lessons, auto-syncing...", weekKey)
+                    syncWeek(monday, force = false)
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        EventBus.getDefault().unregister(this)
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onApiTaskFinishedEvent(event: ApiTaskFinishedEvent) {
+        if (event.profileId == profileId) {
+            syncingWeeks.value = emptySet()
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onApiTaskAllFinishedEvent(event: ApiTaskAllFinishedEvent) {
+        syncingWeeks.value = emptySet()
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onApiTaskErrorEvent(event: ApiTaskErrorEvent) {
+        if (event.error.profileId == profileId) {
+            syncingWeeks.value = emptySet()
+        }
+    }
+
+    fun syncCurrentWeek(force: Boolean = true) {
+        val monday = getMondayOfWeek(selectedDate.value)
+        syncWeek(monday, force = force)
+    }
+
+    fun syncWeek(monday: Date, force: Boolean = true) {
+        val weekKey = monday.stringY_m_d
+        if (!force && syncedWeeks.contains(weekKey)) {
+            return
+        }
+        if (syncingWeeks.value.contains(weekKey)) {
+            return
+        }
+        syncedWeeks.add(weekKey)
+        syncingWeeks.value = syncingWeeks.value + weekKey
+        TimetableFragment.pageSelection = selectedDate.value
+
+        viewModelScope.launch(Dispatchers.IO) {
+            if (app.profile.loginStoreType == LoginType.DEMO) {
+                DemoDataSeeder.seedWeek(app, profileId, monday)
+                withContext(Dispatchers.Main) {
+                    syncingWeeks.value = syncingWeeks.value - weekKey
+                }
+            } else {
+                EdziennikTask.syncProfile(
+                    profileId = profileId,
+                    featureTypes = setOf(FeatureType.TIMETABLE),
+                    arguments = JsonObject("weekStart" to weekKey),
+                ).enqueue(app)
+            }
+        }
+
+        viewModelScope.launch {
+            delay(15_000L)
+            if (syncingWeeks.value.contains(weekKey)) {
+                syncingWeeks.value = syncingWeeks.value - weekKey
+            }
+        }
+    }
 
     fun selectDate(date: Date) {
         selectedDate.value = date
@@ -150,10 +252,12 @@ class TimetableViewModel private constructor(
         allLessons: List<LessonFull>,
         allEvents: List<EventFull>,
         now: Long,
+        syncing: Set<String>,
     ): TimetableUiState {
         val correctedNow = now - bellCorrectionMillis
         val today = Date.fromMillis(now)
         val monday = getMondayOfWeek(currentDate)
+        val isWeekSyncing = syncing.contains(monday.stringY_m_d)
         val weekendDays = setOf(Week.SATURDAY, Week.SUNDAY)
         val showWeekend = currentDate.weekDay in weekendDays ||
             allLessons.any { it.displayDate?.weekDay in weekendDays }
@@ -169,6 +273,7 @@ class TimetableViewModel private constructor(
                 allLessons = allLessons,
                 allEvents = allEvents,
                 nowSeconds = nowSeconds,
+                isWeekSyncing = isWeekSyncing,
             )
         }.toPersistentList()
 
@@ -190,7 +295,7 @@ class TimetableViewModel private constructor(
             }
 
         return TimetableUiState(
-            isLoading = false,
+            isLoading = isWeekSyncing,
             selectedDate = currentDate,
             weekTitle = formatWeekTitle(monday, days.last().date),
             isTodaySelected = currentDate.value == today.value,
@@ -205,11 +310,17 @@ class TimetableViewModel private constructor(
         allLessons: List<LessonFull>,
         allEvents: List<EventFull>,
         nowSeconds: Long,
+        isWeekSyncing: Boolean,
     ): TimetableDayUi {
+        val isWeekend = dayDate.weekDay in Week.SATURDAY..Week.SUNDAY
         val dayLessons = allLessons.filter { it.displayDate?.value == dayDate.value }
         val dayEvents = allEvents.filter { it.date.value == dayDate.value }
         val hasChanges = dayLessons.any { it.isCancelled || it.isChanged }
         val hasExams = dayEvents.any { it.type == Event.TYPE_EXAM || it.type == Event.TYPE_SHORT_QUIZ }
+
+        val isWeekEmpty = allLessons.isEmpty()
+        val isNotDownloaded = !isWeekend && isWeekEmpty
+        val isLoading = isWeekSyncing
 
         val validLessons = dayLessons
             .asSequence()
@@ -235,6 +346,8 @@ class TimetableViewModel private constructor(
         }
 
         if (validLessons.isEmpty()) {
+            val hasExplicitNoLessons = dayLessons.any { it.type == Lesson.TYPE_NO_LESSONS }
+            val isFreeDay = isWeekend || (!isWeekEmpty && (hasExplicitNoLessons || dayLessons.isEmpty()))
             return TimetableDayUi(
                 date = dayDate,
                 dayOfWeekShort = dayDate.dayOfWeekShort(),
@@ -245,7 +358,9 @@ class TimetableViewModel private constructor(
                 hasExams = hasExams,
                 title = title,
                 summary = summary,
-                isFreeDay = true,
+                isFreeDay = isFreeDay,
+                isNotDownloaded = isNotDownloaded,
+                isLoading = isLoading,
             )
         }
 
@@ -371,6 +486,8 @@ class TimetableViewModel private constructor(
             title = title,
             summary = summary,
             isFreeDay = false,
+            isNotDownloaded = false,
+            isLoading = isLoading,
             currentLessonIndex = currentLessonIndex,
             items = items.toPersistentList(),
             preview = preview,

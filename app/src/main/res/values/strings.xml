@@ -1046,6 +1046,9 @@
     <string name="settings_theme_theme_pink">Różowy</string>
     <string name="settings_theme_theme_system">Systemowy</string>
     <string name="settings_theme_theme_text">Motyw</string>
+    <string name="settings_theme_night_mode_text">Ciemny motyw</string>
+    <string name="settings_theme_amoled_text">Tryb AMOLED</string>
+    <string name="settings_theme_amoled_subtext">Czysta czerń (#000000) dla ekranów OLED</string>
     <string name="settings_card_theme_title">Wygląd</string>
     <string name="settings_card_demo_title">Tryb demonstracyjny</string>
     <string name="share">Udostępnij</string>

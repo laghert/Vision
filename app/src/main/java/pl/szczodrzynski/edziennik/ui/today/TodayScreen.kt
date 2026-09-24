@@ -53,6 +53,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Celebration
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CheckCircleOutline
+import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Grade
@@ -154,6 +155,7 @@ fun TodayRoute(
         onRefresh = activity::retryProfileSync,
         onOpenWeek = { activity.selectShellTarget(NavTarget.TIMETABLE) },
         onNavigateTarget = { activity.selectShellTarget(it) },
+        onMarkAllRead = activity::markAllSeen,
         onToggleAttention = viewModel::toggleAttentionOption,
         onToggleHomework = viewModel::toggleHomeworkDone,
         onMoveCard = viewModel::moveTodayCard,
@@ -169,6 +171,7 @@ fun TodayScreen(
     onRefresh: () -> Unit,
     onOpenWeek: () -> Unit,
     onNavigateTarget: (NavTarget) -> Unit,
+    onMarkAllRead: () -> Unit = {},
     onToggleAttention: (key: String, enabled: Boolean) -> Unit,
     onToggleHomework: (eventId: Long, isDone: Boolean) -> Unit,
     onMoveCard: (String, Int) -> Unit = { _, _ -> },
@@ -343,6 +346,7 @@ fun TodayScreen(
                             state = state,
                             onOpenSettings = { showAttentionSheet = true },
                             onNavigateTarget = onNavigateTarget,
+                            onMarkAllRead = onMarkAllRead,
                         )
                     }
 
@@ -1556,6 +1560,7 @@ private fun TodayBentoQuickGlance(
     state: TodayUiState,
     onOpenSettings: () -> Unit,
     onNavigateTarget: (NavTarget) -> Unit,
+    onMarkAllRead: () -> Unit,
 ) {
     val hasLuckyNumber = state.luckyNumber != null && state.luckyNumber > 0
 
@@ -1576,6 +1581,7 @@ private fun TodayBentoQuickGlance(
                 attention = state.attention,
                 onOpenSettings = onOpenSettings,
                 onNavigateTarget = onNavigateTarget,
+                onMarkAllRead = onMarkAllRead,
                 modifier = Modifier.weight(1.1f),
             )
         }
@@ -1585,6 +1591,7 @@ private fun TodayBentoQuickGlance(
             attention = state.attention,
             onOpenSettings = onOpenSettings,
             onNavigateTarget = onNavigateTarget,
+            onMarkAllRead = onMarkAllRead,
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -1721,6 +1728,7 @@ private fun TodayAttentionCenterCard(
     attention: TodayAttentionUi,
     onOpenSettings: () -> Unit,
     onNavigateTarget: (NavTarget) -> Unit,
+    onMarkAllRead: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -1773,6 +1781,17 @@ private fun TodayAttentionCenterCard(
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                            )
+                        }
+                        IconButton(
+                            onClick = onMarkAllRead,
+                            modifier = Modifier.size(24.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.DoneAll,
+                                contentDescription = "Oznacz wszystkie jako przeczytane",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary,
                             )
                         }
                     }

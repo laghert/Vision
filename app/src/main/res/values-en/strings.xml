@@ -966,6 +966,9 @@
     <string name="settings_theme_theme_pink">Pink</string>
     <string name="settings_theme_theme_system">System</string>
     <string name="settings_theme_theme_text">Theme</string>
+    <string name="settings_theme_night_mode_text">Dark theme</string>
+    <string name="settings_theme_amoled_text">AMOLED mode</string>
+    <string name="settings_theme_amoled_subtext">Pure black (#000000) for OLED screens</string>
     <string name="settings_card_theme_title">Appearance</string>
     <string name="share">Share</string>
     <string name="share_intent">Share…</string>

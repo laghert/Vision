@@ -213,7 +213,7 @@ class TodayViewModel private constructor(
                 hero = TodayHeroUi(phase = TodayPhase.FREE_DAY),
                 nextLessons = emptyList(),
             )
-            else -> buildSchedule(todayLessons, correctedNow)
+            else -> buildSchedule(activeTodayLessons, correctedNow)
         }
         val lastSync = secondary.timers.mapNotNull(EndpointTimer::lastSync).maxOrNull()
 
