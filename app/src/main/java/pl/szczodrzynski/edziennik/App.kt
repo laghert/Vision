@@ -130,6 +130,11 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
             .connectTimeout(15, TimeUnit.SECONDS)
             .writeTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            .connectionPool(okhttp3.ConnectionPool(10, 5, TimeUnit.MINUTES))
+            .dispatcher(okhttp3.Dispatcher().apply {
+                maxRequests = 32
+                maxRequestsPerHost = 8
+            })
 
         SSLProviderInstaller.enableSupportedTls(builder, enableCleartext = true)
 

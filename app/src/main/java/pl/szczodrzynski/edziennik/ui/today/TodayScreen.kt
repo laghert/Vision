@@ -152,7 +152,7 @@ fun TodayRoute(
     TodayScreen(
         state = state,
         profileId = profileId,
-        onRefresh = activity::retryProfileSync,
+        onRefresh = { activity.syncToday(force = false) },
         onOpenWeek = { activity.selectShellTarget(NavTarget.TIMETABLE) },
         onNavigateTarget = { activity.selectShellTarget(it) },
         onMarkAllRead = activity::markAllSeen,

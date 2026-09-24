@@ -460,6 +460,36 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         launch { syncCurrentFeature(forceFullSync = true) }
     }
 
+    internal fun syncToday(force: Boolean = false) {
+        if (app.profile.loginStoreType == pl.szczodrzynski.edziennik.data.enums.LoginType.DEMO) {
+            val weekDate = TimetableFragment.pageSelection ?: Date.getToday()
+            launch(Dispatchers.IO) {
+                pl.szczodrzynski.edziennik.data.api.edziennik.demo.DemoDataSeeder.seed(app, app.profileId)
+                pl.szczodrzynski.edziennik.data.api.edziennik.demo.DemoDataSeeder.seedWeek(app, app.profileId, weekDate.weekStart)
+            }
+        }
+        launch {
+            val features = setOf(
+                FeatureType.TIMETABLE,
+                FeatureType.GRADES,
+                FeatureType.AGENDA,
+                FeatureType.ATTENDANCE,
+                FeatureType.BEHAVIOUR,
+                FeatureType.ANNOUNCEMENTS,
+            )
+            val arguments = JsonObject(
+                "weekStart" to Date.getToday().weekStart.stringY_m_d,
+            )
+            val syncTask = EdziennikTask.syncProfile(
+                profileId = App.profileId,
+                featureTypes = features,
+                onlyEndpoints = if (force) emptySet() else null,
+                arguments = arguments,
+            )
+            syncTask.enqueue(this@MainActivity)
+        }
+    }
+
     private fun canNavigate(): Boolean = onBeforeNavigate?.invoke() != false
 
     fun resumePausedNavigation(): Boolean {
@@ -922,9 +952,20 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         eventReceiversRegistered = true
     }
 
+    private var lastForegroundSyncTime = 0L
+
+    private fun checkFastForegroundSync() {
+        val now = System.currentTimeMillis()
+        if (now - lastForegroundSyncTime > 4 * 60 * 1000L && app.profile.id >= 0 && !app.profile.archived) {
+            lastForegroundSyncTime = now
+            syncToday(force = false)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         registerEventReceiversIfNeeded()
+        checkFastForegroundSync()
     }
 
     override fun onPause() {

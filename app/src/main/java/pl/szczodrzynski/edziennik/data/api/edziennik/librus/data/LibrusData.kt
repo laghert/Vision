@@ -14,30 +14,117 @@ import pl.szczodrzynski.edziennik.data.api.edziennik.librus.data.synergia.Librus
 import pl.szczodrzynski.edziennik.data.db.entity.Message
 import pl.szczodrzynski.edziennik.utils.Utils
 import timber.log.Timber
+import java.util.ArrayDeque
+import java.util.concurrent.atomic.AtomicInteger
 
 class LibrusData(val data: DataLibrus, val onSuccess: () -> Unit) {
     companion object {
         private const val TAG = "LibrusEndpoints"
+        private const val MAX_CONCURRENCY = 4
+
+        private val phase1Endpoints = setOf(
+            ENDPOINT_LIBRUS_API_ME,
+            ENDPOINT_LIBRUS_API_SCHOOLS,
+            ENDPOINT_LIBRUS_API_CLASSES,
+            ENDPOINT_LIBRUS_API_VIRTUAL_CLASSES,
+            ENDPOINT_LIBRUS_API_UNITS,
+            ENDPOINT_LIBRUS_API_USERS,
+            ENDPOINT_LIBRUS_API_SUBJECTS,
+            ENDPOINT_LIBRUS_API_CLASSROOMS,
+            ENDPOINT_LIBRUS_API_LESSONS,
+            ENDPOINT_LIBRUS_API_NORMAL_GRADE_CATEGORIES,
+            ENDPOINT_LIBRUS_API_POINT_GRADE_CATEGORIES,
+            ENDPOINT_LIBRUS_API_DESCRIPTIVE_GRADE_CATEGORIES,
+            ENDPOINT_LIBRUS_API_TEXT_GRADE_CATEGORIES,
+            ENDPOINT_LIBRUS_API_DESCRIPTIVE_TEXT_GRADE_CATEGORIES,
+            ENDPOINT_LIBRUS_API_BEHAVIOUR_GRADE_CATEGORIES,
+            ENDPOINT_LIBRUS_API_NORMAL_GRADE_COMMENTS,
+            ENDPOINT_LIBRUS_API_BEHAVIOUR_GRADE_COMMENTS,
+            ENDPOINT_LIBRUS_API_EVENT_TYPES,
+            ENDPOINT_LIBRUS_API_NOTICE_TYPES,
+            ENDPOINT_LIBRUS_API_ATTENDANCE_TYPES,
+            ENDPOINT_LIBRUS_API_TEACHER_FREE_DAY_TYPES,
+        )
     }
 
     init {
-        nextEndpoint(onSuccess)
+        val phase1 = mutableListOf<Pair<Int, Long?>>()
+        val phase2 = mutableListOf<Pair<Int, Long?>>()
+        synchronized(data.targetEndpoints) {
+            for ((id, lastSync) in data.targetEndpoints) {
+                if (id in phase1Endpoints) {
+                    phase1.add(id to lastSync)
+                } else {
+                    phase2.add(id to lastSync)
+                }
+            }
+        }
+
+        runBatchInParallel(phase1) {
+            runBatchInParallel(phase2) {
+                onSuccess()
+            }
+        }
     }
 
-    private fun nextEndpoint(onSuccess: () -> Unit) {
-        if (data.targetEndpoints.isEmpty()) {
-            onSuccess()
+    private fun runBatchInParallel(
+        items: List<Pair<Int, Long?>>,
+        maxConcurrency: Int = MAX_CONCURRENCY,
+        onBatchFinished: () -> Unit,
+    ) {
+        if (items.isEmpty() || data.cancelled) {
+            onBatchFinished()
             return
         }
-        if (data.cancelled) {
-            onSuccess()
-            return
+
+        val queue = ArrayDeque(items)
+        val remaining = AtomicInteger(items.size)
+        val lock = Any()
+        var finished = false
+
+        fun checkAndLaunchNext() {
+            if (data.cancelled) {
+                synchronized(lock) {
+                    if (!finished) {
+                        finished = true
+                        onBatchFinished()
+                    }
+                }
+                return
+            }
+
+            val nextItem: Pair<Int, Long?>?
+            synchronized(lock) {
+                nextItem = if (queue.isNotEmpty()) queue.removeFirst() else null
+            }
+
+            if (nextItem == null) return
+
+            val (endpointId, lastSync) = nextItem
+            useEndpoint(endpointId, lastSync) {
+                synchronized(data.targetEndpoints) {
+                    data.targetEndpoints.remove(endpointId)
+                }
+                data.progress(data.progressStep)
+                val left = remaining.decrementAndGet()
+                if (left <= 0) {
+                    synchronized(lock) {
+                        if (!finished) {
+                            finished = true
+                            onBatchFinished()
+                        }
+                    }
+                } else {
+                    checkAndLaunchNext()
+                }
+            }
         }
-        val id = data.targetEndpoints.firstKey()
-        val lastSync = data.targetEndpoints.remove(id)
-        useEndpoint(id, lastSync) { endpointId ->
-            data.progress(data.progressStep)
-            nextEndpoint(onSuccess)
+
+        synchronized(lock) {
+            val launchCount = minOf(maxConcurrency, items.size)
+            for (i in 0 until launchCount) {
+                checkAndLaunchNext()
+            }
         }
     }
 

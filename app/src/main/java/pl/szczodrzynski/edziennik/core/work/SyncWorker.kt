@@ -59,10 +59,9 @@ class SyncWorker(val context: Context, val params: WorkerParameters) : Worker(co
 
         /**
          * Computes smart sync interval in seconds based on school windows:
-         * - 06:00 - 10:00: 15 minutes (morning changes & substitutions)
-         * - 18:00 - 23:00: 15 minutes (evening grades & homework)
-         * - 10:00 - 18:00: 60 minutes (daytime school)
-         * - 23:00 - 06:00: sleep until 06:00 (night quiet)
+         * - 06:30 - 21:00: 15 minutes (active daytime: substitutions, grades, events)
+         * - 21:00 - 23:00: 30 minutes (late evening)
+         * - 23:00 - 06:30: sleep until 06:30 (night quiet)
          * - Weekends: 2 hours (120 minutes)
          */
         fun calculateSmartSyncInterval(app: App): Long {
@@ -73,15 +72,14 @@ class SyncWorker(val context: Context, val params: WorkerParameters) : Worker(co
 
             return when {
                 isWeekend -> 2 * 3600L
-                hour in 6..9 -> 15 * 60L // 6:00 - 10:00 morning window
-                hour in 18..22 -> 15 * 60L // 18:00 - 23:00 evening window
-                hour in 10..17 -> 60 * 60L // 10:00 - 18:00 school daytime
+                hour in 7..20 -> 15 * 60L // Active school and homework window: 15 minutes
+                hour in 21..22 -> 30 * 60L // Late evening window: 30 minutes
                 else -> {
-                    // 23:00 - 06:00 night window: sleep until 6:00 AM!
+                    // 23:00 - 06:30 night window: sleep until 6:30 AM!
                     val target = java.util.Calendar.getInstance().apply {
                         if (hour >= 23) add(java.util.Calendar.DAY_OF_MONTH, 1)
                         set(java.util.Calendar.HOUR_OF_DAY, 6)
-                        set(java.util.Calendar.MINUTE, 0)
+                        set(java.util.Calendar.MINUTE, 30)
                         set(java.util.Calendar.SECOND, 0)
                     }
                     val diff = (target.timeInMillis - System.currentTimeMillis()) / 1000

@@ -23,6 +23,7 @@ import pl.szczodrzynski.edziennik.ext.*
 import pl.szczodrzynski.edziennik.utils.Utils
 import pl.szczodrzynski.edziennik.utils.models.Date
 import timber.log.Timber
+import java.util.Collections
 
 abstract class Data(val app: App, val profile: Profile?, val loginStore: LoginStore) {
     companion object {
@@ -83,9 +84,9 @@ abstract class Data(val app: App, val profile: Profile?, val loginStore: LoginSt
      */
     var endpointArgs = mutableMapOf<Int, JsonObject>()
 
-    var endpointTimers = mutableListOf<EndpointTimer>()
+    var endpointTimers: MutableList<EndpointTimer> = Collections.synchronizedList(mutableListOf<EndpointTimer>())
 
-    val notifications = mutableListOf<Notification>()
+    val notifications: MutableList<Notification> = Collections.synchronizedList(mutableListOf<Notification>())
 
     val teacherList = LongSparseArray<Teacher>()
     val subjectList = LongSparseArray<Subject>()
@@ -116,37 +117,37 @@ abstract class Data(val app: App, val profile: Profile?, val loginStore: LoginSt
             mTeamClass = value
         }
 
-    var toRemove = mutableListOf<DataRemoveModel>()
+    var toRemove: MutableList<DataRemoveModel> = Collections.synchronizedList(mutableListOf<DataRemoveModel>())
 
-    val lessonList = mutableListOf<Lesson>()
+    val lessonList: MutableList<Lesson> = Collections.synchronizedList(mutableListOf<Lesson>())
 
-    val gradeList = mutableListOf<Grade>()
+    val gradeList: MutableList<Grade> = Collections.synchronizedList(mutableListOf<Grade>())
 
-    val eventList = mutableListOf<Event>()
+    val eventList: MutableList<Event> = Collections.synchronizedList(mutableListOf<Event>())
 
-    val noticeList = mutableListOf<Notice>()
+    val noticeList: MutableList<Notice> = Collections.synchronizedList(mutableListOf<Notice>())
 
-    val attendanceList = mutableListOf<Attendance>()
+    val attendanceList: MutableList<Attendance> = Collections.synchronizedList(mutableListOf<Attendance>())
 
-    val announcementList = mutableListOf<Announcement>()
+    val announcementList: MutableList<Announcement> = Collections.synchronizedList(mutableListOf<Announcement>())
 
-    val luckyNumberList = mutableListOf<LuckyNumber>()
+    val luckyNumberList: MutableList<LuckyNumber> = Collections.synchronizedList(mutableListOf<LuckyNumber>())
 
-    val teacherAbsenceList = mutableListOf<TeacherAbsence>()
+    val teacherAbsenceList: MutableList<TeacherAbsence> = Collections.synchronizedList(mutableListOf<TeacherAbsence>())
 
-    val messageList = mutableListOf<Message>()
-    val messageRecipientList = mutableListOf<MessageRecipient>()
-    val messageRecipientIgnoreList = mutableListOf<MessageRecipient>()
+    val messageList: MutableList<Message> = Collections.synchronizedList(mutableListOf<Message>())
+    val messageRecipientList: MutableList<MessageRecipient> = Collections.synchronizedList(mutableListOf<MessageRecipient>())
+    val messageRecipientIgnoreList: MutableList<MessageRecipient> = Collections.synchronizedList(mutableListOf<MessageRecipient>())
 
-    val metadataList = mutableListOf<Metadata>()
-    val setSeenMetadataList = mutableListOf<Metadata>()
+    val metadataList: MutableList<Metadata> = Collections.synchronizedList(mutableListOf<Metadata>())
+    val setSeenMetadataList: MutableList<Metadata> = Collections.synchronizedList(mutableListOf<Metadata>())
 
     val db: AppDb by lazy { app.db }
 
     init {
         clear()
         if (profile != null) {
-            endpointTimers = db.endpointTimerDao().getAllNow(profile.id).toMutableList()
+            endpointTimers = Collections.synchronizedList(db.endpointTimerDao().getAllNow(profile.id).toMutableList())
             db.teacherDao().getAllNow(profileId).toSparseArray(teacherList) { it.id }
             db.subjectDao().getAllNow(profileId).toSparseArray(subjectList) { it.id }
             db.teamDao().getAllNow(profileId).toSparseArray(teamList) { it.id }

@@ -11,10 +11,21 @@ import pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.data.web.VulcanWebLu
 import pl.szczodrzynski.edziennik.data.db.entity.Message
 import pl.szczodrzynski.edziennik.utils.Utils
 import timber.log.Timber
+import java.util.ArrayDeque
+import java.util.concurrent.atomic.AtomicInteger
 
 class VulcanData(val data: DataVulcan, val onSuccess: () -> Unit) {
     companion object {
         private const val TAG = "VulcanData"
+        private const val MAX_CONCURRENCY = 4
+
+        private val phase1Endpoints = setOf(
+            ENDPOINT_VULCAN_HEBE_MAIN,
+            ENDPOINT_VULCAN_HEBE_ADDRESSBOOK,
+            ENDPOINT_VULCAN_HEBE_ADDRESSBOOK_2,
+            ENDPOINT_VULCAN_HEBE_TEACHERS,
+            ENDPOINT_VULCAN_HEBE_MESSAGE_BOXES,
+        )
     }
 
     private var firstSemesterSync = false
@@ -37,48 +48,106 @@ class VulcanData(val data: DataVulcan, val onSuccess: () -> Unit) {
     init {
         if (data.studentSemesterNumber == 2 && data.profile?.empty != false) {
             firstSemesterSync = true
-            // set to sync 1st semester first
             data.studentSemesterId = data.semester1Id
             data.studentSemesterNumber = 1
         }
-        nextEndpoint {
-            if (firstSemesterSync) {
-                // at the end, set back 2nd semester
-                data.studentSemesterId = data.semester2Id
-                data.studentSemesterNumber = 2
+
+        val phase1 = mutableListOf<Pair<Int, Long?>>()
+        val phase2 = mutableListOf<Pair<Int, Long?>>()
+        synchronized(data.targetEndpoints) {
+            for ((id, lastSync) in data.targetEndpoints) {
+                if (id in phase1Endpoints) {
+                    phase1.add(id to lastSync)
+                } else {
+                    phase2.add(id to lastSync)
+                }
             }
-            onSuccess()
+        }
+
+        runBatchInParallel(phase1) {
+            runBatchInParallel(phase2) {
+                if (firstSemesterSync) {
+                    data.studentSemesterId = data.semester2Id
+                    data.studentSemesterNumber = 2
+                }
+                onSuccess()
+            }
         }
     }
 
-    private fun nextEndpoint(onSuccess: () -> Unit) {
-        if (data.targetEndpoints.isEmpty()) {
-            onSuccess()
+    private fun runBatchInParallel(
+        items: List<Pair<Int, Long?>>,
+        maxConcurrency: Int = MAX_CONCURRENCY,
+        onBatchFinished: () -> Unit,
+    ) {
+        if (items.isEmpty() || data.cancelled) {
+            onBatchFinished()
             return
         }
-        if (data.cancelled) {
-            onSuccess()
-            return
-        }
-        val id = data.targetEndpoints.firstKey()
-        val lastSync = data.targetEndpoints.remove(id)
-        useEndpoint(id, lastSync) {
-            if (firstSemesterSync && id !in firstSemesterSyncExclude) {
-                // sync 2nd semester after every endpoint
-                data.studentSemesterId = data.semester2Id
-                data.studentSemesterNumber = 2
-                useEndpoint(id, lastSync) {
-                    // set 1st semester back for the next endpoint
-                    data.studentSemesterId = data.semester1Id
-                    data.studentSemesterNumber = 1
-                    // progress further
-                    data.progress(data.progressStep)
-                    nextEndpoint(onSuccess)
+
+        val queue = ArrayDeque(items)
+        val remaining = AtomicInteger(items.size)
+        val lock = Any()
+        var finished = false
+
+        fun checkAndLaunchNext() {
+            if (data.cancelled) {
+                synchronized(lock) {
+                    if (!finished) {
+                        finished = true
+                        onBatchFinished()
+                    }
                 }
-                return@useEndpoint
+                return
             }
-            data.progress(data.progressStep)
-            nextEndpoint(onSuccess)
+
+            val nextItem: Pair<Int, Long?>?
+            synchronized(lock) {
+                nextItem = if (queue.isNotEmpty()) queue.removeFirst() else null
+            }
+
+            if (nextItem == null) return
+
+            val (endpointId, lastSync) = nextItem
+
+            val onEndpointComplete: (Int) -> Unit = {
+                synchronized(data.targetEndpoints) {
+                    data.targetEndpoints.remove(endpointId)
+                }
+                data.progress(data.progressStep)
+                val left = remaining.decrementAndGet()
+                if (left <= 0) {
+                    synchronized(lock) {
+                        if (!finished) {
+                            finished = true
+                            onBatchFinished()
+                        }
+                    }
+                } else {
+                    checkAndLaunchNext()
+                }
+            }
+
+            if (firstSemesterSync && endpointId !in firstSemesterSyncExclude) {
+                useEndpoint(endpointId, lastSync) {
+                    data.studentSemesterId = data.semester2Id
+                    data.studentSemesterNumber = 2
+                    useEndpoint(endpointId, lastSync) {
+                        data.studentSemesterId = data.semester1Id
+                        data.studentSemesterNumber = 1
+                        onEndpointComplete(endpointId)
+                    }
+                }
+            } else {
+                useEndpoint(endpointId, lastSync, onEndpointComplete)
+            }
+        }
+
+        synchronized(lock) {
+            val launchCount = minOf(maxConcurrency, items.size)
+            for (i in 0 until launchCount) {
+                checkAndLaunchNext()
+            }
         }
     }
 
