@@ -4,6 +4,7 @@ on:
     tags: ["v*.*.*"]
 jobs:
   build:
+    if: github.repository == 'szkolny-eu/szkolny-android'
     name: Build release (APK)
     uses: szkolny-eu/szkolny-android/.github/workflows/_build.yml@develop
     with:
