@@ -71,6 +71,9 @@ private static def getLastTag(Repository repo, Git git, Ref head) {
         revCount++
     }
 
+    if (!commitTags) {
+        return ["00000000", "v0.0.0", 0]
+    }
     return commitTags.last()
 }
 
