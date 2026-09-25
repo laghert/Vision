@@ -1,0 +1,67 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Release Vision APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Unofficial Release APK
+        run: ./gradlew assembleUnofficialRelease --stacktrace
+
+      - name: Stage APK Artifacts
+        id: stage_apk
+        run: |
+          mkdir -p dist/
+          APK_FILE=$(find app/build/outputs/apk/unofficial/release -type f -name "*.apk" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            APK_FILE=$(find app/build/outputs/apk -type f -name "*.apk" | head -n 1)
+          fi
+          if [ -n "$APK_FILE" ]; then
+            echo "Found APK: $APK_FILE"
+            cp "$APK_FILE" dist/Vision-Release.apk
+            echo "apk_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No APK generated"
+            echo "apk_exists=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vision-Release-APK
+          path: dist/Vision-Release.apk
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Vision-Release.apk
+          name: Vision Release ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false

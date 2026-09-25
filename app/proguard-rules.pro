@@ -105,3 +105,5 @@
 
 -keepclassmembernames class pl.szczodrzynski.fslogin.realm.RealmData { *; }
 -keepclassmembernames class pl.szczodrzynski.fslogin.realm.RealmData$Type { *; }
+
+-dontwarn com.migcomponents.migbase64.Base64
