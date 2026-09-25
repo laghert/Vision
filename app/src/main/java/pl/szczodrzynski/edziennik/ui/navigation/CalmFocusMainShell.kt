@@ -1,15 +1,22 @@
 package pl.szczodrzynski.edziennik.ui.navigation
 
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import pl.szczodrzynski.edziennik.ui.designsystem.CalmFocusMotion
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -95,6 +102,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -197,11 +205,18 @@ fun CalmFocusMainShell(
         bottomBar = {
             Column {
                 val nowLesson by NowLessonStore.current.collectAsStateWithLifecycle()
-                nowLesson?.let { lesson ->
-                    NowPlayingLessonBar(
-                        lesson = lesson,
-                        onClick = { activity.selectShellTarget(NavTarget.TIMETABLE) },
-                    )
+                val isLessonAlreadyInView = currentTarget in listOf(NavTarget.HOME, NavTarget.TIMETABLE)
+                AnimatedVisibility(
+                    visible = nowLesson != null && !isLessonAlreadyInView,
+                    enter = expandVertically(CalmFocusMotion.springSpec()) + fadeIn(CalmFocusMotion.springSpec()),
+                    exit = shrinkVertically(CalmFocusMotion.springSpec()) + fadeOut(CalmFocusMotion.springSpec()),
+                ) {
+                    nowLesson?.let { lesson ->
+                        NowPlayingLessonBar(
+                            lesson = lesson,
+                            onClick = { activity.selectShellTarget(NavTarget.TIMETABLE) },
+                        )
+                    }
                 }
                 if (!expanded) {
                     MainNavigationBar(
@@ -474,7 +489,7 @@ private fun MainNavigationBar(
     onTargetSelected: (NavTarget) -> Unit,
     onMoreSelected: () -> Unit,
 ) {
-    val haptic = LocalHapticFeedback.current
+    val view = LocalView.current
     val isAmoled = MaterialTheme.colorScheme.surface == Color.Black
 
     Surface(
@@ -508,7 +523,7 @@ private fun MainNavigationBar(
                     selected = selected,
                     count = count,
                     onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                         if (destination.target != null) {
                             onTargetSelected(destination.target)
                         } else {
@@ -531,8 +546,8 @@ private fun DockItem(
     modifier: Modifier = Modifier,
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (selected) 1.05f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        targetValue = if (selected) 1.02f else 1f,
+        animationSpec = CalmFocusMotion.springSpec(),
         label = "dockScale",
     )
     val indicatorColor by animateColorAsState(
@@ -655,8 +670,8 @@ private fun DestinationIconWithBadge(
 @Composable
 private fun AnimatedDestinationIcon(icon: ImageVector, selected: Boolean) {
     val scale by animateFloatAsState(
-        targetValue = if (selected) 1.18f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
+        targetValue = if (selected) 1.08f else 1f,
+        animationSpec = CalmFocusMotion.springSpec(),
         label = "navigationIconScale",
     )
     Icon(

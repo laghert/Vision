@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import pl.szczodrzynski.edziennik.App
+import pl.szczodrzynski.edziennik.R
 import pl.szczodrzynski.edziennik.data.db.AppDb
 import pl.szczodrzynski.edziennik.data.db.entity.Event
 import pl.szczodrzynski.edziennik.data.db.entity.Lesson
@@ -540,17 +541,19 @@ class TimetableViewModel private constructor(
     private fun formatWeekTitle(monday: Date, last: Date): String {
         val start = Calendar.getInstance(locale).apply { timeInMillis = monday.inMillis }
         val end = Calendar.getInstance(locale).apply { timeInMillis = last.inMillis }
-        val monthFormat = SimpleDateFormat("LLLL", locale)
-        val startMonth = monthFormat.format(start.time)
-        val endMonth = monthFormat.format(end.time)
+        val genitiveMonths = app.resources.getStringArray(R.array.months_day_of_array)
+        val startMonthGen = genitiveMonths.getOrNull(start.get(Calendar.MONTH))
+            ?: SimpleDateFormat("MMMM", locale).format(start.time)
+        val endMonthGen = genitiveMonths.getOrNull(end.get(Calendar.MONTH))
+            ?: SimpleDateFormat("MMMM", locale).format(end.time)
         val startDay = start.get(Calendar.DAY_OF_MONTH)
         val endDay = end.get(Calendar.DAY_OF_MONTH)
         val startYear = start.get(Calendar.YEAR)
         val endYear = end.get(Calendar.YEAR)
         return when {
-            startYear != endYear -> "$startDay $startMonth $startYear – $endDay $endMonth $endYear"
-            startMonth != endMonth -> "$startDay $startMonth – $endDay $endMonth"
-            else -> "$startDay–$endDay $startMonth"
+            startYear != endYear -> "$startDay $startMonthGen $startYear – $endDay $endMonthGen $endYear"
+            start.get(Calendar.MONTH) != end.get(Calendar.MONTH) -> "$startDay $startMonthGen – $endDay $endMonthGen"
+            else -> "$startDay–$endDay $startMonthGen"
         }
     }
 

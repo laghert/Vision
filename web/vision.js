@@ -38,17 +38,39 @@
       const gain = this.ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.04);
+      osc.frequency.setValueAtTime(340, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.016);
 
-      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.016);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.04);
+      osc.stop(this.ctx.currentTime + 0.016);
+    }
+
+    playDetent() {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(420, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.012);
+
+      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.012);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.012);
     }
 
     playPop() {
@@ -118,7 +140,7 @@
   updateSoundUI();
 
   if (soundToggleBtn) {
-    soundToggleBtn.addEventListener('click', () => {
+    soundToggleBtn.addEventListener('pointerdown', () => {
       sound.toggle();
       updateSoundUI();
     });
@@ -139,7 +161,7 @@
   applyAccentColor(savedColor);
 
   swatches.forEach(swatch => {
-    swatch.addEventListener('click', () => {
+    swatch.addEventListener('pointerdown', () => {
       const color = swatch.getAttribute('data-color');
       sound.playClick();
       applyAccentColor(color);
@@ -210,7 +232,7 @@
   const downloadIcsBtn = document.getElementById('download-ics-btn');
 
   if (calendarBtn && reminderDropdown) {
-    calendarBtn.addEventListener('click', (e) => {
+    calendarBtn.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       sound.playClick();
       reminderDropdown.classList.toggle('open');
@@ -264,8 +286,13 @@
   // --- 7. Interactive Smartphone Device & MD3 Bottom Dock ---
   const dockButtons = document.querySelectorAll('.dock-btn');
   const screenImages = document.querySelectorAll('.phone-screen-img');
+  const phoneScreenFrame = document.querySelector('.phone-screen-frame');
+  const DOCK_TABS = ['home', 'plan', 'oceny', 'msg'];
+  let currentTabIndex = 0;
 
   function switchPhoneTab(targetDock) {
+    const targetIdx = DOCK_TABS.indexOf(targetDock);
+    if (targetIdx !== -1) currentTabIndex = targetIdx;
     const targetBtn = document.querySelector(`.dock-btn[data-dock="${targetDock}"]`);
     if (!targetBtn) return;
     sound.playClick();
@@ -280,61 +307,188 @@
   }
 
   dockButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       switchPhoneTab(btn.getAttribute('data-dock'));
     });
   });
 
-  // --- 8. Bento Tile 1: Comparison Slider (Szkolny.eu vs Vision) ---
+  // Direct manipulation: Horizontal swipe on phone screen (WWDC 2018 Fluid Interfaces)
+  if (phoneScreenFrame) {
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let isPhoneSwiping = false;
+
+    phoneScreenFrame.addEventListener('pointerdown', (e) => {
+      swipeStartX = e.clientX;
+      swipeStartY = e.clientY;
+      isPhoneSwiping = true;
+      phoneScreenFrame.setPointerCapture(e.pointerId);
+    });
+
+    phoneScreenFrame.addEventListener('pointerup', (e) => {
+      if (!isPhoneSwiping) return;
+      isPhoneSwiping = false;
+      try { phoneScreenFrame.releasePointerCapture(e.pointerId); } catch (_) {}
+
+      const dx = e.clientX - swipeStartX;
+      const dy = e.clientY - swipeStartY;
+
+      // Only trigger if horizontal intent is clear (more horizontal than vertical)
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 35) {
+        if (dx < 0 && currentTabIndex < DOCK_TABS.length - 1) {
+          switchPhoneTab(DOCK_TABS[currentTabIndex + 1]);
+        } else if (dx > 0 && currentTabIndex > 0) {
+          switchPhoneTab(DOCK_TABS[currentTabIndex - 1]);
+        }
+      }
+    });
+
+    phoneScreenFrame.addEventListener('pointercancel', (e) => {
+      isPhoneSwiping = false;
+      try { phoneScreenFrame.releasePointerCapture(e.pointerId); } catch (_) {}
+    });
+  }
+
+  // --- 8. Bento Tile 1: Comparison Slider with Apple Fluid Physics ---
   const sliderContainer = document.getElementById('compare-slider');
   const sliderOverlay = document.getElementById('compare-overlay');
   const sliderHandle = document.getElementById('compare-handle');
 
   if (sliderContainer && sliderOverlay && sliderHandle) {
     let isDragging = false;
-    let lastSoundTick = 0;
+    let currentPercent = 50;
+    let pointerHistory = [];
+    let animFrame = null;
+    let lastCrossedMilestone = 50;
 
-    function setSliderPosition(clientX) {
-      const rect = sliderContainer.getBoundingClientRect();
-      let x = clientX - rect.left;
-      let percentage = (x / rect.width) * 100;
+    // Apple rubberband resistance at boundaries (Designing Fluid Interfaces)
+    function rubberband(overshoot, dimension, constant = 0.45) {
+      return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
+    }
 
-      if (percentage < 0) percentage = 0;
-      if (percentage > 100) percentage = 100;
+    // Apple momentum projection (exponential decay form)
+    function project(v, decelerationRate = 0.992) {
+      return (v / 1000) * decelerationRate / (1 - decelerationRate);
+    }
 
-      sliderOverlay.style.clipPath = `polygon(0 0, ${percentage}% 0, ${percentage}% 100%, 0 100%)`;
-      sliderOverlay.style.webkitClipPath = `polygon(0 0, ${percentage}% 0, ${percentage}% 100%, 0 100%)`;
-      sliderHandle.style.left = `${percentage}%`;
+    function applyVisual(p) {
+      const clampedP = Math.max(0, Math.min(100, p));
+      sliderOverlay.style.clipPath = `polygon(0 0, ${clampedP}% 0, ${clampedP}% 100%, 0 100%)`;
+      sliderOverlay.style.webkitClipPath = `polygon(0 0, ${clampedP}% 0, ${clampedP}% 100%, 0 100%)`;
+      sliderHandle.style.left = `${clampedP}%`;
 
-      const now = Date.now();
-      if (now - lastSoundTick > 120) {
-        sound.playClick();
-        lastSoundTick = now;
+      // Haptic transient on crossing 50% center split or edges
+      const snapTarget = Math.round(p / 25) * 25;
+      if (Math.abs(p - snapTarget) < 2 && lastCrossedMilestone !== snapTarget) {
+        sound.playDetent();
+        lastCrossedMilestone = snapTarget;
+      } else if (Math.abs(p - snapTarget) > 4) {
+        lastCrossedMilestone = -1;
       }
     }
 
+    // Interruptible physical spring animation with velocity handoff
+    function springTo(target, initialVelocity = 0) {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      let pos = currentPercent;
+      let vel = initialVelocity;
+      let lastTime = performance.now();
+
+      const hasMomentum = Math.abs(initialVelocity) > 60;
+      const damping = hasMomentum ? 0.82 : 1.0; // Under-damped on flick, critically damped otherwise
+      const omega = 20; // Natural frequency (snappy ~0.35s settle)
+
+      function step(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.032);
+        lastTime = now;
+
+        const displacement = pos - target;
+        const springForce = -omega * omega * displacement;
+        const dampingForce = -2 * damping * omega * vel;
+        const accel = springForce + dampingForce;
+
+        vel += accel * dt;
+        pos += vel * dt;
+        currentPercent = pos;
+
+        applyVisual(currentPercent);
+
+        if (Math.abs(displacement) > 0.05 || Math.abs(vel) > 0.2) {
+          animFrame = requestAnimationFrame(step);
+        } else {
+          currentPercent = target;
+          applyVisual(target);
+          animFrame = null;
+        }
+      }
+
+      animFrame = requestAnimationFrame(step);
+    }
+
+    function calcPercentFromClientX(clientX) {
+      const rect = sliderContainer.getBoundingClientRect();
+      const rawX = clientX - rect.left;
+      let p = (rawX / rect.width) * 100;
+
+      if (p < 0) {
+        p = rubberband(p, 100);
+      } else if (p > 100) {
+        p = 100 + rubberband(p - 100, 100);
+      }
+      return p;
+    }
+
     sliderContainer.addEventListener('pointerdown', (e) => {
+      if (animFrame) cancelAnimationFrame(animFrame);
       isDragging = true;
       sliderContainer.setPointerCapture(e.pointerId);
-      setSliderPosition(e.clientX);
+      pointerHistory = [{ x: e.clientX, time: performance.now() }];
+      currentPercent = calcPercentFromClientX(e.clientX);
+      applyVisual(currentPercent);
+      sound.playClick();
     });
 
     sliderContainer.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
-      setSliderPosition(e.clientX);
+      const now = performance.now();
+      pointerHistory.push({ x: e.clientX, time: now });
+      if (pointerHistory.length > 5) pointerHistory.shift();
+
+      currentPercent = calcPercentFromClientX(e.clientX);
+      applyVisual(currentPercent);
     });
 
     function stopDrag(e) {
       if (!isDragging) return;
       isDragging = false;
-      try {
-        sliderContainer.releasePointerCapture(e.pointerId);
-      } catch (_) {}
+      try { sliderContainer.releasePointerCapture(e.pointerId); } catch (_) {}
+
+      let releaseVelocity = 0;
+      if (pointerHistory.length >= 2) {
+        const rect = sliderContainer.getBoundingClientRect();
+        const first = pointerHistory[0];
+        const last = pointerHistory[pointerHistory.length - 1];
+        const dt = (last.time - first.time) / 1000;
+        if (dt > 0.005) {
+          const dxPercent = ((last.x - first.x) / rect.width) * 100;
+          releaseVelocity = dxPercent / dt;
+        }
+      }
+
+      // Momentum projection: project where user's flick is landing
+      const projectedEndpoint = currentPercent + project(releaseVelocity);
+
+      let target = 50;
+      if (projectedEndpoint < 25) target = 0;
+      else if (projectedEndpoint > 75) target = 100;
+      else target = 50;
+
+      springTo(target, releaseVelocity);
     }
 
     sliderContainer.addEventListener('pointerup', stopDrag);
     sliderContainer.addEventListener('pointercancel', stopDrag);
-    sliderContainer.addEventListener('click', (e) => setSliderPosition(e.clientX));
   }
 
   // --- 9. Bento Tile 3: Target Grade Calculator ---
@@ -391,7 +545,7 @@
     }
 
     goalBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('pointerdown', () => {
         sound.playClick();
         goalBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -401,7 +555,7 @@
     });
 
     weightBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('pointerdown', () => {
         sound.playClick();
         weightBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -443,8 +597,8 @@
     }
   }
 
-  if (modeOnlineBtn) modeOnlineBtn.addEventListener('click', () => setNetworkMode(false));
-  if (modeOfflineBtn) modeOfflineBtn.addEventListener('click', () => setNetworkMode(true));
+  if (modeOnlineBtn) modeOnlineBtn.addEventListener('pointerdown', () => setNetworkMode(false));
+  if (modeOfflineBtn) modeOfflineBtn.addEventListener('pointerdown', () => setNetworkMode(true));
 
   // Ping fluctuation
   setInterval(() => {
@@ -465,21 +619,21 @@
   const closeShortcutsBtn = document.getElementById('close-shortcuts-modal');
 
   if (openSecBtn && secModal) {
-    openSecBtn.addEventListener('click', () => {
+    openSecBtn.addEventListener('pointerdown', () => {
       sound.playClick();
       secModal.showModal();
     });
   }
 
   if (closeSecBtn && secModal) {
-    closeSecBtn.addEventListener('click', () => {
+    closeSecBtn.addEventListener('pointerdown', () => {
       sound.playClick();
       secModal.close();
     });
   }
 
   if (closeShortcutsBtn && shortcutsModal) {
-    closeShortcutsBtn.addEventListener('click', () => {
+    closeShortcutsBtn.addEventListener('pointerdown', () => {
       sound.playClick();
       shortcutsModal.close();
     });

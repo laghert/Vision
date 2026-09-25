@@ -15,12 +15,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 
 object CalmFocusMotion {
-    const val dampingRatio = Spring.DampingRatioLowBouncy
-    const val stiffness = Spring.StiffnessMediumLow
+    // Apple Design: Default UI transitions should be critically damped (no overshoot/bounce)
+    const val dampingRatio = Spring.DampingRatioNoBouncy
+    const val stiffness = Spring.StiffnessMedium
+
+    // Momentum / flick gestures carry slight physical elasticity (damping ~0.8)
+    const val momentumDampingRatio = 0.8f
+    const val momentumStiffness = Spring.StiffnessMediumLow
 
     fun <T> springSpec(visibilityThreshold: T? = null): SpringSpec<T> = spring(
         dampingRatio = dampingRatio,
         stiffness = stiffness,
+        visibilityThreshold = visibilityThreshold,
+    )
+
+    fun <T> momentumSpringSpec(visibilityThreshold: T? = null): SpringSpec<T> = spring(
+        dampingRatio = momentumDampingRatio,
+        stiffness = momentumStiffness,
         visibilityThreshold = visibilityThreshold,
     )
 
