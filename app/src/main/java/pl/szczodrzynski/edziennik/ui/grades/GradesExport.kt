@@ -15,12 +15,12 @@ object GradesExport {
         state.subjects.forEach { subject ->
             subject.grades.forEach { grade ->
                 val row = listOf(
-                    subject.name,
-                    grade.value,
+                    subject.subjectName,
+                    grade.name,
                     grade.weight.toString(),
-                    grade.category ?: "",
+                    grade.category,
                     grade.teacher ?: "",
-                    grade.date ?: "",
+                    grade.dateString,
                     grade.comment ?: ""
                 ).joinToString(";") { "\"${it.replace("\"", "\"\"")}\"" }
                 sb.append(row).append("\r\n")

@@ -1635,4 +1635,11 @@
         <item quantity="many">%1$d lekcji</item>
         <item quantity="other">%1$d lekcji</item>
     </plurals>
+    <string name="settings_security_card_title">Prywatność i bezpieczeństwo</string>
+    <string name="settings_security_biometric_text">Blokada biometryczna</string>
+    <string name="settings_security_biometric_subtext">Wymagaj odcisku palca / twarzy przy otwieraniu aplikacji</string>
+    <string name="settings_security_dnd_text">Wyciszanie podczas lekcji (DND)</string>
+    <string name="settings_security_dnd_subtext">Automatycznie przełączaj w tryb Nie przeszkadzać w godzinach lekcji</string>
+    <string name="settings_about_updates_text">Sprawdź aktualizacje</string>
+    <string name="settings_about_updates_subtext">Sprawdź nowe wydanie na GitHub Releases</string>
 </resources>

@@ -10,14 +10,15 @@ import pl.szczodrzynski.edziennik.ui.settings.SettingsUtil
 class SettingsSecurityCard(util: SettingsUtil) : SettingsCard(util) {
 
     override fun buildCard() = util.createCard(
-        "Prywatność i bezpieczeństwo",
+        R.string.settings_security_card_title,
         items = ::getItems,
+        itemsMore = { emptyList() },
     )
 
     override fun getItems(card: MaterialAboutCard) = listOfNotNull(
         util.createPropertyItem(
-            text = "Blokada biometryczna",
-            subText = "Wymagaj odcisku palca / twarzy przy otwieraniu aplikacji",
+            text = R.string.settings_security_biometric_text,
+            subText = R.string.settings_security_biometric_subtext,
             icon = CommunityMaterial.Icon2.cmd_fingerprint,
             value = configGlobal.security.biometricLockEnabled,
         ) { _, isChecked ->
@@ -37,8 +38,8 @@ class SettingsSecurityCard(util: SettingsUtil) : SettingsCard(util) {
             refresh()
         },
         util.createPropertyItem(
-            text = "Wyciszanie podczas lekcji (DND)",
-            subText = "Automatycznie przełączaj w tryb Nie przeszkadzać w godzinach lekcji z planu",
+            text = R.string.settings_security_dnd_text,
+            subText = R.string.settings_security_dnd_subtext,
             icon = CommunityMaterial.Icon.cmd_bell_off,
             value = configGlobal.security.dndDuringLessonsEnabled,
         ) { _, isChecked ->

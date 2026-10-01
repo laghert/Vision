@@ -620,12 +620,12 @@ private fun GradesHeroCard(
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                         )
                         Text(
-                            text = String.format(Locale.getDefault(), "od %.2f do %.2f", historyPoints.first(), historyPoints.last()),
+                            text = String.format(java.util.Locale.getDefault(), "od %.2f do %.2f", historyPoints.first(), historyPoints.last()),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                         )
                     }
-                    Canvas(
+                    androidx.compose.foundation.Canvas(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp)
@@ -636,13 +636,13 @@ private fun GradesHeroCard(
                         val minVal = (historyPoints.minOrNull() ?: 1f) - 0.2f
                         val maxVal = (historyPoints.maxOrNull() ?: 6f) + 0.2f
                         val range = (maxVal - minVal).coerceAtLeast(0.5f)
-                        val stepX = size.width / (historyPoints.size - 1).coerceAtLeast(1)
+                        val stepX = this.size.width / (historyPoints.size - 1).coerceAtLeast(1)
                         val path = androidx.compose.ui.graphics.Path()
 
                         historyPoints.forEachIndexed { idx, point ->
                             val x = idx * stepX
                             val normY = (point - minVal) / range
-                            val y = size.height - (normY * size.height)
+                            val y = this.size.height - (normY * this.size.height)
                             if (idx == 0) path.moveTo(x, y) else path.lineTo(x, y)
                         }
 

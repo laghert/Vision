@@ -7,7 +7,7 @@ package pl.szczodrzynski.edziennik.ui.settings.cards
 import android.content.Intent
 import android.media.MediaPlayer
 import android.widget.Toast
-import com.danielstone.materialaboutlibrary.model.MaterialAboutCard
+import kotlinx.coroutines.launch
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.BuildConfig
@@ -80,8 +80,8 @@ class SettingsAboutCard(util: SettingsUtil) : SettingsCard(util) {
             ChangelogDialog(activity).show()
         },
         util.createActionItem(
-            text = "Sprawdź aktualizacje",
-            subText = "Sprawdź nowe wydanie na GitHub Releases",
+            text = R.string.settings_about_updates_text,
+            subText = R.string.settings_about_updates_subtext,
             icon = CommunityMaterial.Icon.cmd_cloud_download_outline,
         ) {
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {

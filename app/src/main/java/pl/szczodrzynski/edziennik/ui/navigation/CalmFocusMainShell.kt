@@ -207,11 +207,11 @@ fun CalmFocusMainShell(
                 val nowLesson by NowLessonStore.current.collectAsStateWithLifecycle()
                 LaunchedEffect(nowLesson) {
                     val lesson = nowLesson
-                    if (lesson != null && lesson.isCurrent) {
+                    if (lesson != null) {
                         pl.szczodrzynski.edziennik.core.work.LiveLessonNotificationManager.showLiveLessonNotification(
                             context = activity,
                             subject = lesson.subject,
-                            room = lesson.classroom,
+                            room = lesson.room,
                             remainingMinutes = lesson.minutesRemaining,
                             progressPercent = (lesson.progress * 100).toInt(),
                         )
@@ -566,8 +566,7 @@ private fun DockItem(
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
+    val isPressed by androidx.compose.foundation.interaction.collectIsPressedAsState(interactionSource)
     val scale by animateFloatAsState(
         targetValue = when {
             isPressed -> 0.88f // Apple-style responsive touch-down squish

@@ -162,7 +162,7 @@ class GradesViewModel(
         }
 
         // Timeline progression points of overall average
-        val sortedNormalByDate = normalGradesAll.sortedBy { it.dateAdded?.epochSecond ?: 0L }
+        val sortedNormalByDate = normalGradesAll.sortedBy { it.addedDate }
         val historyPoints = mutableListOf<Float>()
         var runningSum = 0f
         var runningWeights = 0f
