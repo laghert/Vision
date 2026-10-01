@@ -89,7 +89,7 @@ class LoginProgressFragment : Fragment(), CoroutineScope {
         timeoutJob = launch {
             kotlinx.coroutines.delay(45_000L) // 45s failsafe timeout
             if (isAdded && !isDetached) {
-                activity.error(ApiError(TAG, pl.szczodrzynski.edziennik.data.api.ERROR_REQUEST_TIMEOUT))
+                activity.error(ApiError(TAG, pl.szczodrzynski.edziennik.data.api.ERROR_REQUEST_FAILURE_TIMEOUT))
                 nav.navigateUp()
             }
         }

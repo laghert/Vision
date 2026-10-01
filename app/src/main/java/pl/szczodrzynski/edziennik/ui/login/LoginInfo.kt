@@ -201,7 +201,7 @@ object LoginInfo {
                             )
                         ),
                         errorCodes = mapOf(
-                            ERROR_LOGIN_VULCAN_PIN_COUNT_EXCEEDED to R.string.login_error_incorrect_pin
+                            ERROR_LOGIN_VULCAN_INVALID_PIN_0_REMAINING to R.string.error_310_reason
                         )
                     ),
                     Mode(
