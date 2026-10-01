@@ -566,7 +566,8 @@ private fun DockItem(
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-    val isPressed by androidx.compose.foundation.interaction.collectIsPressedAsState(interactionSource)
+    val isPressed by interactionSource.interactions.collectAsStateWithLifecycle(initialValue = null)
+        .let { androidx.compose.runtime.derivedStateOf { it.value is androidx.compose.foundation.interaction.PressInteraction.Press } }
     val scale by animateFloatAsState(
         targetValue = when {
             isPressed -> 0.88f // Apple-style responsive touch-down squish

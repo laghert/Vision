@@ -28,14 +28,14 @@ class SettingsSecurityCard(util: SettingsUtil) : SettingsCard(util) {
                     "Biometria lub blokada ekranu nie jest skonfigurowana w telefonie",
                     Toast.LENGTH_LONG
                 ).show()
-                refresh()
+                util.onRefresh()
                 return@createPropertyItem
             }
             configGlobal.security.biometricLockEnabled = isChecked
             if (isChecked) {
                 app.biometricLockManager.markUnlocked()
             }
-            refresh()
+            util.onRefresh()
         },
         util.createPropertyItem(
             text = R.string.settings_security_dnd_text,
@@ -44,7 +44,7 @@ class SettingsSecurityCard(util: SettingsUtil) : SettingsCard(util) {
             value = configGlobal.security.dndDuringLessonsEnabled,
         ) { _, isChecked ->
             configGlobal.security.dndDuringLessonsEnabled = isChecked
-            refresh()
+            util.onRefresh()
         },
     )
 }

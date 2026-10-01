@@ -7,8 +7,8 @@ package pl.szczodrzynski.edziennik.ui.settings.cards
 import android.content.Intent
 import android.media.MediaPlayer
 import android.widget.Toast
+import com.danielstone.materialaboutlibrary.model.MaterialAboutCard
 import kotlinx.coroutines.launch
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.BuildConfig
 import pl.szczodrzynski.edziennik.R
