@@ -65,9 +65,9 @@ object LoginInfo {
                         errorCodes = mapOf(
                             ERROR_LOGIN_LIBRUS_PORTAL_NOT_ACTIVATED to R.string.login_error_account_not_activated,
                             ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
-                            ERROR_LOGIN_LIBRUS_PORTAL_CSRF_EXPIRED to R.string.login_error_timeout,
-                            ERROR_LOGIN_LIBRUS_PORTAL_ACTION_ERROR to R.string.login_error_blocked,
-                            ERROR_LOGIN_LIBRUS_PORTAL_OTHER to R.string.login_error_blocked,
+                            ERROR_LOGIN_LIBRUS_PORTAL_CSRF_EXPIRED to R.string.sync_error_timeout,
+                            ERROR_LOGIN_LIBRUS_PORTAL_ACTION_ERROR to R.string.login_error_account_not_activated,
+                            ERROR_LOGIN_LIBRUS_PORTAL_OTHER to R.string.login_error_incorrect_login_or_password,
                         )
                     ),
                     Mode(
