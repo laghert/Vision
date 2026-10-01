@@ -20,7 +20,8 @@
   <a href="#-obsługiwane-e-dzienniki">Obsługiwane dzienniki</a> •
   <a href="#-pobieranie-i-instalacja">Pobieranie</a> •
   <a href="#-kompilacja-ze-źródeł">Kompilacja</a> •
-  <a href="#-licencja-i-atrybucja">Licencja</a>
+  <a href="#-licencja-i-atrybucja">Licencja</a> •
+  <a href="#-zastrzeżenie-prawne-disclaimer">Zastrzeżenie prawne</a>
 </p>
 
 ---
@@ -172,6 +173,17 @@ Zgodnie z licencją GPLv3:
 - Każdy ma prawo do wglądu, modyfikacji i dalszego rozpowszechniania kodu z zachowaniem tej samej licencji oraz informacji o prawach autorskich.
 - Wszelkie znaki towarowe, logotypy i nazwy dzienników (Librus, Synergia, Vulcan, Mobidziennik) należą do ich prawnych właścicieli i zostały użyte w tym repozytorium wyłącznie w celach informacyjnych i identyfikacyjnych.
 - Vision jest projektem niezależnym i nieoficjalnym.
+
+---
+
+## ⚖️ Zastrzeżenie prawne (Disclaimer)
+
+> [!WARNING]
+> **Zastrzeżenie prawne (Disclaimer):**
+>
+> Vision jest niezależnym, nieoficjalnym projektem hobbystycznym / open-source i nie jest w żaden sposób powiązany, autoryzowany, sponsorowany ani popierany przez podmioty Librus Sp. z o.o. sp. k., VULCAN sp. z o.o., Moja Szkoła Sp. z o.o. ani żadnego innego dostawcę systemów oświatowych.
+>
+> Znaki towarowe „Librus”, „Synergia”, „VULCAN”, „UONET+”, „Mobidziennik” oraz powiązane logotypy są wyłączną własnością ich prawnych posiadaczy i zostały użyte wyłącznie w celach informacyjno-kompatybilnościowych (art. 156 ustawy Prawo własności przemysłowej). Użytkownik korzysta z aplikacji na własną odpowiedzialność.
 
 ---
 
