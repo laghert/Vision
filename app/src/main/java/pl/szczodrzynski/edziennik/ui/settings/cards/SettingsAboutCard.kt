@@ -8,6 +8,7 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.widget.Toast
 import com.danielstone.materialaboutlibrary.model.MaterialAboutCard
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import kotlinx.coroutines.launch
 import pl.szczodrzynski.edziennik.App
 import pl.szczodrzynski.edziennik.BuildConfig
