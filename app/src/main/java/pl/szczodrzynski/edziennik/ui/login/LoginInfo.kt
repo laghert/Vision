@@ -52,12 +52,31 @@ object LoginInfo {
                 registerLogo = R.drawable.login_logo_librus,
                 loginModes = listOf(
                     Mode(
+                        loginMode = LoginMode.LIBRUS_EMAIL,
+                        name = R.string.login_mode_librus_email,
+                        icon = R.drawable.login_mode_librus_email,
+                        hintText = R.string.login_mode_librus_email_hint,
+                        guideText = R.string.login_mode_librus_email_guide,
+                        isRecommended = true,
+                        credentials = listOf(
+                            getEmailCredential("email"),
+                            getPasswordCredential("password")
+                        ),
+                        errorCodes = mapOf(
+                            ERROR_LOGIN_LIBRUS_PORTAL_NOT_ACTIVATED to R.string.login_error_account_not_activated,
+                            ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
+                            ERROR_LOGIN_LIBRUS_PORTAL_CSRF_EXPIRED to R.string.login_error_timeout,
+                            ERROR_LOGIN_LIBRUS_PORTAL_ACTION_ERROR to R.string.login_error_blocked,
+                            ERROR_LOGIN_LIBRUS_PORTAL_OTHER to R.string.login_error_blocked,
+                        )
+                    ),
+                    Mode(
                         loginMode = LoginMode.LIBRUS_SYNERGIA,
                         name = R.string.login_mode_librus_synergia,
                         icon = R.drawable.login_mode_librus_synergia,
                         hintText = R.string.login_mode_librus_synergia_hint,
                         guideText = R.string.login_mode_librus_synergia_guide,
-                        isRecommended = true,
+                        isRecommended = false,
                         credentials = listOf(
                             FormField(
                                 keyName = "accountLogin",
@@ -74,22 +93,8 @@ object LoginInfo {
                         ),
                         errorCodes = mapOf(
                             ERROR_LOGIN_LIBRUS_API_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
-                            ERROR_LOGIN_LIBRUS_API_INVALID_REQUEST to R.string.login_error_incorrect_login_or_password
-                        )
-                    ),
-                    Mode(
-                        loginMode = LoginMode.LIBRUS_EMAIL,
-                        name = R.string.login_mode_librus_email,
-                        icon = R.drawable.login_mode_librus_email,
-                        hintText = R.string.login_mode_librus_email_hint,
-                        guideText = R.string.login_mode_librus_email_guide,
-                        credentials = listOf(
-                            getEmailCredential("email"),
-                            getPasswordCredential("password")
-                        ),
-                        errorCodes = mapOf(
-                            ERROR_LOGIN_LIBRUS_PORTAL_NOT_ACTIVATED to R.string.login_error_account_not_activated,
-                            ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
+                            ERROR_LOGIN_LIBRUS_API_INVALID_REQUEST to R.string.login_error_incorrect_login_or_password,
+                            ERROR_LOGIN_LIBRUS_API_OTHER to R.string.login_error_incorrect_login_or_password,
                         )
                     ),
                     Mode(
