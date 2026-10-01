@@ -76,6 +76,7 @@ open class LibrusSynergia(open val data: DataLibrus, open val lastSync: Long?) {
         Request.builder()
                 .url("$LIBRUS_SYNERGIA_URL/$endpoint")
                 .userAgent(LIBRUS_USER_AGENT)
+                .withClient(data.app.httpLazy)
                 .apply {
                     when (method) {
                         GET -> get()

@@ -85,6 +85,7 @@ open class LibrusPortal(open val data: DataLibrus) {
                 .url(LIBRUS_PORTAL_URL + endpoint)
                 .userAgent(LIBRUS_USER_AGENT)
                 .addHeader("Authorization", "Bearer ${data.portalAccessToken}")
+                .withClient(data.app.http)
                 .apply {
                     when (method) {
                         GET -> get()

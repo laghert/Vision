@@ -108,6 +108,7 @@ open class LibrusApi(open val data: DataLibrus, open val lastSync: Long?) {
                 .url("$LIBRUS_API_URL/$endpoint")
                 .userAgent(LIBRUS_USER_AGENT)
                 .addHeader("Authorization", "Bearer ${data.apiAccessToken}")
+                .withClient(data.app.http)
                 .apply {
                     when (method) {
                         GET -> get()
