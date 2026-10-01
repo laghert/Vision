@@ -273,6 +273,10 @@ fun CalmFocusMainShell(
             NavHost(
                 navController = navController,
                 startDestination = initialRoute.value,
+                enterTransition = { CalmFocusMotion.enterTransition },
+                exitTransition = { CalmFocusMotion.exitTransition },
+                popEnterTransition = { CalmFocusMotion.enterTransition },
+                popExitTransition = { CalmFocusMotion.exitTransition },
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
@@ -561,21 +565,31 @@ private fun DockItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
     val scale by animateFloatAsState(
-        targetValue = if (selected) 1.02f else 1f,
-        animationSpec = CalmFocusMotion.springSpec(),
+        targetValue = when {
+            isPressed -> 0.88f // Apple-style responsive touch-down squish
+            selected -> 1.05f
+            else -> 1f
+        },
+        animationSpec = spring(
+            dampingRatio = if (isPressed) Spring.DampingRatioNoBouncy else CalmFocusMotion.momentumDampingRatio,
+            stiffness = if (isPressed) Spring.StiffnessHigh else CalmFocusMotion.stiffness,
+        ),
         label = "dockScale",
     )
     val indicatorColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
         label = "dockIndicator",
     )
     val contentColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
         label = "dockContentColor",
     )
-
     Column(
         modifier = modifier
             .graphicsLayer {
@@ -583,7 +597,11 @@ private fun DockItem(
                 scaleY = scale
             }
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            )
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

@@ -15,13 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 
 object CalmFocusMotion {
-    // Apple Design: Default UI transitions should be critically damped (no overshoot/bounce)
+    // Apple Fluid Motion specs:
+    // Damping ratio 1.0 (critically damped) prevents unnatural oscillation/jitter.
+    // Stiffness 350-400f delivers a snappy ~300ms response.
     const val dampingRatio = Spring.DampingRatioNoBouncy
-    const val stiffness = Spring.StiffnessMedium
+    const val stiffness = 380f
 
-    // Momentum / flick gestures carry slight physical elasticity (damping ~0.8)
-    const val momentumDampingRatio = 0.8f
-    const val momentumStiffness = Spring.StiffnessMediumLow
+    // Momentum / flick gestures carry slight elasticity
+    const val momentumDampingRatio = 0.82f
+    const val momentumStiffness = 320f
 
     fun <T> springSpec(visibilityThreshold: T? = null): SpringSpec<T> = spring(
         dampingRatio = dampingRatio,
@@ -35,8 +37,29 @@ object CalmFocusMotion {
         visibilityThreshold = visibilityThreshold,
     )
 
+    // Apple-like page enter: subtle scale up from 0.95 + slight slide from offset + smooth fade-in
+    val enterTransition: androidx.compose.animation.EnterTransition
+        get() = fadeIn(
+            animationSpec = spring(dampingRatio = dampingRatio, stiffness = stiffness)
+        ) + androidx.compose.animation.scaleIn(
+            initialScale = 0.96f,
+            animationSpec = spring(dampingRatio = dampingRatio, stiffness = stiffness)
+        ) + androidx.compose.animation.slideInVertically(
+            initialOffsetY = { fullHeight -> (fullHeight * 0.035f).toInt() },
+            animationSpec = spring(dampingRatio = dampingRatio, stiffness = stiffness)
+        )
+
+    // Apple-like page exit: subtle scale down to 0.98 + smooth fade-out (materializing depth)
+    val exitTransition: androidx.compose.animation.ExitTransition
+        get() = fadeOut(
+            animationSpec = spring(dampingRatio = dampingRatio, stiffness = stiffness * 1.2f)
+        ) + androidx.compose.animation.scaleOut(
+            targetScale = 0.98f,
+            animationSpec = spring(dampingRatio = dampingRatio, stiffness = stiffness * 1.2f)
+        )
+
     val contentTransform: ContentTransform
-        get() = fadeIn(springSpec()) togetherWith fadeOut(springSpec())
+        get() = enterTransition togetherWith exitTransition
 }
 
 @Composable
