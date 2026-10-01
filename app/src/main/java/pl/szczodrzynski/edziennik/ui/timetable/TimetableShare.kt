@@ -10,6 +10,9 @@ import android.graphics.Typeface
 import androidx.core.content.FileProvider
 import pl.szczodrzynski.edziennik.R
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 object TimetableShare {
     fun shareWeek(context: Context, state: TimetableUiState) {
@@ -25,6 +28,71 @@ object TimetableShare {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_intent)))
+    }
+
+    fun exportIcs(context: Context, state: TimetableUiState) {
+        val sb = StringBuilder()
+        sb.append("BEGIN:VCALENDAR\r\n")
+        sb.append("VERSION:2.0\r\n")
+        sb.append("PRODID:-//Vision//Plan Lekcji//PL\r\n")
+        sb.append("CALSCALE:GREGORIAN\r\n")
+
+        val nowStr = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date())
+
+        state.days.forEach { day ->
+            val dateStr = String.format(Locale.US, "%04d%02d%02d", day.date.year, day.date.month, day.date.day)
+            day.items.filterIsInstance<TimetableItemUi.Lesson>().forEach { lesson ->
+                val startParts = lesson.startTime.split(":")
+                val endParts = lesson.endTime.split(":")
+                if (startParts.size >= 2 && endParts.size >= 2) {
+                    val dtStart = String.format(
+                        Locale.US,
+                        "%sT%02d%02d00",
+                        dateStr,
+                        startParts[0].toIntOrNull() ?: 8,
+                        startParts[1].toIntOrNull() ?: 0
+                    )
+                    val dtEnd = String.format(
+                        Locale.US,
+                        "%sT%02d%02d00",
+                        dateStr,
+                        endParts[0].toIntOrNull() ?: 8,
+                        endParts[1].toIntOrNull() ?: 45
+                    )
+                    sb.append("BEGIN:VEVENT\r\n")
+                    sb.append("UID:vision-${lesson.id}-${dateStr}@vision.app\r\n")
+                    sb.append("DTSTAMP:").append(nowStr).append("\r\n")
+                    sb.append("DTSTART:").append(dtStart).append("\r\n")
+                    sb.append("DTEND:").append(dtEnd).append("\r\n")
+                    sb.append("SUMMARY:").append(lesson.subject.replace(",", "\\,")).append("\r\n")
+                    lesson.classroom?.let {
+                        sb.append("LOCATION:Sala ").append(it.replace(",", "\\,")).append("\r\n")
+                    }
+                    val desc = buildString {
+                        lesson.teacher?.let { append("Nauczyciel: ").append(it).append("\\n") }
+                        lesson.topic?.let { append("Temat: ").append(it).append("\\n") }
+                    }
+                    if (desc.isNotEmpty()) {
+                        sb.append("DESCRIPTION:").append(desc).append("\r\n")
+                    }
+                    sb.append("END:VEVENT\r\n")
+                }
+            }
+        }
+        sb.append("END:VCALENDAR\r\n")
+
+        val file = File(context.cacheDir, "plan-lekcji.ics")
+        file.writeText(sb.toString(), Charsets.UTF_8)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/calendar"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "Plan lekcji Vision (.ics)")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Eksportuj plan do kalendarza (.ics)"))
     }
 
     private fun renderWeek(state: TimetableUiState): Bitmap {

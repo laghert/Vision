@@ -18,6 +18,7 @@ data class GradesUiState(
     val redStripeProgress: Float = 0f,
     val redStripeDiff: Float? = null,
     val gradeDistribution: Map<Int, Int> = emptyMap(),
+    val averageHistoryPoints: List<Float> = emptyList(),
     val subjects: PersistentList<GradeSubjectUi> = persistentListOf(),
     val simulatedGrades: Map<Long, List<SimulatedGrade>> = emptyMap(),
     val filterFromLastLogin: Boolean = false,

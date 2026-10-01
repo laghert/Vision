@@ -52,12 +52,24 @@ object LoginInfo {
                 registerLogo = R.drawable.login_logo_librus,
                 loginModes = listOf(
                     Mode(
+                        loginMode = LoginMode.LIBRUS_OAUTH,
+                        name = R.string.login_mode_librus_oauth,
+                        icon = R.drawable.login_mode_librus_email,
+                        hintText = R.string.login_mode_librus_oauth_hint,
+                        guideText = R.string.login_mode_librus_oauth_guide,
+                        isRecommended = true,
+                        credentials = listOf(),
+                        errorCodes = mapOf(
+                            ERROR_LOGIN_LIBRUS_PORTAL_NOT_ACTIVATED to R.string.login_error_account_not_activated,
+                            ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
+                        )
+                    ),
+                    Mode(
                         loginMode = LoginMode.LIBRUS_EMAIL,
                         name = R.string.login_mode_librus_email,
                         icon = R.drawable.login_mode_librus_email,
                         hintText = R.string.login_mode_librus_email_hint,
                         guideText = R.string.login_mode_librus_email_guide,
-                        isRecommended = true,
                         credentials = listOf(
                             getEmailCredential("email"),
                             getPasswordCredential("password")
@@ -136,12 +148,22 @@ object LoginInfo {
                 registerLogo = R.drawable.login_logo_vulcan,
                 loginModes = listOf(
                     Mode(
+                        loginMode = LoginMode.VULCAN_EDUVULCAN,
+                        name = R.string.login_mode_vulcan_eduvulcan,
+                        icon = R.drawable.login_mode_vulcan_web,
+                        hintText = R.string.login_mode_vulcan_eduvulcan_hint,
+                        guideText = R.string.login_mode_vulcan_eduvulcan_guide,
+                        isRecommended = true,
+                        credentials = listOf(),
+                        errorCodes = mapOf(),
+                    ),
+                    Mode(
                         loginMode = LoginMode.VULCAN_HEBE,
                         name = R.string.login_mode_vulcan_api,
                         icon = R.drawable.login_mode_vulcan_hebe,
                         hintText = R.string.login_mode_vulcan_api_hint,
                         guideText = R.string.login_mode_vulcan_api_guide,
-                        isRecommended = true,
+                        isRecommended = false,
                         credentials = listOf(
                             FormField(
                                 keyName = "deviceToken",

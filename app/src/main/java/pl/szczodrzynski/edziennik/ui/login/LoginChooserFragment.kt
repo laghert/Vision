@@ -142,7 +142,10 @@ class LoginChooserFragment : Fragment(), CoroutineScope {
             addItemDecoration(SimpleDividerItemDecoration(context))
         }
 
-        b.helpButton.isVisible = false
+        b.helpButton.isVisible = true
+        b.helpButton.onClick {
+            pl.szczodrzynski.edziennik.ui.dialogs.LibrusGuideBottomSheet.show(activity)
+        }
 
         // eggs
         b.footnoteText.onClick {

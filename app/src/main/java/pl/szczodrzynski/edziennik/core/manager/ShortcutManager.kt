@@ -60,10 +60,10 @@ class ShortcutManager(val app: App) {
 
     fun createShortcuts() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
-            app.getSystemService<ShortcutManager>()?.dynamicShortcuts = shortcuts.map {
+            // Launcher guidelines recommend at most 4 dynamic shortcuts
+            app.getSystemService<ShortcutManager>()?.dynamicShortcuts = shortcuts.take(4).map {
                 ShortcutInfo.Builder(app, it.id)
                     .setShortLabel(app.getString(it.label))
-                    .setLongLabel(app.getString(it.label))
                     .setIcon(Icon.createWithResource(app, it.icon))
                     .setIntent(
                         Intent(Intent.ACTION_MAIN, null, app, MainActivity::class.java)

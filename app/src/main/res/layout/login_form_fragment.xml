@@ -100,6 +100,7 @@
                     tools:text="Podaj dane logowania, jakich używasz podczas logowania na stronie internetowej swojego e-dziennika." />
 
                 <com.mikepenz.iconics.view.IconicsImageView
+                    android:id="@+id/helpButton"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="?selectableItemBackgroundBorderless"

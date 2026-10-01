@@ -74,10 +74,29 @@ Aplikacja **Szkolny.eu** przez lata była jednym z najlepszych otwartoźródłow
 
 - 🔤 **Dopracowana typografia i język:**  
   Optyczny kerning/tracking, cyfry tabelaryczne o stałej szerokości w ocenach oraz poprawna polska odmiana dat (np. *14–18 września* zamiast *14-18 wrzesień*).
-
 - 🧪 **Wbudowany tryb demonstracyjny:**  
   Możliwość natychmiastowego wypróbowania interfejsu i działania aplikacji z realistycznymi danymi testowymi bez logowania.
 
+- 🔒 **Biometryczna ochrona (BiometricPrompt):**  
+  Wymóg odcisku palca / rozpoznawania twarzy przed wglądem do aplikacji dla maksymalnej prywatności.
+
+- 🛡️ **Inteligentny asystent frekwencji (Próg 50%):**  
+  Wykrywanie przedmiotów zagrożonych brakiem klasyfikacji, licznik dopuszczalnych nieobecności i natychmiastowy generator szablonu usprawiedliwień dla rodziców.
+
+- 📈 **Wykresy i trendy średniej w czasie:**  
+  Wizualna oś postępu średniej na ekranie ocen oraz błyskawiczny eksport zestawienia ocen do pliku CSV.
+
+- 📅 **Eksport planu lekcji (.ics):**  
+  Możliwość wyeksportowania całego planu lekcji do systemowego kalendarza (Google Kalendarz, Outlook itp.).
+
+- 🔕 **Wyciszanie podczas lekcji (DND Focus):**  
+  Opcjonalne automatyczne wyciszanie powiadomień lub profil *Nie przeszkadzać* w trakcie trwania zajęć.
+
+- 🔴 **Live Notification lekcji na żywo:**  
+  Trwałe powiadomienie ze statusem bieżącej lekcji, postępem i odliczaniem do dzwonka na ekranie blokady.
+
+- 🔄 **Wbudowany Update Checker:**  
+  Automatyczne sprawdzanie i pobieranie najnowszych wydań APK bezpośrednio z GitHub Releases.
 ---
 
 ## 📸 Zrzuty ekranu

@@ -79,6 +79,28 @@ class SettingsAboutCard(util: SettingsUtil) : SettingsCard(util) {
         ) {
             ChangelogDialog(activity).show()
         },
+        util.createActionItem(
+            text = "Sprawdź aktualizacje",
+            subText = "Sprawdź nowe wydanie na GitHub Releases",
+            icon = CommunityMaterial.Icon.cmd_cloud_download_outline,
+        ) {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                android.widget.Toast.makeText(activity, "Sprawdzanie dostępności aktualizacji...", android.widget.Toast.LENGTH_SHORT).show()
+                val release = app.updateChecker.checkLatestRelease()
+                if (release != null && app.updateChecker.isNewerVersion(release.tagName)) {
+                    androidx.appcompat.app.AlertDialog.Builder(activity)
+                        .setTitle("Dostępna aktualizacja ${release.tagName}")
+                        .setMessage("${release.name}\n\n${release.body.take(250)}...")
+                        .setPositiveButton("Pobierz") { _, _ ->
+                            app.updateChecker.openReleasePage(activity, release)
+                        }
+                        .setNegativeButton("Później", null)
+                        .show()
+                } else {
+                    android.widget.Toast.makeText(activity, "Masz najnowszą wersję Vision!", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        },
 
         util.createActionItem(
             text = R.string.settings_about_licenses_text,
@@ -86,6 +108,19 @@ class SettingsAboutCard(util: SettingsUtil) : SettingsCard(util) {
         ) {
             activity.startActivity(Intent(activity, SettingsLicenseActivity::class.java))
         },
+        util.createPropertyItem(
+            text = R.string.settings_about_telemetry_text,
+            subText = R.string.settings_about_telemetry_subtext,
+            subTextChecked = R.string.settings_about_telemetry_subtext_checked,
+            icon = CommunityMaterial.Icon.cmd_chart_line,
+            value = app.config.telemetryEnabled,
+        ) { _, isChecked ->
+            app.config.telemetryEnabled = isChecked
+            if (isChecked) {
+                pl.szczodrzynski.edziennik.core.telemetry.VisionTelemetry.recordEvent("telemetry_opt_in")
+            }
+        },
+
 
         if (App.devMode) {
             util.createActionItem(

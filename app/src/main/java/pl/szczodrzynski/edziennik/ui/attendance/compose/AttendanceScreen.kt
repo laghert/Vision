@@ -113,6 +113,13 @@ fun AttendanceScreen(
             AttendanceBreakdownGrid(state = state)
         }
 
+        // Subject 50% threshold assistant
+        if (state.subjectRisks.isNotEmpty()) {
+            item(key = "attendance-threshold-assistant") {
+                AttendanceThresholdCard(state = state)
+            }
+        }
+
         // Timeline Section Header
         item(key = "attendance-timeline-title") {
             Text(
@@ -409,6 +416,108 @@ private fun AttendanceDayCard(day: AttendanceDayUi) {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttendanceThresholdCard(state: AttendanceUiState) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val atRiskSubjects = state.subjectRisks.filter { it.isAtRisk }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (atRiskSubjects.isNotEmpty())
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f)
+            else
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (atRiskSubjects.isNotEmpty())
+                MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
+            else
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+        ),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(text = if (atRiskSubjects.isNotEmpty()) "⚠️" else "🛡️", fontSize = 24.sp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Asystent Frekwencji (Próg 50%)",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = if (atRiskSubjects.isNotEmpty())
+                            "Uwaga! ${atRiskSubjects.size} przedmiot(ów) blisko progu braku klasyfikacji"
+                        else
+                            "Wszystkie przedmioty powyżej bezpiecznego progu klasyfikacji",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            // Top subjects closest to limit
+            state.subjectRisks.take(4).forEach { item ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = item.subjectName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "Dopuszczalne jeszcze ${item.maxAbsenceAllowedBefore50Percent}h nieobecności",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (item.isAtRisk) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        text = String.format(Locale.getDefault(), "%.1f%%", item.percentage),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (item.isAtRisk) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
+            if (state.unexcusedLessonsCount > 0) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = {
+                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(
+                                android.content.Intent.EXTRA_SUBJECT,
+                                "Usprawiedliwienie nieobecności"
+                            )
+                            putExtra(
+                                android.content.Intent.EXTRA_TEXT,
+                                "Dzień dobry,\n\nUprzejmie proszę o usprawiedliwienie nieobecności na lekcjach (${state.unexcusedLessonsCount} nieusprawiedliwionych godzin) z powodu ważnych przyczyn osobistych/zdrowotnych.\n\nZ poważaniem,"
+                            )
+                        }
+                        context.startActivity(
+                            android.content.Intent.createChooser(shareIntent, "Wyślij wzór usprawiedliwienia")
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text("✉️ Generuj szablon usprawiedliwienia (${state.unexcusedLessonsCount}h)")
                 }
             }
         }

@@ -74,8 +74,10 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
     }
 
     val attendanceManager by lazy { AttendanceManager(this) }
+    val biometricLockManager by lazy { pl.szczodrzynski.edziennik.core.manager.BiometricLockManager(this) }
     val buildManager by lazy { BuildManager(this) }
     val eventManager by lazy { EventManager(this) }
+    val focusDndManager by lazy { pl.szczodrzynski.edziennik.core.manager.FocusDndManager(this) }
     val firebaseManager by lazy { FirebaseManager(this) }
     val gradesManager by lazy { GradesManager(this) }
     val loggingManager by lazy { LoggingManager(this) }
@@ -87,6 +89,7 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
     val textStylingManager by lazy { TextStylingManager(this) }
     val timetableManager by lazy { TimetableManager(this) }
     val uiManager by lazy { UiManager(this) }
+    val updateChecker by lazy { pl.szczodrzynski.edziennik.core.manager.UpdateChecker(this) }
     val userActionManager by lazy { UserActionManager(this) }
 
     val db
@@ -219,6 +222,7 @@ class App : MultiDexApplication(), Configuration.Provider, CoroutineScope {
         Iconics.respectFontBoundsDefault = true
         Utils.initializeStorageDir(this)
         buildHttp()
+        pl.szczodrzynski.edziennik.core.telemetry.VisionTelemetry.init(this)
 
         uiManager.applyNightMode()
         uiManager.applyLanguage(this)

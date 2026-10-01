@@ -34,7 +34,7 @@ class LibrusLoginApi {
         this.data = data
         this.onSuccess = onSuccess
 
-        if (data.loginStore.mode == LoginMode.LIBRUS_EMAIL && data.profile == null) {
+        if ((data.loginStore.mode == LoginMode.LIBRUS_EMAIL || data.loginStore.mode == LoginMode.LIBRUS_OAUTH) && data.profile == null) {
             data.error(ApiError(TAG, ERROR_PROFILE_MISSING))
             return
         }
@@ -44,7 +44,7 @@ class LibrusLoginApi {
         }
         else {
             when (data.loginStore.mode) {
-                LoginMode.LIBRUS_EMAIL -> loginWithPortal()
+                LoginMode.LIBRUS_EMAIL, LoginMode.LIBRUS_OAUTH -> loginWithPortal()
                 LoginMode.LIBRUS_SYNERGIA -> loginWithSynergia()
                 LoginMode.LIBRUS_JST -> loginWithJst()
                 else -> {

@@ -40,7 +40,7 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
     val sync by lazy { Sync() }
     val timetable by lazy { Timetable() }
     val grades by lazy { Grades() }
-
+    val security by lazy { Security() }
     var lastProfileId: Int by config<Int>(0)
     var loginFinished: Boolean by config<Boolean>(false)
 
@@ -48,6 +48,8 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
     var devModePassword: String? by config<String?>(null)
     var enableChucker: Boolean? by config<Boolean?>(null)
 
+    var telemetryEnabled: Boolean by config<Boolean>("telemetryEnabled", true)
+    var telemetryInstallationId: String? by config<String?>("telemetryInstallationId", null)
     var appInstalledTime: Long by config<Long>(0L)
     var appRateSnackbarTime: Long by config<Long>(0L)
     var lastLogCleanupTime: Long by config<Long>(0L)
@@ -112,5 +114,11 @@ class Config(app: App) : BaseConfig<Config>(app, profileId = null) {
 
     inner class Grades {
         var orderBy: Int by config<Int>("gradesOrderBy", ORDER_BY_DATE_DESC)
+    }
+
+    inner class Security {
+        var biometricLockEnabled: Boolean by config<Boolean>("biometricLockEnabled", false)
+        var lockOnResume: Boolean by config<Boolean>("lockOnResume", true)
+        var dndDuringLessonsEnabled: Boolean by config<Boolean>("dndDuringLessonsEnabled", false)
     }
 }

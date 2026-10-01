@@ -118,6 +118,13 @@ class LoginFormFragment : Fragment(), CoroutineScope {
         b.text.text = platformGuideText ?: app.getString(mode.guideText)
         b.betaWarningBanner.isVisible = register.loginType != LoginType.LIBRUS
 
+        if (register.loginType == LoginType.LIBRUS) {
+            b.helpButton.isVisible = true
+            b.helpButton.onClick {
+                pl.szczodrzynski.edziennik.ui.dialogs.LibrusGuideBottomSheet.show(this@LoginFormFragment)
+            }
+        }
+
         // eggs
         isEggs = register.loginType == LoginType.PODLASIE
 

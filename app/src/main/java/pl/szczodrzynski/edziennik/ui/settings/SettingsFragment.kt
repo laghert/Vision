@@ -47,6 +47,7 @@ class SettingsFragment : MaterialAboutFragment() {
         val cards = mutableListOf(
             SettingsProfileCard(util).card,
             SettingsThemeCard(util).card,
+            SettingsSecurityCard(util).card,
             SettingsSyncCard(util).card,
             SettingsRegisterCard(util).card,
         )

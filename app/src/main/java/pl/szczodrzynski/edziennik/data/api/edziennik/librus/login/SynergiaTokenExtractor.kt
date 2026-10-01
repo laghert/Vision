@@ -17,7 +17,7 @@ class SynergiaTokenExtractor(override val data: DataLibrus, val onSuccess: () ->
     }
 
     init { run {
-        if (data.loginStore.mode != LoginMode.LIBRUS_EMAIL) {
+        if (data.loginStore.mode != LoginMode.LIBRUS_EMAIL && data.loginStore.mode != LoginMode.LIBRUS_OAUTH) {
             data.error(ApiError(TAG, ERROR_INVALID_LOGIN_MODE))
             return@run
         }

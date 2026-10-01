@@ -187,7 +187,7 @@ class LoginProgressFragment : Fragment(), CoroutineScope {
             .distinct()
         val sharedLoginStoreId = reusedLoginStoreIds
             .singleOrNull()
-            ?.takeIf { event.loginStore.mode == LoginMode.LIBRUS_EMAIL }
+            ?.takeIf { event.loginStore.mode == LoginMode.LIBRUS_EMAIL || event.loginStore.mode == LoginMode.LIBRUS_OAUTH }
 
         fun refreshedLoginStore(loginStoreId: Int): LoginStore {
             val oldLoginStore = existingLoginStores[loginStoreId]

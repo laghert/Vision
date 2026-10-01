@@ -27,7 +27,7 @@ class LibrusFirstLogin(val data: DataLibrus, val onSuccess: () -> Unit) {
     init {
         var firstProfileId = data.loginStore.id
 
-        if (data.loginStore.mode == LoginMode.LIBRUS_EMAIL) {
+        if (data.loginStore.mode == LoginMode.LIBRUS_EMAIL || data.loginStore.mode == LoginMode.LIBRUS_OAUTH) {
             // email login: use Portal for account list
             LibrusLoginPortal(data) {
                 portal.portalGet(TAG, LIBRUS_ACCOUNTS_URL) { json, response ->

@@ -205,6 +205,22 @@ fun CalmFocusMainShell(
         bottomBar = {
             Column {
                 val nowLesson by NowLessonStore.current.collectAsStateWithLifecycle()
+                LaunchedEffect(nowLesson) {
+                    val lesson = nowLesson
+                    if (lesson != null && lesson.isCurrent) {
+                        pl.szczodrzynski.edziennik.core.work.LiveLessonNotificationManager.showLiveLessonNotification(
+                            context = activity,
+                            subject = lesson.subject,
+                            room = lesson.classroom,
+                            remainingMinutes = lesson.minutesRemaining,
+                            progressPercent = (lesson.progress * 100).toInt(),
+                        )
+                        activity.app.focusDndManager.applyLessonSilence(true)
+                    } else {
+                        pl.szczodrzynski.edziennik.core.work.LiveLessonNotificationManager.cancel(activity)
+                        activity.app.focusDndManager.applyLessonSilence(false)
+                    }
+                }
                 val isLessonAlreadyInView = currentTarget in listOf(NavTarget.HOME, NavTarget.TIMETABLE)
                 AnimatedVisibility(
                     visible = nowLesson != null && !isLessonAlreadyInView,

@@ -929,6 +929,9 @@
     <string name="settings_about_language_text">Język aplikacji</string>
     <string name="settings_about_licenses_text">Licencje open-source</string>
     <string name="settings_about_privacy_policy_text">Polityka prywatności</string>
+    <string name="settings_about_telemetry_text">Telemetria i diagnostyka</string>
+    <string name="settings_about_telemetry_subtext">Pomóż ulepszać Vision przesyłając anonimowe statystyki użytkowania. Nigdy nie zbieramy danych osobowych ani ocen.</string>
+    <string name="settings_about_telemetry_subtext_checked">Telemetria włączona (w pełni anonimowa)</string>
     <string name="settings_card_register_title">E-dziennik</string>
     <string name="settings_about_title_subtext">© Laghert, Kuba Szczodrzyński, 2026</string>
     <string name="settings_about_update_subtext">Kliknij, aby sprawdzić aktualizacje</string>
@@ -1337,17 +1340,27 @@
     <string name="login_chooser_beta_warning">Wszystkie formy logowania poza LIBRUS® są w wersji BETA i mogą nie działać poprawnie.</string>
     <string name="login_chooser_beta_badge">BETA</string>
     <string name="login_register_librus" translatable="false">LIBRUS® Rodzina / Synergia</string>
+    <string name="login_mode_librus_oauth">Zaloguj przez stronę WWW</string>
+    <string name="login_mode_librus_oauth_hint">Oficjalna strona LIBRUS® (Rekomendowane)</string>
+    <string name="login_mode_librus_oauth_guide">Zaloguj się przez oficjalną stronę LIBRUS® w bezpiecznym oknie przeglądarki. Nie musisz ręcznie rozwiązywać Captchy, a Twoja sesja zostanie trwale zapamiętana.</string>
     <string name="login_mode_librus_email">Zaloguj używając e-maila</string>
     <string name="login_mode_librus_email_hint">Musisz posiadać konto LIBRUS® Rodzina</string>
     <string name="login_mode_librus_synergia">Zaloguj używając loginu i hasła</string>
     <string name="login_mode_librus_synergia_hint">Użyj loginu w postaci \"9874123u\"</string>
     <string name="login_mode_librus_jst">Logowanie przez platformę VULCAN®</string>
     <string name="login_mode_librus_jst_hint">Tylko Oświata w Radomiu oraz Innowacyjny Tarnobrzeg</string>
+    <string name="notification_user_action_required_oauth_librus">Wymagane logowanie do LIBRUS®</string>
+    <string name="librus_guide_title">Przewodnik: Dlaczego Konto LIBRUS?</string>
+    <string name="librus_guide_learn_more">Dlaczego potrzebuję Konta LIBRUS? Zobacz poradnik</string>
     <string name="login_type_vulcan" translatable="false">VULCAN® UONET+</string>
     <string name="login_mode_vulcan_api">Użyj tokenu, symbolu i kodu PIN</string>
     <string name="login_mode_vulcan_api_hint">Zarejestruj urządzenie na stronie dziennika VULCAN®</string>
     <string name="login_mode_vulcan_web">Użyj e-maila/nazwy użytkownika i hasła</string>
     <string name="login_mode_vulcan_web_hint">Zaloguj danymi, które podajesz na stronie e-dziennika VULCAN®</string>
+    <string name="login_mode_vulcan_eduvulcan">Zaloguj przez eduVULCAN (Przeglądarka)</string>
+    <string name="login_mode_vulcan_eduvulcan_hint">Najwygodniejsze logowanie e-mailem i hasłem w oknie przeglądarki</string>
+    <string name="login_mode_vulcan_eduvulcan_guide">Zaloguj się na swoje konto eduVULCAN w oknie przeglądarki. Vision automatycznie wykryje Twoje konto i połączy je z aplikacją.</string>
+    <string name="notification_user_action_required_eduvulcan">Wymagane logowanie do konta eduVULCAN</string>
     <string name="login_type_mobidziennik" translatable="false">MobiDziennik</string>
     <string name="login_mode_mobidziennik_web">Zaloguj nazwą serwera, loginem i hasłem</string>
     <string name="login_mode_mobidziennik_web_hint">Podaj dane, których używasz na stronie e-dziennika</string>

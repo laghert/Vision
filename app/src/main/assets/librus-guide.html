@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dlaczego Konto LIBRUS? — Przewodnik Vision</title>
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --card-border-top: rgba(255, 255, 255, 0.25);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-tertiary: rgba(255, 255, 255, 0.45);
+      --accent: #0a84ff;
+      --accent-gradient: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
+      --accent-glow: rgba(10, 132, 255, 0.35);
+      --purple: #bf5af2;
+      --green: #30d158;
+      --gold: #ffd60a;
+      --glass-blur: blur(28px) saturate(190%);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f5f7;
+        --card-bg: rgba(255, 255, 255, 0.75);
+        --card-border: rgba(0, 0, 0, 0.08);
+        --card-border-top: rgba(255, 255, 255, 0.85);
+        --text-primary: #1d1d1f;
+        --text-secondary: rgba(0, 0, 0, 0.65);
+        --text-tertiary: rgba(0, 0, 0, 0.4);
+        --accent: #0071e3;
+        --accent-gradient: linear-gradient(135deg, #0071e3 0%, #5856d6 100%);
+        --accent-glow: rgba(0, 113, 227, 0.2);
+        --purple: #af52de;
+        --green: #34c759;
+        --gold: #ffcc00;
+        --glass-blur: blur(24px) saturate(180%);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.45;
+      padding: 20px 16px 40px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    /* Header & Hero */
+    .hero {
+      text-align: center;
+      padding: 24px 8px 20px;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--card-border);
+      border-top: 1px solid var(--card-border-top);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .hero-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+
+    .hero-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 440px;
+      margin: 0 auto;
+      letter-spacing: -0.005em;
+    }
+
+    /* Segmented Control / Tabs */
+    .tabs-wrapper {
+      margin: 16px 0 20px;
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 4px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tab-btn.active {
+      background: var(--text-primary);
+      color: var(--bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .tab-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Panels */
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--card-border);
+      border-top: 1px solid var(--card-border-top);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 24px -10px rgba(0,0,0,0.12);
+      transition: transform 0.15s ease-out;
+    }
+
+    .glass-card:active {
+      transform: scale(0.99);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .icon-blue { background: rgba(10, 132, 255, 0.15); color: var(--accent); }
+    .icon-purple { background: rgba(191, 90, 242, 0.15); color: var(--purple); }
+    .icon-green { background: rgba(48, 209, 88, 0.15); color: var(--green); }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+
+    .card-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+    }
+
+    .card-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Comparison Grid */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .compare-col {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .compare-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .compare-list {
+      list-style: none;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .compare-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .badge-cross { color: #ff453a; font-weight: bold; }
+    .badge-check { color: var(--green); font-weight: bold; }
+
+    /* Steps */
+    .step-item {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 18px;
+      position: relative;
+    }
+
+    .step-item:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 17px;
+      top: 36px;
+      bottom: -10px;
+      width: 2px;
+      background: var(--card-border);
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .step-content {
+      flex: 1;
+      padding-top: 2px;
+    }
+
+    .step-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .step-tip {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(10, 132, 255, 0.1);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* Primary Apple-style Button */
+    .btn-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      background: var(--accent-gradient);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 8px 20px var(--accent-glow);
+      transition: transform 0.1s ease-out;
+      margin-top: 14px;
+    }
+
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
+    /* FAQ */
+    .faq-item {
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 0;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+
+    .faq-q {
+      font-size: 13.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .faq-a {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="hero">
+      <div class="pill-badge">Vision &bull; Edukacja</div>
+      <h1 class="hero-title">Dlaczego Konto LIBRUS?</h1>
+      <p class="hero-subtitle">Proste wyjaśnienie, czym różni się login szkolny od Konta LIBRUS i jak zalogować się raz na zawsze bez błędów.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-wrapper">
+      <button class="tab-btn active" onclick="switchTab(0)">Czym się różnią?</button>
+      <button class="tab-btn" onclick="switchTab(1)">3 proste kroki</button>
+      <button class="tab-btn" onclick="switchTab(2)">Częste pytania</button>
+    </div>
+
+    <!-- TAB 1: Porównanie -->
+    <div class="tab-panel active" id="panel-0">
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-icon icon-blue">✦</div>
+          <div>
+            <div class="card-title">Klucz do Twojego dziennika</div>
+            <div class="card-tag">Oficjalne API Librus vs Strona WWW</div>
+          </div>
+        </div>
+        <p class="card-text">
+          Aplikacja <strong>Vision</strong> wyświetla Twoje oceny, plan lekcji, frekwencję i powiadomienia za pośrednictwem szybkiego REST API. 
+          Librus zablokował bezpośrednie logowanie do API samym loginem szkolnym. Aby aplikacja miała dostęp do danych, konto szkolne musi być powiązane z <strong>Kontem LIBRUS</strong>.
+        </p>
+
+        <div class="compare-grid">
+          <div class="compare-col">
+            <div class="compare-title"><span style="color:var(--purple);">●</span> Login ze szkoły</div>
+            <ul class="compare-list">
+              <li><span class="badge-cross">✕</span> Postać: <code>1234567u</code></li>
+              <li><span class="badge-cross">✕</span> Tylko strona WWW</li>
+              <li><span class="badge-cross">✕</span> Sesja wygasa po 2h</li>
+              <li><span class="badge-cross">✕</span> Brak tokenu do API ocen</li>
+            </ul>
+          </div>
+
+          <div class="compare-col">
+            <div class="compare-title"><span style="color:var(--accent);">●</span> Konto LIBRUS</div>
+            <ul class="compare-list">
+              <li><span class="badge-check">✓</span> Twój adres e-mail</li>
+              <li><span class="badge-check">✓</span> Działa z Vision i API</li>
+              <li><span class="badge-check">✓</span> Trwała sesja (tokeny)</li>
+              <li><span class="badge-check">✓</span> Multikonto rodzeństwa</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-icon icon-green">🔒</div>
+          <div>
+            <div class="card-title">100% Bezpieczeństwa</div>
+            <div class="card-tag">Standard branżowy OAuth 2.0</div>
+          </div>
+        </div>
+        <p class="card-text">
+          Logując się przez oficjalne okno przeglądarki w Vision, logujesz się bezpośrednio na serwerach Librusa. Twoje hasło <strong>nigdy nie trafia do aplikacji</strong>. Vision otrzymuje wyłącznie bezpieczny token autoryzacyjny, który samoczynnie odświeża sesję w tle.
+        </p>
+      </div>
+
+      <a class="btn-action" href="https://portal.librus.pl/rodzina/register" target="_blank">
+        Załóż bezpłatne Konto LIBRUS &rarr;
+      </a>
+    </div>
+
+    <!-- TAB 2: 3 Kroki -->
+    <div class="tab-panel" id="panel-1">
+      <div class="glass-card">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Załóż bezpłatne Konto LIBRUS</div>
+            <div class="step-desc">
+              Wejdź na stronę <strong>portal.librus.pl</strong> i zarejestruj się, podając swój adres e-mail oraz dowolne hasło.
+            </div>
+            <div class="step-tip">Wystarczy zwykły adres e-mail</div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Powiąż konto ze szkoły (Synergia)</div>
+            <div class="step-desc">
+              Po zalogowaniu na portalu kliknij <strong>„Powiąż konto z systemem Synergia”</strong> i wpisz login ze szkoły (np. <code>1234567u</code>) oraz szkolne hasło z kartki.
+            </div>
+            <div class="step-tip">Robisz to tylko jeden jedyny raz!</div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Zaloguj się w Vision</div>
+            <div class="step-desc">
+              Wróć do Vision, wybierz <strong>„Zaloguj przez stronę WWW”</strong> i zaloguj się swoim mailem. Vision automatycznie pobierze oceny, plan lekcji i zapamięta sesję.
+            </div>
+            <div class="step-tip">Brak uciążliwych kodów Captcha</div>
+          </div>
+        </div>
+      </div>
+
+      <a class="btn-action" href="https://portal.librus.pl/rodzina" target="_blank">
+        Otwórz Portal Librus &rarr;
+      </a>
+    </div>
+
+    <!-- TAB 3: FAQ -->
+    <div class="tab-panel" id="panel-2">
+      <div class="glass-card">
+        <div class="faq-item">
+          <div class="faq-q">Czy Konto LIBRUS jest płatne?</div>
+          <div class="faq-a">Nie! Założenie Konta LIBRUS i powiązanie konta ucznia jest w 100% darmowe. Płatne są tylko opcjonalne dodatki komercyjne w oficjalnej aplikacji, których Vision w ogóle nie wymaga.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Co jeśli mam więcej niż jedno dziecko w szkole?</div>
+          <div class="faq-a">To największa zaleta! Do jednego Konta LIBRUS (e-mail) możesz powiązać dowolną liczbę uczniów. Vision po jednym zalogowaniu wykryje wszystkie profile i pozwoli na wygodne przełączanie się między nimi.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Dlaczego nie muszę ponownie podawać hasła?</div>
+          <div class="faq-a">Vision wykorzystuje mechanizm <code>refresh_token</code> zgodny ze standardem OAuth 2.0. Aplikacja w tle periodycznie odświeża sesję, więc nie zostaniesz wylogowany po wygaśnięciu ciasteczek.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(index) {
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+      document.querySelectorAll('.tab-panel').forEach((panel, i) => {
+        panel.classList.toggle('active', i === index);
+      });
+    }
+  </script>
+</body>
+</html>

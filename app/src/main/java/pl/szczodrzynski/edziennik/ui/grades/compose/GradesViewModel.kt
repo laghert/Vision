@@ -161,6 +161,26 @@ class GradesViewModel(
             normalGradesAll.count { it.value.toInt() == gradeNum }
         }
 
+        // Timeline progression points of overall average
+        val sortedNormalByDate = normalGradesAll.sortedBy { it.dateAdded?.epochSecond ?: 0L }
+        val historyPoints = mutableListOf<Float>()
+        var runningSum = 0f
+        var runningWeights = 0f
+        sortedNormalByDate.forEach { g ->
+            val w = if (g.weight > 0f) g.weight else 1f
+            runningSum += g.value * w
+            runningWeights += w
+            if (runningWeights > 0f) {
+                historyPoints.add(runningSum / runningWeights)
+            }
+        }
+        val sampledHistory = if (historyPoints.size > 20) {
+            val step = historyPoints.size / 20
+            historyPoints.filterIndexed { index, _ -> index % step == 0 || index == historyPoints.lastIndex }
+        } else {
+            historyPoints
+        }
+
         GradesUiState(
             isLoading = false,
             selectedSemester = semesterTab,
@@ -168,6 +188,7 @@ class GradesViewModel(
             redStripeProgress = redStripeProgress,
             redStripeDiff = redStripeDiff,
             gradeDistribution = distribution,
+            averageHistoryPoints = sampledHistory,
             subjects = displaySubjects,
             simulatedGrades = simulated,
             filterFromLastLogin = fromLastLogin,

@@ -18,14 +18,23 @@ data class AttendanceLessonUi(
 )
 
 @Immutable
+data class SubjectAttendanceRiskUi(
+    val subjectName: String,
+    val totalHours: Int,
+    val presentHours: Int,
+    val unexcusedAbsentHours: Int,
+    val percentage: Float,
+    val maxAbsenceAllowedBefore50Percent: Int,
+    val isAtRisk: Boolean,
+)
+
+@Immutable
 data class AttendanceDayUi(
     val dateLabel: String,
     val dayOfWeek: String,
     val isToday: Boolean,
     val lessons: PersistentList<AttendanceLessonUi>,
 )
-
-@Immutable
 data class AttendanceUiState(
     val isLoading: Boolean = true,
     val overallPercentage: Float = 100f,
@@ -37,5 +46,7 @@ data class AttendanceUiState(
     val releasedCount: Int = 0,
     val streakDays: Int = 0,
     val statusMessage: String = "",
+    val subjectRisks: PersistentList<SubjectAttendanceRiskUi> = persistentListOf(),
+    val unexcusedLessonsCount: Int = 0,
     val historyByDay: PersistentList<AttendanceDayUi> = persistentListOf(),
 )

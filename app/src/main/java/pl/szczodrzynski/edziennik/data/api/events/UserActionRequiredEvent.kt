@@ -15,5 +15,6 @@ data class UserActionRequiredEvent(
     enum class Type {
         RECAPTCHA,
         OAUTH,
+        EDU_VULCAN,
     }
 }

@@ -63,6 +63,38 @@ class AttendanceViewModel(
             percentage >= 50f -> "⚠️ Ryzyko nieklasyfikowania"
             else -> "🚨 Krytycznie niska frekwencja (<50%)"
         }
+        // Subject-level 50% threshold calculation
+        val subjectGroups = rawList.groupBy { it.subjectLongName ?: it.subjectShortName ?: "Inne" }
+        val subjectRisks = subjectGroups.mapNotNull { (subject, items) ->
+            var subPresent = 0
+            var subAbsent = 0
+            var subExcused = 0
+            var subLate = 0
+            items.forEach { item ->
+                when (item.baseType) {
+                    Attendance.TYPE_PRESENT, Attendance.TYPE_PRESENT_CUSTOM -> subPresent++
+                    Attendance.TYPE_ABSENT -> subAbsent++
+                    Attendance.TYPE_ABSENT_EXCUSED -> subExcused++
+                    Attendance.TYPE_BELATED, Attendance.TYPE_BELATED_EXCUSED -> subLate++
+                }
+            }
+            val subTotal = subPresent + subAbsent + subExcused + subLate
+            if (subTotal == 0) return@mapNotNull null
+            val subPresence = subPresent + subLate
+            val subPct = (subPresence.toFloat() / subTotal.toFloat()) * 100f
+            // Max more unexcused absences before dipping below 50%:
+            // (subPresence) / (subTotal + x) >= 0.5 => subPresence * 2 >= subTotal + x => x <= 2 * subPresence - subTotal
+            val maxAllowed = (2 * subPresence - subTotal).coerceAtLeast(0)
+            SubjectAttendanceRiskUi(
+                subjectName = subject,
+                totalHours = subTotal,
+                presentHours = subPresence,
+                unexcusedAbsentHours = subAbsent,
+                percentage = subPct,
+                maxAbsenceAllowedBefore50Percent = maxAllowed,
+                isAtRisk = subPct < 55f,
+            )
+        }.sortedBy { it.percentage }.toPersistentList()
 
         val dayFormat = SimpleDateFormat("EEEE", Locale("pl"))
         val history = rawList
@@ -105,6 +137,8 @@ class AttendanceViewModel(
             releasedCount = released,
             streakDays = 5,
             statusMessage = statusMsg,
+            subjectRisks = subjectRisks,
+            unexcusedLessonsCount = absent,
             historyByDay = history,
         )
     }

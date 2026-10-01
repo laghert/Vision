@@ -964,6 +964,19 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onResume() {
         super.onResume()
+        if (app.biometricLockManager.isUnlockRequired()) {
+            app.biometricLockManager.requestUnlock(
+                activity = this,
+                onSuccess = {
+                    registerEventReceiversIfNeeded()
+                    checkFastForegroundSync()
+                },
+                onCancel = {
+                    finish()
+                }
+            )
+            return
+        }
         registerEventReceiversIfNeeded()
         checkFastForegroundSync()
     }

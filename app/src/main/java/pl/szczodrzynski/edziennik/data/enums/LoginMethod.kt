@@ -33,14 +33,14 @@ enum class LoginMethod(
     LIBRUS_PORTAL(
         loginType = LoginType.LIBRUS,
         id = 2100,
-        isPossible = { _, loginStore -> loginStore.mode == LoginMode.LIBRUS_EMAIL },
+        isPossible = { _, loginStore -> loginStore.mode == LoginMode.LIBRUS_EMAIL || loginStore.mode == LoginMode.LIBRUS_OAUTH },
     ),
     LIBRUS_API(
         loginType = LoginType.LIBRUS,
         id = 2200,
         isPossible = { _, loginStore -> loginStore.mode != LoginMode.LIBRUS_SYNERGIA },
         requiredLoginMethod = { _, loginStore ->
-            if (loginStore.mode == LoginMode.LIBRUS_EMAIL) LIBRUS_PORTAL
+            if (loginStore.mode == LoginMode.LIBRUS_EMAIL || loginStore.mode == LoginMode.LIBRUS_OAUTH) LIBRUS_PORTAL
             else null
         },
     ),

@@ -4,6 +4,7 @@
 
 package pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.firstlogin
 
+import android.os.Bundle
 import org.greenrobot.eventbus.EventBus
 import pl.szczodrzynski.edziennik.*
 import pl.szczodrzynski.edziennik.data.api.*
@@ -15,6 +16,7 @@ import pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.login.CufsCertificat
 import pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.login.VulcanLoginHebe
 import pl.szczodrzynski.edziennik.data.api.edziennik.vulcan.login.VulcanLoginWebMain
 import pl.szczodrzynski.edziennik.data.api.events.FirstLoginFinishedEvent
+import pl.szczodrzynski.edziennik.data.api.events.UserActionRequiredEvent
 import pl.szczodrzynski.edziennik.data.api.models.ApiError
 import pl.szczodrzynski.edziennik.data.db.entity.Profile
 import pl.szczodrzynski.edziennik.data.enums.LoginMode
@@ -51,6 +53,28 @@ class VulcanFirstLogin(val data: DataVulcan, val onSuccess: () -> Unit) {
                 }
 
                 checkSymbol(certificate)
+            }
+        }
+        else if (data.loginStore.mode == LoginMode.VULCAN_EDUVULCAN) {
+            val hasToken = data.arguments?.getString("deviceToken") != null ||
+                    data.loginStore.getLoginData("deviceToken", null) != null
+
+            if (!hasToken) {
+                data.requireUserAction(
+                    type = UserActionRequiredEvent.Type.EDU_VULCAN,
+                    params = Bundle(),
+                    errorText = R.string.notification_user_action_required_eduvulcan,
+                )
+            } else {
+                data.arguments?.let { args ->
+                    if (args.has("deviceToken")) data.loginStore.putLoginData("deviceToken", args.getString("deviceToken"))
+                    if (args.has("symbol")) data.loginStore.putLoginData("symbol", args.getString("symbol"))
+                    if (args.has("devicePin")) data.loginStore.putLoginData("devicePin", args.getString("devicePin"))
+                }
+                registerDeviceHebe {
+                    EventBus.getDefault().postSticky(FirstLoginFinishedEvent(profileList, data.loginStore))
+                    onSuccess()
+                }
             }
         }
         else {

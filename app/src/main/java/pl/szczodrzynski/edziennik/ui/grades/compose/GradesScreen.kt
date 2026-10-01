@@ -12,6 +12,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +45,8 @@ import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -61,6 +66,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.input.pointer.pointerInput
+import pl.szczodrzynski.edziennik.core.telemetry.VisionTelemetry
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -131,7 +139,7 @@ fun GradesScreen(
     val haptic = LocalHapticFeedback.current
     var selectedSubjectForDetails by remember { mutableStateOf<GradeSubjectUi?>(null) }
     var selectedGradeForDetails by remember { mutableStateOf<Pair<GradeItemUi, String>?>(null) }
-
+    var isCompactGrid by rememberSaveable { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxSize()) {
         // Top Header
         Row(
@@ -157,8 +165,27 @@ fun GradesScreen(
                 }
             }
 
-            IconButton(onClick = onRefresh, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Outlined.Refresh, contentDescription = "Odśwież oceny", modifier = Modifier.size(20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        isCompactGrid = !isCompactGrid
+                        VisionTelemetry.recordEvent(
+                            "grades_semantic_zoom",
+                            mapOf("mode" to if (isCompactGrid) "compact" else "comfortable", "source" to "button"),
+                        )
+                    },
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        imageVector = if (isCompactGrid) Icons.Outlined.ViewAgenda else Icons.Outlined.GridView,
+                        contentDescription = if (isCompactGrid) "Widok szczegółowy (Bento)" else "Widok minimalistyczny (Siatka)",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                IconButton(onClick = onRefresh, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Outlined.Refresh, contentDescription = "Odśwież oceny", modifier = Modifier.size(20.dp))
+                }
             }
         }
 
@@ -209,18 +236,57 @@ fun GradesScreen(
             GradesLoadingShimmer()
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(isCompactGrid) {
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false)
+                            var zoom = 1f
+                            do {
+                                val event = awaitPointerEvent()
+                                if (event.changes.any { it.isConsumed }) break
+                                if (event.changes.size >= 2) {
+                                    val zoomChange = event.calculateZoom()
+                                    zoom *= zoomChange
+                                    if (zoom < 0.82f && !isCompactGrid) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        isCompactGrid = true
+                                        VisionTelemetry.recordEvent(
+                                            "grades_semantic_zoom",
+                                            mapOf("mode" to "compact", "source" to "pinch"),
+                                        )
+                                        event.changes.forEach { it.consume() }
+                                        break
+                                    } else if (zoom > 1.22f && isCompactGrid) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        isCompactGrid = false
+                                        VisionTelemetry.recordEvent(
+                                            "grades_semantic_zoom",
+                                            mapOf("mode" to "comfortable", "source" to "spread"),
+                                        )
+                                        event.changes.forEach { it.consume() }
+                                        break
+                                    }
+                                }
+                            } while (event.changes.any { it.pressed })
+                        }
+                    },
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 // Hero GPA & Red Stripe Card (only when not filtering)
                 if (!state.filterFromLastLogin) {
                     item(key = "hero-gpa") {
+                        val context = androidx.compose.ui.platform.LocalContext.current
                         GradesHeroCard(
                             overallAverage = state.overallAverage,
                             redStripeProgress = state.redStripeProgress,
                             redStripeDiff = state.redStripeDiff,
                             gradeDistribution = state.gradeDistribution,
+                            historyPoints = state.averageHistoryPoints,
+                            onExportCsv = {
+                                pl.szczodrzynski.edziennik.ui.grades.GradesExport.exportCsv(context, state)
+                            },
                         )
                     }
                 }
@@ -241,7 +307,7 @@ fun GradesScreen(
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "Kliknij, aby otworzyć",
+                            text = if (isCompactGrid) "Siatka minimalistyczna" else "Kliknij, aby otworzyć",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -249,22 +315,51 @@ fun GradesScreen(
                 }
 
                 // Subjects List
-                items(state.subjects, key = { it.subjectId }) { subject ->
-                    val hasSimulation = state.simulatedGrades[subject.subjectId]?.isNotEmpty() == true
-                    SubjectBentoCard(
-                        subject = subject,
-                        hasSimulation = hasSimulation,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            selectedSubjectForDetails = subject
-                        },
-                        onGradeClick = { grade ->
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            selectedGradeForDetails = grade to subject.subjectName
-                        },
-                        onTogglePinnedGrade = onTogglePinnedGrade,
-                        onMarkGradeSeen = onMarkGradeSeen,
-                    )
+                if (!isCompactGrid) {
+                    // Full Bento Cards
+                    items(state.subjects, key = { it.subjectId }) { subject ->
+                        val hasSimulation = state.simulatedGrades[subject.subjectId]?.isNotEmpty() == true
+                        SubjectBentoCard(
+                            subject = subject,
+                            hasSimulation = hasSimulation,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedSubjectForDetails = subject
+                            },
+                            onGradeClick = { grade ->
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                selectedGradeForDetails = grade to subject.subjectName
+                            },
+                            onTogglePinnedGrade = onTogglePinnedGrade,
+                            onMarkGradeSeen = onMarkGradeSeen,
+                        )
+                    }
+                } else {
+                    // 2-Column Minimalist Grid (pairs in LazyColumn)
+                    val subjectPairs = state.subjects.chunked(2)
+                    items(subjectPairs, key = { pair -> "compact-${pair.first().subjectId}" }) { pair ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            pair.forEach { subject ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    val hasSimulation = state.simulatedGrades[subject.subjectId]?.isNotEmpty() == true
+                                    SubjectCompactCard(
+                                        subject = subject,
+                                        hasSimulation = hasSimulation,
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            selectedSubjectForDetails = subject
+                                        },
+                                    )
+                                }
+                            }
+                            if (pair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
                 }
 
                 item {
@@ -369,6 +464,8 @@ private fun GradesHeroCard(
     redStripeProgress: Float,
     redStripeDiff: Float?,
     gradeDistribution: Map<Int, Int>,
+    historyPoints: List<Float> = emptyList(),
+    onExportCsv: () -> Unit = {},
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = redStripeProgress,
@@ -507,6 +604,70 @@ private fun GradesHeroCard(
                         )
                     }
                 }
+            }
+
+            // Timeline Chart of Average Progression
+            if (historyPoints.size >= 2) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Trend średniej w czasie",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                        )
+                        Text(
+                            text = String.format(Locale.getDefault(), "od %.2f do %.2f", historyPoints.first(), historyPoints.last()),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                        )
+                    }
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.25f))
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        val minVal = (historyPoints.minOrNull() ?: 1f) - 0.2f
+                        val maxVal = (historyPoints.maxOrNull() ?: 6f) + 0.2f
+                        val range = (maxVal - minVal).coerceAtLeast(0.5f)
+                        val stepX = size.width / (historyPoints.size - 1).coerceAtLeast(1)
+                        val path = androidx.compose.ui.graphics.Path()
+
+                        historyPoints.forEachIndexed { idx, point ->
+                            val x = idx * stepX
+                            val normY = (point - minVal) / range
+                            val y = size.height - (normY * size.height)
+                            if (idx == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                        }
+
+                        drawPath(
+                            path = path,
+                            color = Color(0xFF2F6FED),
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                width = 3.dp.toPx(),
+                                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Export CSV action
+            androidx.compose.material3.OutlinedButton(
+                onClick = onExportCsv,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+            ) {
+                Text("📊 Eksportuj oceny do arkusza (.csv)", style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -709,6 +870,150 @@ private fun SubjectBentoCard(
 }
 
 /**
+ * Minimalist compact subject card for dense 2-column grid.
+ */
+@Composable
+private fun SubjectCompactCard(
+    subject: GradeSubjectUi,
+    hasSimulation: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isThreatened = subject.average != null && subject.average < 2.0f
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isThreatened) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.14f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            },
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (hasSimulation) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            else if (isThreatened) MaterialTheme.colorScheme.error.copy(alpha = 0.45f)
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.28f),
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // Top row: Subject name & Threat/Sim icon
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = subject.subjectName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                if (isThreatened) {
+                    Text(text = "⚠️", fontSize = 12.sp)
+                } else if (hasSimulation) {
+                    Text(text = "✨", fontSize = 12.sp)
+                }
+            }
+
+            // Middle row: Prominent Average Pill + proposed/final if any
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                val avgColor = subject.average?.let { avg ->
+                    when {
+                        avg >= 4.75f -> Color(0xFF2E7D32)
+                        avg >= 3.75f -> Color(0xFF00838F)
+                        avg >= 2.50f -> Color(0xFFEF6C00)
+                        else -> Color(0xFFC62828)
+                    }
+                } ?: MaterialTheme.colorScheme.onSurfaceVariant
+
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = avgColor.copy(alpha = 0.16f),
+                    border = BorderStroke(1.dp, avgColor.copy(alpha = 0.35f)),
+                ) {
+                    Text(
+                        text = subject.average?.let { "%.2f".format(it) } ?: "—",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = avgColor,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    )
+                }
+
+                val finalOrProposed = subject.finalGrade ?: subject.proposedGrade
+                if (finalOrProposed != null) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                    ) {
+                        Text(
+                            text = finalOrProposed,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                        )
+                    }
+                }
+            }
+
+            // Bottom: Heat-map Micro-Dots representing latest grades
+            if (subject.grades.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val recentGrades = subject.grades.takeLast(7)
+                    recentGrades.forEach { grade ->
+                        val dotColor = when (grade.name.firstOrNull()) {
+                            '6', '5' -> Color(0xFF2E7D32)
+                            '4' -> Color(0xFF00838F)
+                            '3' -> Color(0xFFEF6C00)
+                            '2', '1' -> Color(0xFFC62828)
+                            else -> MaterialTheme.colorScheme.primary
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(dotColor),
+                        )
+                    }
+                    if (subject.grades.size > 7) {
+                        Text(
+                            text = "+${subject.grades.size - 7}",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "Brak ocen",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+            }
+        }
+    }
+}
+
+/**
  * Individual Grade Pill in card row.
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -781,6 +1086,13 @@ private fun GradePill(
             }
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text("⚡ Co jeśli poprawię na 5?") },
+                onClick = {
+                    menu = false
+                    onClick()
+                },
+            )
             DropdownMenuItem(
                 text = { Text(if (grade.isPinned) "Odepnij" else "Przypnij") },
                 onClick = { menu = false; onTogglePinned() },

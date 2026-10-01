@@ -22,6 +22,8 @@ import pl.szczodrzynski.edziennik.ext.*
 import pl.szczodrzynski.edziennik.ui.captcha.RecaptchaPromptDialog
 import pl.szczodrzynski.edziennik.ui.login.oauth.OAuthLoginActivity
 import pl.szczodrzynski.edziennik.ui.login.oauth.OAuthLoginResult
+import pl.szczodrzynski.edziennik.ui.login.eduvulcan.EduVulcanLoginActivity
+import pl.szczodrzynski.edziennik.ui.login.eduvulcan.EduVulcanLoginResult
 import pl.szczodrzynski.edziennik.ui.login.recaptcha.RecaptchaActivity
 import pl.szczodrzynski.edziennik.ui.login.recaptcha.RecaptchaResult
 import timber.log.Timber
@@ -86,6 +88,7 @@ class UserActionManager(val app: App) {
         val isSuccessful = when (event.type) {
             UserActionRequiredEvent.Type.RECAPTCHA -> executeRecaptcha(activity, event, callback)
             UserActionRequiredEvent.Type.OAUTH -> executeOauth(activity, event, callback)
+            UserActionRequiredEvent.Type.EDU_VULCAN -> executeEduVulcan(activity, event, callback)
         }
         if (!isSuccessful)
             callback.onFailure?.invoke()
@@ -176,6 +179,36 @@ class UserActionManager(val app: App) {
         EventBus.getDefault().register(listener)
 
         val intent = Intent(activity, OAuthLoginActivity::class.java).putExtras(event.params)
+        activity.startActivity(intent)
+        return true
+    }
+
+    private fun executeEduVulcan(
+        activity: AppCompatActivity,
+        event: UserActionRequiredEvent,
+        callback: UserActionCallback,
+    ): Boolean {
+        var listener: Any? = null
+        listener = object {
+            @Subscribe(threadMode = ThreadMode.MAIN)
+            fun onEduVulcanLoginResult(result: EduVulcanLoginResult) {
+                EventBus.getDefault().unregister(listener)
+                when {
+                    result.isError -> callback.onFailure?.invoke()
+                    result.token != null && result.symbol != null && result.pin != null -> {
+                        finishAction(activity, event, callback, Bundle().apply {
+                            putString("deviceToken", result.token)
+                            putString("symbol", result.symbol)
+                            putString("devicePin", result.pin)
+                        })
+                    }
+                    else -> callback.onCancel?.invoke()
+                }
+            }
+        }
+        EventBus.getDefault().register(listener)
+
+        val intent = Intent(activity, EduVulcanLoginActivity::class.java).putExtras(event.params)
         activity.startActivity(intent)
         return true
     }

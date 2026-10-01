@@ -28,12 +28,8 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
     private var loginPerformed = false
 
     init { run {
-        if (data.loginStore.mode != LoginMode.LIBRUS_EMAIL) {
+        if (data.loginStore.mode != LoginMode.LIBRUS_EMAIL && data.loginStore.mode != LoginMode.LIBRUS_OAUTH) {
             data.error(ApiError(TAG, ERROR_INVALID_LOGIN_MODE))
-            return@run
-        }
-        if (data.portalEmail == null || data.portalPassword == null) {
-            data.error(ApiError(TAG, ERROR_LOGIN_DATA_MISSING))
             return@run
         }
         loginPerformed = false
@@ -46,7 +42,37 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
             data.app.cookieJar.clear("portal.librus.pl")
             accessToken(null, data.portalRefreshToken)
         }
+        else if (data.loginStore.mode == LoginMode.LIBRUS_OAUTH) {
+            val responseUrl = data.arguments?.getString("oauthLoginResponse")
+                ?: data.loginStore.getLoginData("oauthLoginResponse", null)
+            data.loginStore.removeLoginData("oauthLoginResponse")
+
+            if (responseUrl != null) {
+                val codeMatcher = Pattern.compile("code=([^&?]+)").matcher(responseUrl)
+                if (codeMatcher.find()) {
+                    val code = codeMatcher.group(1)
+                    accessToken(code, null)
+                } else {
+                    data.error(ApiError(TAG, ERROR_LOGIN_LIBRUS_PORTAL_NO_CODE))
+                }
+            } else {
+                data.requireUserAction(
+                    type = UserActionRequiredEvent.Type.OAUTH,
+                    params = Bundle(
+                        "authorizeUrl" to LIBRUS_AUTHORIZE_URL,
+                        "redirectUrl" to LIBRUS_REDIRECT_URL,
+                        "responseStoreKey" to "oauthLoginResponse",
+                        "extras" to data.loginStore.data.toBundle(),
+                    ),
+                    errorText = R.string.notification_user_action_required_oauth_librus,
+                )
+            }
+        }
         else {
+            if (data.portalEmail == null || data.portalPassword == null) {
+                data.error(ApiError(TAG, ERROR_LOGIN_DATA_MISSING))
+                return@run
+            }
             data.app.cookieJar.clear("portal.librus.pl")
             authorize(LIBRUS_AUTHORIZE_URL)
         }
@@ -231,6 +257,9 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
             data.portalAccessToken = json.getString("access_token")
             data.portalRefreshToken = json.getString("refresh_token")
             data.portalTokenExpiryTime = response.getUnixDate() + json.getInt("expires_in", 86400)
+            data.portalAccessToken?.let { data.loginStore.putLoginData("accessToken", it) }
+            data.portalRefreshToken?.let { data.loginStore.putLoginData("refreshToken", it) }
+            data.loginStore.putLoginData("tokenExpiryTime", data.portalTokenExpiryTime)
             onSuccess()
         }
 
