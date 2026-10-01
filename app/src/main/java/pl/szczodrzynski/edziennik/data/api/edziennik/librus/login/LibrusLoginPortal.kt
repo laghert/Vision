@@ -114,16 +114,6 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
                         if (checkError(text, response))
                             return
 
-                        // If we already tried to log in and got a form again, that means
-                        // the credentials were wrong (the server returned the login page again
-                        // without a redirect to the auth code).
-                        if (loginPerformed) {
-                            data.error(ApiError(TAG, ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN)
-                                .withApiResponse(text)
-                                .withResponse(response))
-                            return
-                        }
-
                         var loginUrl = LIBRUS_LOGIN_URL
                         val csrfToken = Regexes.HTML_CSRF_TOKEN.find(text)?.get(1) ?: ""
 
