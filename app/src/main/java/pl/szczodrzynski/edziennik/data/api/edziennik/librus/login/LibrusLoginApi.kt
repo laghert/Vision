@@ -141,7 +141,11 @@ class LibrusLoginApi {
                     "librus_password_change_required" -> ERROR_LOGIN_LIBRUS_API_PASSWORD_CHANGE_REQUIRED
                     "invalid_grant" -> ERROR_LOGIN_LIBRUS_API_INVALID_LOGIN
                     "invalid_request" -> ERROR_LOGIN_LIBRUS_API_INVALID_REQUEST
-                    else -> ERROR_LOGIN_LIBRUS_API_OTHER
+                    "unauthorized_client", "access_denied" -> ERROR_LOGIN_LIBRUS_API_INVALID_LOGIN
+                    else -> {
+                        Timber.e("LibrusLoginApi: unknown OAuth error='$error' http=${response?.code()}")
+                        ERROR_LOGIN_LIBRUS_API_OTHER
+                    }
                 }.let { errorCode ->
                     data.error(ApiError(TAG, errorCode)
                             .withApiResponse(json)
