@@ -151,6 +151,9 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
             text.contains("Sesja logowania wygasła") -> ERROR_LOGIN_LIBRUS_PORTAL_CSRF_EXPIRED
             text.contains("Upewnij się, że nie") -> ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN
             text.contains("Podany adres e-mail jest nieprawidłowy.") -> ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN
+            text.contains("Nieprawidłowy login lub hasło") -> ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN
+            text.contains("Błędny login lub hasło") -> ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN
+            text.contains("Just a moment...") || text.contains("cf-browser-verification") -> ERROR_LOGIN_LIBRUS_PORTAL_ACTION_ERROR
             else -> null // no error for now
         }?.let { errorCode ->
             data.error(ApiError(TAG, errorCode)
@@ -158,7 +161,6 @@ class LibrusLoginPortal(val data: DataLibrus, val onSuccess: () -> Unit) {
                 .withResponse(response))
             return true
         }
-
         if ("robotem" in text || "g-recaptcha" in text || "captchaValidate" in text) {
             val siteKey = Regexes.HTML_RECAPTCHA_KEY.find(text)?.get(1)
             if (siteKey == null) {

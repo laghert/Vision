@@ -52,16 +52,29 @@ object LoginInfo {
                 registerLogo = R.drawable.login_logo_librus,
                 loginModes = listOf(
                     Mode(
-                        loginMode = LoginMode.LIBRUS_OAUTH,
-                        name = R.string.login_mode_librus_oauth,
-                        icon = R.drawable.login_mode_librus_email,
-                        hintText = R.string.login_mode_librus_oauth_hint,
-                        guideText = R.string.login_mode_librus_oauth_guide,
+                        loginMode = LoginMode.LIBRUS_SYNERGIA,
+                        name = R.string.login_mode_librus_synergia,
+                        icon = R.drawable.login_mode_librus_synergia,
+                        hintText = R.string.login_mode_librus_synergia_hint,
+                        guideText = R.string.login_mode_librus_synergia_guide,
                         isRecommended = true,
-                        credentials = listOf(),
+                        credentials = listOf(
+                            FormField(
+                                keyName = "accountLogin",
+                                name = R.string.login_hint_login,
+                                icon = CommunityMaterial.Icon.cmd_account_outline,
+                                emptyText = R.string.login_error_no_login,
+                                invalidText = R.string.login_error_incorrect_login,
+                                errorCodes = mapOf(),
+                                isRequired = true,
+                                validationRegex = "[A-Za-z0-9._\\-+]+",
+                                caseMode = FormField.CaseMode.LOWER_CASE
+                            ),
+                            getPasswordCredential("accountPassword")
+                        ),
                         errorCodes = mapOf(
-                            ERROR_LOGIN_LIBRUS_PORTAL_NOT_ACTIVATED to R.string.login_error_account_not_activated,
-                            ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
+                            ERROR_LOGIN_LIBRUS_API_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
+                            ERROR_LOGIN_LIBRUS_API_INVALID_REQUEST to R.string.login_error_incorrect_login_or_password
                         )
                     ),
                     Mode(
@@ -79,31 +92,19 @@ object LoginInfo {
                             ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
                         )
                     ),
-                    /*Mode(
-                            loginMode = LoginMode.LIBRUS_SYNERGIA,
-                            name = R.string.login_mode_librus_synergia,
-                            icon = R.drawable.login_mode_librus_synergia,
-                            hintText = R.string.login_mode_librus_synergia_hint,
-                            guideText = R.string.login_mode_librus_synergia_guide,
-                            credentials = listOf(
-                                    Credential(
-                                            keyName = "accountLogin",
-                                            name = R.string.login_hint_login,
-                                            icon = CommunityMaterial.Icon.cmd_account_outline,
-                                            emptyText = R.string.login_error_no_login,
-                                            invalidText = R.string.login_error_incorrect_login,
-                                            errorCodes = mapOf(),
-                                            isRequired = true,
-                                            validationRegex = "[A-z0-9._\\-+]+",
-                                            caseMode = Credential.CaseMode.LOWER_CASE
-                                    ),
-                                    getPasswordCredential("accountPassword")
-                            ),
-                            errorCodes = mapOf(
-                                    ERROR_LOGIN_LIBRUS_API_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
-                                    ERROR_LOGIN_LIBRUS_API_INVALID_REQUEST to R.string.login_error_incorrect_login_or_password
-                            )
-                    ),*/
+                    Mode(
+                        loginMode = LoginMode.LIBRUS_OAUTH,
+                        name = R.string.login_mode_librus_oauth,
+                        icon = R.drawable.login_mode_librus_email,
+                        hintText = R.string.login_mode_librus_oauth_hint,
+                        guideText = R.string.login_mode_librus_oauth_guide,
+                        isRecommended = false,
+                        credentials = listOf(),
+                        errorCodes = mapOf(
+                            ERROR_LOGIN_LIBRUS_PORTAL_NOT_ACTIVATED to R.string.login_error_account_not_activated,
+                            ERROR_LOGIN_LIBRUS_PORTAL_INVALID_LOGIN to R.string.login_error_incorrect_login_or_password,
+                        )
+                    ),
                     Mode(
                         loginMode = LoginMode.LIBRUS_JST,
                         name = R.string.login_mode_librus_jst,
@@ -148,22 +149,12 @@ object LoginInfo {
                 registerLogo = R.drawable.login_logo_vulcan,
                 loginModes = listOf(
                     Mode(
-                        loginMode = LoginMode.VULCAN_EDUVULCAN,
-                        name = R.string.login_mode_vulcan_eduvulcan,
-                        icon = R.drawable.login_mode_vulcan_web,
-                        hintText = R.string.login_mode_vulcan_eduvulcan_hint,
-                        guideText = R.string.login_mode_vulcan_eduvulcan_guide,
-                        isRecommended = true,
-                        credentials = listOf(),
-                        errorCodes = mapOf(),
-                    ),
-                    Mode(
                         loginMode = LoginMode.VULCAN_HEBE,
                         name = R.string.login_mode_vulcan_api,
                         icon = R.drawable.login_mode_vulcan_hebe,
                         hintText = R.string.login_mode_vulcan_api_hint,
                         guideText = R.string.login_mode_vulcan_api_guide,
-                        isRecommended = false,
+                        isRecommended = true,
                         credentials = listOf(
                             FormField(
                                 keyName = "deviceToken",
@@ -205,12 +196,23 @@ object LoginInfo {
                                     ERROR_LOGIN_VULCAN_INVALID_PIN_2_REMAINING to R.string.error_312_reason
                                 ),
                                 isRequired = true,
-                                isNumber = true,
-                                validationRegex = "[0-9]+",
+                                validationRegex = "[0-9]{4,8}",
                                 caseMode = FormField.CaseMode.LOWER_CASE
                             )
                         ),
-                        errorCodes = mapOf()
+                        errorCodes = mapOf(
+                            ERROR_LOGIN_VULCAN_PIN_COUNT_EXCEEDED to R.string.login_error_incorrect_pin
+                        )
+                    ),
+                    Mode(
+                        loginMode = LoginMode.VULCAN_EDUVULCAN,
+                        name = R.string.login_mode_vulcan_eduvulcan,
+                        icon = R.drawable.login_mode_vulcan_web,
+                        hintText = R.string.login_mode_vulcan_eduvulcan_hint,
+                        guideText = R.string.login_mode_vulcan_eduvulcan_guide,
+                        isRecommended = false,
+                        credentials = listOf(),
+                        errorCodes = mapOf(),
                     )
                 )
             ),

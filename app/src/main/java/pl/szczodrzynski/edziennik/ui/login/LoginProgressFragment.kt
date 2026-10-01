@@ -54,6 +54,7 @@ class LoginProgressFragment : Fragment(), CoroutineScope {
     private val job: Job = Job()
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
+    private var timeoutJob: Job? = null
 
     private data class ReconciledLogin(
         val profiles: List<Profile>,
@@ -84,6 +85,15 @@ class LoginProgressFragment : Fragment(), CoroutineScope {
     }
 
     private fun doFirstLogin(args: Bundle) {
+        timeoutJob?.cancel()
+        timeoutJob = launch {
+            kotlinx.coroutines.delay(45_000L) // 45s failsafe timeout
+            if (isAdded && !isDetached) {
+                activity.error(ApiError(TAG, pl.szczodrzynski.edziennik.data.api.ERROR_REQUEST_TIMEOUT))
+                nav.navigateUp()
+            }
+        }
+
         launch {
             activity.errorSnackbar.dismiss()
 
@@ -108,6 +118,7 @@ class LoginProgressFragment : Fragment(), CoroutineScope {
 
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     fun onFirstLoginFinishedEvent(event: FirstLoginFinishedEvent) {
+        timeoutJob?.cancel()
         EventBus.getDefault().removeStickyEvent(event)
         if (event.profileList.isEmpty()) {
             SimpleDialog<Unit>(activity) {
@@ -267,6 +278,7 @@ class LoginProgressFragment : Fragment(), CoroutineScope {
 
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     fun onSyncErrorEvent(event: ApiTaskErrorEvent) {
+        timeoutJob?.cancel()
         EventBus.getDefault().removeStickyEvent(event)
         activity.error(event.error)
         nav.navigateUp()
@@ -282,18 +294,20 @@ class LoginProgressFragment : Fragment(), CoroutineScope {
 
         val callback = UserActionManager.UserActionCallback(
             onSuccess = { data ->
+                timeoutJob?.cancel()
                 args.putAll(data)
                 doFirstLogin(args)
             },
             onFailure = {
+                timeoutJob?.cancel()
                 activity.error(ApiError(TAG, ERROR_REQUIRES_USER_ACTION))
                 nav.navigateUp()
             },
             onCancel = {
+                timeoutJob?.cancel()
                 nav.navigateUp()
             },
         )
-
         app.userActionManager.execute(activity, event, callback)
     }
 

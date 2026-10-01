@@ -241,7 +241,7 @@ class EduVulcanLoginActivity : AppCompatActivity() {
         CookieManager.getInstance().flush()
         webView?.destroy()
         if (!isSuccessful) {
-            EventBus.getDefault().post(EduVulcanLoginResult(isError = false))
+            EventBus.getDefault().post(EduVulcanLoginResult(isError = true))
         }
     }
 }

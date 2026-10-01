@@ -174,7 +174,7 @@ class OAuthLoginActivity : AppCompatActivity() {
         webView?.destroy()
         if (!isSuccessful) {
             EventBus.getDefault().post(OAuthLoginResult(
-                isError = false,
+                isError = true,
                 responseUrl = null,
             ))
         }

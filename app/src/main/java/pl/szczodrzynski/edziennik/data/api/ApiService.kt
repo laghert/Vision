@@ -258,7 +258,7 @@ class ApiService : Service() {
         EventBus.getDefault().removeStickyEvent(task)
         Timber.d(task.toString())
 
-        if (task is EdziennikTask) {
+        if (task is EdziennikTask && task.request !is EdziennikTask.FirstLoginRequest) {
             // fix for duplicated tasks, thank you EventBus
             if (task.request in allTaskRequestList)
                 return
