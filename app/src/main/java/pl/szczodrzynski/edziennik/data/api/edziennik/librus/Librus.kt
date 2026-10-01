@@ -199,7 +199,10 @@ class Librus(val app: App, val profile: Profile?, val loginStore: LoginStore, va
                         login()
                     }
                     ERROR_LIBRUS_API_ACCESS_DENIED,
-                    ERROR_LIBRUS_API_TOKEN_EXPIRED -> {
+                    ERROR_LIBRUS_API_TOKEN_EXPIRED,
+                    ERROR_LOGIN_LIBRUS_PORTAL_SYNERGIA_TOKEN_MISSING -> {
+                        // API token expired or Synergia token missing from portal response;
+                        // invalidate API token and re-run login chain.
                         data.loginMethods.remove(LoginMethod.LIBRUS_API)
                         data.prepareFor(LoginMethod.LIBRUS_API)
                         data.apiTokenExpiryTime = 0
